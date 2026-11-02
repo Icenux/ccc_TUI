@@ -205,6 +205,18 @@ async def test_fork_adopts_real_session_id(storage, project_dir, tmux, monkeypat
     assert storage.get_queue(q.id).first_run_flags is None
 
 
+async def test_plain_resume_follows_new_session_id(storage, project_dir, tmux):
+    # `claude --resume X` writes to a NEW session id; the app must read that transcript, not X's old one.
+    q = _rc(storage, project_dir)
+    assert storage.get_queue(q.id).first_run_flags is None
+    tmux.session_id_override = "resumed-real-id"
+
+    async def body():
+        assert await _until(lambda: storage.get_queue(q.id).session_id == "resumed-real-id")
+
+    await _run_orch(storage, body)
+
+
 async def test_trust_prompt_not_confirmed_after_startup_window(storage, project_dir, tmux, monkeypatch):
     monkeypatch.setattr("ccc.orchestrator.TRUST_CONFIRM_WINDOW_SECONDS", 0)
     _rc(storage, project_dir)

@@ -650,9 +650,10 @@ class QueueRuntime:
             return
         # What you typed into Claude Code yourself shows in the list too.
         self.storage.set_live_busy(queue.id, session.status == "busy")
-        if queue.first_run_flags is not None and session.session_id != queue.session_id:
-            # Fork / from-PR: the process created a new session id.
-            self._adopt_session(queue, session.session_id)
+        if session.session_id != queue.session_id:
+            # Fork / from-PR, but also a plain --resume: the process writes to a new session id,
+            # and the app (API) must read that transcript, not the old one.
+            self._adopt_session(queue, session.session_id, blocking=queue.first_run_flags is not None)
         blocked = session.state == "blocked"
         if blocked and not self._managed_was_blocked and queue.status not in (
             QueueStatus.WAITING_RETRY,
@@ -720,13 +721,16 @@ class QueueRuntime:
                 break
             await asyncio.sleep(min(1.0, DELIVERY_SETTLE_SECONDS))
 
-    def _adopt_session(self, queue: Queue, session_id: str) -> None:
+    def _adopt_session(self, queue: Queue, session_id: str, blocking: bool = True) -> None:
         """After the first successful run of a fork / from-PR conversation,
         switch the queue from its placeholder id to the session Claude Code
         actually created, so later messages --resume that one."""
         try:
             self.storage.set_queue_session(queue.id, session_id)
         except sqlite3.IntegrityError:
+            if not blocking:
+                logger.warning("session %s already belongs to another conversation; keeping '%s' on its own", session_id, queue.name)
+                return
             self.storage.update_queue_status(
                 queue.id,
                 QueueStatus.BLOCKED_ERROR,

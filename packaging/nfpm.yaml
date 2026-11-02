@@ -1,5 +1,5 @@
 # The .deb from the built tree (dist/ccc, packaging/build.sh) — called by packaging/package.sh.
-# Besides the application it sets up the shared Icenux APT repository (github.com/Luquas95/icenux,
+# Besides the application it sets up the shared Icenux APT repository (github.com/Icenux/icenux,
 # by packaging/files/postinst.sh), so later versions arrive with the ordinary system update.
 name: ccc
 arch: all
@@ -8,13 +8,13 @@ version: ${VERSION}
 release: 1
 section: devel
 priority: optional
-maintainer: ccc contributors <https://github.com/Luquas95/ccc_TUI>
+maintainer: ccc contributors <https://github.com/Icenux/ccc_TUI>
 description: |-
   Prompt queue and auto-continue TUI for Claude Code.
   Runs queued prompts, keeps conversations alive and watches usage limits;
   a daemon and a TUI as systemd user services, optionally an API for the Android app.
 vendor: ccc
-homepage: https://github.com/Luquas95/ccc_TUI
+homepage: https://github.com/Icenux/ccc_TUI
 
 depends:
   # The bundled virtualenv is built for Python 3.12 (Ubuntu 24.04): its libraries live in lib/python3.12.

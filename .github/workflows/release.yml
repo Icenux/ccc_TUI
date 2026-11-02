@@ -7,7 +7,7 @@
 #               ccc-deb-sign-upload.sh X.Y.Z (~/Documents/CC/bin) downloads the "deb" artifact
 #               of this run, signs SHA256SUMS locally and attaches ccc_all.deb, SHA256SUMS and
 #               SHA256SUMS.asc together. The shared APT repository Icenux
-#               (github.com/Luquas95/icenux) takes the package from there.
+#               (github.com/Icenux/icenux) takes the package from there.
 # A release made by hand with the tag is kept; an artifact already published is never replaced.
 name: Release
 

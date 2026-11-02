@@ -17,7 +17,7 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-REPO = "Luquas95/ccc_TUI"
+REPO = "Icenux/ccc_TUI"
 API = "https://api.github.com"
 ASSET = "ccc.tar.gz"
 TIMEOUT = 20

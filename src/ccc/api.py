@@ -1,4 +1,4 @@
-"""ccc's HTTP API, for the Android app (github.com/Luquas95/ccc_android): the conversations, their
+"""ccc's HTTP API, for the Android app (github.com/Icenux/ccc_android): the conversations, their
 messages, sending one, approvals, a new conversation, usage limits, and a
 stream of changes. Like the TUI it's just another reader / writer of the
 ccc database — the daemon does the work.

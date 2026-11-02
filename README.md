@@ -121,19 +121,19 @@ phone via Remote Control.
 
 ### As a system package (Debian / Ubuntu)
 
-Add the [Icenux](https://github.com/Luquas95/icenux) repository — the shared APT repository of
+Add the [Icenux](https://github.com/Icenux/icenux) repository — the shared APT repository of
 my applications — and install ccc from it:
 
 ```bash
-sudo curl -fsSL https://luquas95.github.io/icenux/icenux.asc -o /usr/share/keyrings/icenux.asc
-echo 'deb [signed-by=/usr/share/keyrings/icenux.asc] https://luquas95.github.io/icenux/apt ./' \
+sudo curl -fsSL https://icenux.github.io/icenux/icenux.asc -o /usr/share/keyrings/icenux.asc
+echo 'deb [signed-by=/usr/share/keyrings/icenux.asc] https://icenux.github.io/icenux/apt ./' \
   | sudo tee /etc/apt/sources.list.d/icenux.list
 sudo apt update && sudo apt install ccc
 systemctl --user enable --now ccc ccc-tui   # as your user, once
 loginctl enable-linger "$USER"              # keep them running after you log out
 ```
 
-(Or install `ccc_all.deb` from the [latest release](https://github.com/Luquas95/ccc_TUI/releases/latest)
+(Or install `ccc_all.deb` from the [latest release](https://github.com/Icenux/ccc_TUI/releases/latest)
 with `sudo apt install ./ccc_all.deb` — the package adds the Icenux repository itself.)
 
 The package puts ccc in `/usr/lib/ccc` (`ccc` and `ccc-daemon` in `/usr/bin`) and ships the
@@ -145,7 +145,7 @@ Python 3.12 (Ubuntu 24.04; other versions: the git checkout below) and needs `tm
 ### From a git checkout (for development)
 
 ```bash
-git clone https://github.com/Luquas95/ccc_TUI.git ~/ccc
+git clone https://github.com/Icenux/ccc_TUI.git ~/ccc
 cd ~/ccc
 bin/install.sh
 ```
@@ -203,7 +203,7 @@ Language):
 - [Usage limits & blocked queues](src/ccc/help/limits.md)
 - [Approving tool calls](src/ccc/help/approvals.md)
 - [Remote control (phone)](src/ccc/help/remote-control.md)
-- [Android app & API](src/ccc/help/android-api.md) — the app itself: [ccc_android](https://github.com/Luquas95/ccc_android)
+- [Android app & API](src/ccc/help/android-api.md) — the app itself: [ccc_android](https://github.com/Icenux/ccc_android)
 - [Live sessions](src/ccc/help/live-sessions.md)
 - [Analytics](src/ccc/help/analytics.md)
 - [Settings & notifications](src/ccc/help/settings.md)

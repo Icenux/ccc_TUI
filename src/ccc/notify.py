@@ -36,7 +36,7 @@ DISCORD_WEBHOOK_KEY = "discord_webhook"
 DISCORD_MAX_CHARS = 2000
 DISCORD_MAX_FILE_BYTES = 20 * 1024 * 1024  # default per-file limit, 20 MiB
 # Discord (Cloudflare) rejects urllib's default "Python-urllib/x.y" agent.
-USER_AGENT = "ccc-notifier (https://github.com/Luquas95/ccc_TUI, 1.0)"
+USER_AGENT = "ccc-notifier (https://github.com/Icenux/ccc_TUI, 1.0)"
 _DISCORD_WEBHOOK_RE = re.compile(r"^https://(?:(?:ptb|canary)\.)?(?:discord|discordapp)\.com/api/webhooks/\S+$")
 
 # What can be switched on and off, per service (#146). A message belongs to one

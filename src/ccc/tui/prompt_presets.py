@@ -22,6 +22,9 @@ ALT_DIGIT_CHARS = {
 # The characters themselves, typed when there's no preset on that number.
 ALT_DIGIT_TEXT = {1: "¡", 2: "™", 3: "£", 4: "¢", 5: "∞", 6: "§", 7: "¶", 8: "•", 9: "ª"}
 
+# Alt+0 (switch ccc ↔ Claude Code) arrives the same way, as "º".
+ALT_ZERO_CHAR = "º"
+
 SEND_MARK = "⏎"
 INSERT_MARK = "✎"
 

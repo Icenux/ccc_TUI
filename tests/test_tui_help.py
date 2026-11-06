@@ -2,7 +2,7 @@ import pytest
 from textual.app import App
 
 from ccc.storage import Storage
-from ccc.tui.prompt_presets import ALT_DIGIT_CHARS
+from ccc.tui.prompt_presets import ALT_DIGIT_CHARS, ALT_ZERO_CHAR
 from ccc.tui.dashboard import DashboardScreen
 from ccc import keymap
 from ccc.tui.help import KEY_HELP, HelpScreen, keys_markdown
@@ -25,11 +25,11 @@ def _ccc_bindings():
 
 def test_every_binding_is_a_documented_keymap_action():
     # Every key can be changed (keymap ids) and is listed in the help;
-    # only Alt+digit as some terminals send it rides along with Alt+N.
+    # only Alt+digit as some terminals send it (a character) rides along with Alt+N / Alt+0.
     documented = {ref for _section, entries in KEY_HELP for ref, _ in entries}
     for binding in _ccc_bindings():
         if binding.id is None:
-            assert binding.key in ALT_DIGIT_CHARS.values(), binding
+            assert binding.key in (*ALT_DIGIT_CHARS.values(), ALT_ZERO_CHAR), binding
             continue
         assert binding.id in keymap.BY_ID, binding
         assert binding.key == keymap.BY_ID[binding.id].default, binding

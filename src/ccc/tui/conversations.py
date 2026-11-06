@@ -33,7 +33,7 @@ from ccc.tui.layout import (
 )
 from ccc.tui.message_box import MessageBox
 from ccc.tui.pixel_text import PixelBanner
-from ccc.tui.prompt_presets import ALT_DIGIT_CHARS, ALT_DIGIT_TEXT, bar_item
+from ccc.tui.prompt_presets import ALT_DIGIT_CHARS, ALT_DIGIT_TEXT, ALT_ZERO_CHAR, bar_item
 
 GIT_STATUS_SECONDS = 15.0
 CONTEXT_SECONDS = 5.0
@@ -127,6 +127,9 @@ class ConversationsScreen(SidebarScreen):
         # moved to another key leaves these behind, harmlessly.
         *[Binding(ALT_DIGIT_CHARS[n], f"prompt_preset({n}, True)", _("Preset {n}").format(n=n), show=False, priority=True)
           for n in range(1, 10)],
+        # Alt+0 the same way: Esc+0 arrives as "º". Only while Claude Code is
+        # open (check_action), so a real "º" is still typed otherwise.
+        Binding(ALT_ZERO_CHAR, "focus_claude", "Claude ↔ ccc", show=False, priority=True),
     ]
 
     # Sidebar frame/buttons come from SidebarScreen (layout.SHARED_CSS);

@@ -238,3 +238,22 @@ async def test_section_sign_is_typed_when_no_preset_on_6(tmp_path):
         await pilot.pause()
         assert box.text == "§"
         assert _pending_texts(app.storage, qid) == []
+
+
+@pytest.mark.asyncio
+async def test_alt_zero_character_switches_to_claude_only_while_it_is_open(tmp_path):
+    # Esc+0 arrives as "º": with Claude Code open beside ccc it is Alt+0, not text.
+    app, _ = _app(tmp_path)
+    async with app.run_test(size=(140, 45)) as pilot:
+        screen = await _conversations(pilot, app)
+        calls = []
+        screen.action_focus_claude = lambda: calls.append(1)
+        box = screen.query_one("#message-input", MessageBox)
+        box.focus()
+        await pilot.press("º")
+        assert calls == [] and box.text == "º"  # closed: typed as usual
+        screen._sync_cli_pane = lambda: None  # no real Claude Code in the test
+        screen.add_class("-cli-open")
+        await pilot.pause()
+        await pilot.press("º")
+        assert calls == [1] and box.text == "º"

@@ -280,6 +280,8 @@ class ConversationsScreen(SidebarScreen):
         # Plain text of the list rows as last drawn — rebuild when it changes
         # (new/removed conversation, status marker, pending count).
         self._list_signature: list[str] = []
+        self._row_keys: list = []
+        self._column_key = None
         # The rendered transcripts kept (_View), least recently shown first,
         # and the conversation whose one is on screen.
         self._views: dict[int, _View] = {}
@@ -368,15 +370,21 @@ class ConversationsScreen(SidebarScreen):
         # Recreate the column too: after a plain clear() the auto width
         # stays at the header's ("Queue") and every name gets cut to 5 chars.
         table.clear(columns=True)
-        table.add_column(_("Queue"))
+        self._column_key = table.add_column(_("Queue"))
         rows = self._list_rows()
         self._rows = [row for row, _label in rows]
         self._queue_ids = [row for row in self._rows if isinstance(row, int)]
         table.heading_rows = {i for i, row in enumerate(self._rows) if isinstance(row, str)}
         self._list_signature = [label.plain for _id, label in rows]
-        for _id, label in rows:
-            table.add_row(label)
+        self._row_keys = [table.add_row(label) for _id, label in rows]
         self.query_one("#conversation-filter-empty", Static).display = self._filter.active and not rows
+
+    def _update_list_labels(self, rows: list[tuple[int | str, Text]]) -> None:
+        table = self.query_one("#conversation-queue-list", DataTable)
+        for i, (_id, label) in enumerate(rows):
+            if label.plain != self._list_signature[i]:
+                table.update_cell(self._row_keys[i], self._column_key, label, update_width=True)
+        self._list_signature = [label.plain for _id, label in rows]
 
     def _list_rows(self) -> list[tuple[int | str, Text]]:
         """The list's rows: group headings (ccc.groups) and the
@@ -939,10 +947,16 @@ class ConversationsScreen(SidebarScreen):
         if self._current_queue_id is not None and self.app.screen is self:
             # You're looking at it: replies to it aren't "new".
             self.storage.mark_seen(self._current_queue_id)
-        if [label.plain for _id, label in self._list_rows()] != self._list_signature:
-            # New/removed conversation, or a marker / pending count changed.
+        rows = self._list_rows()
+        if [row for row, _label in rows] != self._rows:
+            # New/removed conversation or heading, or another order.
             self._rebuild_queue_list()
             self._restore_cursor()
+        elif [label.plain for _id, label in rows] != self._list_signature:
+            # Only a label changed (marker, pending count, git status, context
+            # fill): update those cells. A rebuild resets the hover and scroll
+            # of the list, which flickered under the mouse.
+            self._update_list_labels(rows)
         self._sync_cli_pane()
         self.sync_retry_button()
         if self._current_queue_id is None:

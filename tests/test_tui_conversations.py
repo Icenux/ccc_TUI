@@ -712,3 +712,40 @@ async def test_only_the_latest_views_are_kept(tmp_path, monkeypatch):
         assert len(app.screen._views) == VIEWS_KEPT
         assert len(app.screen.query("#conversation-transcript > .transcript-view")) == VIEWS_KEPT
         assert queues[0].id not in app.screen._views
+
+
+@pytest.mark.asyncio
+async def test_a_changed_label_updates_the_cell_without_rebuilding_the_list(tmp_path, monkeypatch):
+    # A rebuild (clear + add_row) resets the list's hover, so it flickered
+    # under the mouse whenever a git status or context fill changed.
+    monkeypatch.setattr("ccc.transcript.PROJECTS_ROOT", tmp_path / "projects")
+    (tmp_path / "projects").mkdir()
+    storage = Storage(tmp_path / "history.db")
+    a = storage.create_queue("proj-a", "/tmp/proj-a", "s1")
+    storage.create_queue("proj-b", "/tmp/proj-b", "s2")
+    screen = ConversationsScreen(storage, select_queue_id=a.id)
+
+    class _HostApp(App):
+        async def on_mount(self):
+            await self.push_screen(screen)
+
+    app = _HostApp()
+    async with app.run_test(size=(140, 40)) as pilot:
+        await pilot.pause()
+        await app.workers.wait_for_complete()
+        table = app.screen.query_one("#conversation-queue-list", DataTable)
+        rebuilt = []
+        original = screen._rebuild_queue_list
+        monkeypatch.setattr(screen, "_rebuild_queue_list", lambda: (rebuilt.append(1), original())[1])
+
+        from ccc import gitops
+        screen._git_status = {a.id: gitops.WorkStatus(5, 1, 0, 0, "main")}
+        await screen._refresh_current()
+        await pilot.pause()
+        cells = [str(cell) for row_key in table.rows for cell in table.get_row(row_key)]
+        assert any("proj-a" in c and "+5−1" in c for c in cells)
+        assert rebuilt == []
+
+        storage.create_queue("proj-c", "/tmp/proj-c", "s3")  # a new row still rebuilds
+        await screen._refresh_current()
+        assert rebuilt == [1]

@@ -265,3 +265,14 @@ async def test_remote_control_replies_show_in_analytics_and_dashboard(tmp_path, 
         table = app.screen.query_one("#analytics-project-table", DataTable)
         assert [str(c) for c in table.get_row_at(0)][:2] == ["phone-chat", "10"]
     assert date.today().isoformat() in dict(storage.daily_token_totals())
+
+
+def test_day_axis_labels_days_under_the_bars():
+    from ccc.tui.analytics import day_axis
+
+    wide = day_axis(30, 90)
+    assert len(wide) == 90
+    assert wide.startswith("1  2  3") and wide.rstrip().endswith("30")
+    narrow = day_axis(31, 40)  # too narrow for every day: thinned out
+    assert narrow.startswith("1  4") and len(narrow) == 40
+    assert day_axis(0, 40) == ""

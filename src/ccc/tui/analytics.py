@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import math
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
@@ -81,6 +82,25 @@ def month_title(year: int, month: int) -> str:
     return i18n.month_title(year, month)
 
 
+def day_axis(days: int, width: int) -> str:
+    """Day numbers for the sparkline, aligned under the bars: the sparkline
+    stretches `days` values over `width` columns, so day N starts at column
+    (N-1) * width / days. Labels are thinned out (every k-th day) when the
+    columns are too narrow for all of them."""
+    if days <= 0 or width <= 0:
+        return ""
+    cell = width / days
+    step = 1 if cell >= 3 else math.ceil(3 / cell)
+    line = [" "] * width
+    for day in range(1, days + 1, step):
+        label = str(day)
+        start = int((day - 1) * cell)
+        if start + len(label) > width:
+            break
+        line[start:start + len(label)] = label
+    return "".join(line)
+
+
 class AnalyticsScreen(SidebarScreen):
     VIEW = "analytics"
     SUB_TITLE = _("Analytics")
@@ -128,7 +148,12 @@ class AnalyticsScreen(SidebarScreen):
     def compose_main(self):
         yield VerticalScroll(
             panel(Container(id="pro-usage-gauges"), title=_("Claude Pro usage (account limits)")),
-            panel(Sparkline([], id="tokens-sparkline"), title=_("Tokens per day"), id="month-panel"),
+            panel(
+                Sparkline([], id="tokens-sparkline"),
+                Static(id="tokens-day-axis"),
+                title=_("Tokens per day"),
+                id="month-panel",
+            ),
             panel(Container(id="model-usage-gauges"), title=_("Tokens by model"), id="model-panel"),
             panel(
                 DataTable(id="analytics-project-table"),
@@ -184,6 +209,15 @@ class AnalyticsScreen(SidebarScreen):
         self.year, self.month = year, month
         await self._render_month()
 
+    def _render_day_axis(self) -> None:
+        days = getattr(self, "_days_in_month", 0)
+        sparkline = self.query_one("#tokens-sparkline", Sparkline)
+        self.query_one("#tokens-day-axis", Static).update(day_axis(days, sparkline.size.width))
+
+    def on_resize(self) -> None:
+        # The sparkline gets its width only after layout.
+        self.call_after_refresh(self._render_day_axis)
+
     async def _render_month(self) -> None:
         """Chart, per-model bars and per-conversation table of the selected
         calendar month (headless runs + remote-control replies, deleted
@@ -195,7 +229,10 @@ class AnalyticsScreen(SidebarScreen):
         )
         self.query_one("#model-panel").border_title = _("Tokens by model — {month}").format(month=title)
         self.query_one("#project-panel").border_title = _("Tokens per conversation — {month}").format(month=title)
-        self.query_one("#tokens-sparkline", Sparkline).data = month_series(stats.by_day, self.year, self.month)
+        series = month_series(stats.by_day, self.year, self.month)
+        self.query_one("#tokens-sparkline", Sparkline).data = series
+        self._days_in_month = len(series)
+        self._render_day_axis()
 
         table = self.query_one("#analytics-project-table", DataTable)
         table.clear()

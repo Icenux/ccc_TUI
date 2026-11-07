@@ -247,6 +247,22 @@ async def test_new_queue_appears_and_select_queue_id_opens_it(tmp_path, monkeypa
 
 
 @pytest.mark.asyncio
+async def test_returning_to_conversations_reopens_the_conversation_left(tmp_path, monkeypatch):
+    """#233: a fresh screen (after Analytics / Dashboard) opens the last
+    conversation, not the first one in the list."""
+    monkeypatch.setattr("ccc.transcript.PROJECTS_ROOT", tmp_path / "projects")
+    storage = Storage(tmp_path / "history.db")
+    storage.create_queue("a", "/tmp/a", "s-a")
+    b = storage.create_queue("b", "/tmp/b", "s-b")
+    app = await _open(storage, select_queue_id=b.id)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await app.push_screen(ConversationsScreen(storage))  # as after the round trip
+        await pilot.pause()
+        assert app.screen._current_queue_id == b.id
+
+
+@pytest.mark.asyncio
 async def test_status_line_shows_waiting_for_reset(tmp_path, monkeypatch):
     from datetime import datetime
     from ccc.models import QueueStatus

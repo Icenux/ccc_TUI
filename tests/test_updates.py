@@ -150,6 +150,18 @@ def test_ccc_from_a_system_package_leaves_the_update_to_apt(tmp_path, storage, m
     assert not ok and "apt upgrade" in message
 
 
+def test_ccc_from_the_arch_package_leaves_the_update_to_pacman(tmp_path, storage, monkeypatch):
+    package = tmp_path / "usr-lib-ccc"
+    (package / "venv").mkdir(parents=True)
+    (package / "install-kind").write_text("pacman\n")
+    monkeypatch.setattr(updates.sys, "prefix", str(package / "venv"))
+    monkeypatch.setattr(updates, "__version__", "0.1.0")
+    assert updates.installed_by_system() == "pacman"
+    ok, message = updates.apply(storage, package, spawn=lambda *a: pytest.fail("pacman does this"), units=lambda: [],
+                                latest=github("0.2.0"), download=lambda *a: pytest.fail("pacman does this"))
+    assert not ok and "pacman -Syu" in message and "apt" not in message
+
+
 def test_a_download_that_fails_changes_nothing(tmp_path, storage, monkeypatch):
     package = tmp_path / "site-packages"
     package.mkdir()

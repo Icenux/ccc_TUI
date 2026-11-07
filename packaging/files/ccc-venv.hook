@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = ccc
+Target = python
+
+[Action]
+Description = Building the ccc virtualenv for the installed Python...
+When = PostTransaction
+Exec = /usr/lib/ccc/arch-setup.sh

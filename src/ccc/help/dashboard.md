@@ -26,7 +26,6 @@ One row per conversation (archived ones are in the [Archive](archive.md)):
 | Goal | its latest [goal loop](goal.md): `◎ 3/5` (round / rounds) while it runs, `✅ met 3/5` / `⛔ stuck 4/5` / `⛔ out of rounds 5/5` / `✖ failed` / `■ stopped` for a day after it ended; `–` otherwise |
 | Pending | tasks waiting in its [queue](tasks.md) |
 | Today's tokens | tokens it used today |
-| Context | how full its context window is (yellow / red at the thresholds in Settings), as in the Conversations list; `–` until there is a reply to read it from |
 | Git | the branch, uncommitted lines (`+12−3`) and commits ahead `↑` / behind `↓` its base branch; `–` outside git, and for a conversation where Claude may not run commands itself (ccc runs git only there, see [Git](git.md)) |
 | Path | the project folder Claude works in, shortened from the front — the last folder is always shown |
 

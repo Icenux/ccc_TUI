@@ -82,8 +82,7 @@ it.
 
 The app is updated by version, not through ccc, and from its own repository: a tag `X.Y.Z` (no `v`) in [ccc_android](https://github.com/Icenux/ccc_android) makes GitHub Actions build and test the app; the maintainer then signs it on their own computer and attaches `ccc.apk` to the release (the signing key never reaches GitHub). The app asks GitHub for that repository's newest release (when it comes to the foreground, at most every six hours; no token is sent), and when its version is lower it shows "A new version of the app is available: X" with a *Download and install* button. The download goes to Android's installer, which asks first — and the first time asks to allow installing from the app. A build made by hand has the version `0.0.0-dev` and never asks. The app and ccc are versioned separately; the API stays compatible, so an older app keeps working with a newer ccc.
 
-**What the list shows** (Connection → *Conversation list*): the context
-fill, the git state, the queued tasks and the folder, each on or off —
+**What the list shows** (Connection → *Conversation list*): the git state, the queued tasks and the folder, each on or off —
 kept on the phone, so a small screen can show less.
 
 ## What a device may do (roles)
@@ -182,7 +181,7 @@ settings it shows are the ones that apply to both sides.
 | | |
 |---|---|
 | `GET /status` | the daemon running?, how many conversations, running, waiting for approval |
-| `GET /conversations` | the list in the TUI's order, with groups, states, queued messages and markers, how full its context window is (`context`: tokens, percent, level) and its git state (`git`: branch, added, removed, ahead, behind; `null` where Claude may not run commands) and its latest [goal loop](goal.md) (`goal`: id, status, status_label, phase_label, round, max_rounds, finished_at; while it runs and for a day after it ended, else `null`); `?archived=1` the archive |
+| `GET /conversations` | the list in the TUI's order, with groups, states, queued messages and markers, and its git state (`git`: branch, added, removed, ahead, behind; `null` where Claude may not run commands) and its latest [goal loop](goal.md) (`goal`: id, status, status_label, phase_label, round, max_rounds, finished_at; while it runs and for a day after it ended, else `null`); `?archived=1` the archive |
 | `GET /conversations/{id}` | one, with its queued messages and approvals waiting |
 | `GET /conversations/{id}/messages` | its transcript, each message with an `index`; `?after=N` only newer ones, `?before=N` older ones, `?limit=` how many (200) |
 | `POST /conversations/{id}/messages` | `{"text": "…"}` queues a message, as the message box does |

@@ -75,7 +75,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
-from ccc import context_fill, goals, groups, i18n, launch_options, mcp_servers, plugins, updates
+from ccc import goals, groups, i18n, launch_options, mcp_servers, plugins, updates
 from ccc.api_agents import AgentEndpoints
 from ccc import api_audit, api_roles, api_scope
 from ccc.api_common import ApiError, int_of, iso, route, task_line, text_of
@@ -181,7 +181,6 @@ class Api(AgentEndpoints, ViewEndpoints):
         self.storage = storage
         self._lock = threading.Lock()
         self._transcripts: dict[str, _Transcript] = {}
-        self._context = context_fill.ContextTracker()
         self._git: dict[str, tuple[float, object]] = {}  # folder -> (when, gitops.WorkStatus | None)
         self._routes = self._route_table()
 
@@ -366,7 +365,6 @@ class Api(AgentEndpoints, ViewEndpoints):
             "next_retry_at": iso(q.next_retry_at),
             "updated_at": iso(q.updated_at),
             "group": group,
-            "context": self._context_of(q),
             "git": self._git_of(q),
             "goal": self._goal_of(goal),
         }
@@ -379,16 +377,6 @@ class Api(AgentEndpoints, ViewEndpoints):
         return {"id": goal.id, "status": goal.status.value, "status_label": _(goals.STATUS_LABELS[goal.status]),
                 "phase_label": _(goals.PHASE_LABELS[goal.phase]).format(n=goal.round),
                 "round": goal.round, "max_rounds": goal.max_rounds, "finished_at": iso(goal.finished_at)}
-
-    def _context_of(self, q) -> dict | None:
-        """How full its context window is (context_fill): tokens, percent
-        (None: window unknown) and the level the Settings thresholds give
-        it — "" / "warn" / "danger"."""
-        fill = self._context.fills(self.storage, [q]).get(q.id)
-        if fill is None:
-            return None
-        warn, danger = context_fill.thresholds(self.storage)
-        return {"tokens": fill.tokens, "percent": fill.percent, "level": context_fill.level(fill, warn, danger)}
 
     def _git_of(self, q) -> dict | None:
         """Its folder's branch and what's uncommitted / ahead / behind — only

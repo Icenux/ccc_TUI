@@ -15,7 +15,7 @@ between them); *Save* applies every tab at once:
 | Tab | Sections |
 |---|---|
 | General | Appearance, External editor, Dashboard, Keyboard shortcuts |
-| Queues and context | Queues, Context |
+| Queues | Queues |
 | Notifications | Telegram, Discord |
 | Presets | Preset prompts, New-conversation presets |
 | Data | Exports, Monthly analytics archive, Data |
@@ -31,7 +31,6 @@ The Android app's *ccc settings* has the same kinds of tabs (plus
 | Telegram notifications | see below |
 | Discord notifications | see below |
 | Queues | the *continue* text sent after a usage limit, and the usage reserve — see [Usage limits](limits.md); the [reviewer's](review.md) model; *Groups in the list* — by project, or only your own groups (see [Conversations](conversations.md#groups)) |
-| Context | the context window size and the warning / alarm thresholds of the context fill, and the Telegram / Discord message when a conversation reaches the warning — see [Conversations](conversations.md) |
 | Preset prompts | your prompts on `Alt+1` … `Alt+9` — see below |
 | New-conversation presets | delete presets saved in the [New conversation](new-conversation.md) window |
 | Keyboard shortcuts | change any key, export / import them — see below |
@@ -151,7 +150,6 @@ and the other only what needs you. Saved with *Save* in the app, at once
 | Usage limits | waiting for the limit to reset, and continuing | on |
 | Needs you | a tool to approve, a workflow gate, an answer to a question | on |
 | Results | a workflow, a goal or a review ended | on |
-| Context | a conversation's context is nearly full (also needs the *Context* setting) | on |
 | Updates | a new ccc version is available | on |
 | Conversation started | a conversation starts working after 10+ quiet minutes | off |
 | Routines | a routine started, or was skipped | off |

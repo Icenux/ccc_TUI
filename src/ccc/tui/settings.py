@@ -21,7 +21,7 @@ from ccc.notify import (
     send_telegram,
 )
 from ccc.analytics_archive import FOLDER_KEY as ARCHIVE_FOLDER_KEY, archive
-from ccc import context_fill, dashboard_columns, external_editor, groups, i18n, keymap, updates
+from ccc import dashboard_columns, external_editor, groups, i18n, keymap, updates
 from ccc.reviews import MODEL_CHOICES as REVIEW_MODELS, MODEL_KEY as REVIEW_MODEL_KEY
 from ccc.i18n import N_, _
 from ccc.export_paths import (
@@ -243,35 +243,6 @@ class SettingsModal(ModalScreen):
             Static(_("Conversations and Archive: m puts a conversation into a group of your own; the others go "
                      "under their project (git repository or folder), or under No group."), classes="settings-hint"),
         )
-        warn, danger = context_fill.thresholds(s)
-        window = context_fill.window_setting(s)
-        context = _section(
-            _("Context"),
-            _row(_("Window"), Select(
-                [(_("Auto"), "auto")] + [(context_fill.short_tokens(w), str(w))
-                                         for w in sorted(set(context_fill.WINDOW_CHOICES) | ({window} if window else set()))],
-                value=str(window) if window else "auto", allow_blank=False, id="settings-context-window",
-            )),
-            Static(_("Auto: 1M when --model has [1m] or the conversation already went past 200k, else 200k "
-                     "for a Claude model. Choose 1M if your model runs with the 1M window by default."),
-                   classes="settings-hint"),
-            _row(_("Warning"), Select(
-                [(f"{p} %", str(p)) for p in sorted(set(context_fill.THRESHOLD_CHOICES) | {warn})],
-                value=str(warn), allow_blank=False, id="settings-context-warn",
-            )),
-            _row(_("Alarm"), Select(
-                [(f"{p} %", str(p)) for p in sorted(set(context_fill.THRESHOLD_CHOICES) | {danger})],
-                value=str(danger), allow_blank=False, id="settings-context-danger",
-            )),
-            Static(_("The context fill in Conversations turns yellow at the warning and red at the alarm."),
-                   classes="settings-hint"),
-            _row(_("Notify"), Select(
-                [(_("Yes"), "on"), (_("No"), "off")],
-                value="on" if context_fill.notify_enabled(s) else "off", allow_blank=False, id="settings-context-notify",
-            )),
-            Static(_("Telegram / Discord message once when a conversation reaches the warning."),
-                   classes="settings-hint"),
-        )
         dashboard = _section(
             _("Dashboard"),
             _row(_("Columns"), self._columns_list()),
@@ -375,7 +346,7 @@ class SettingsModal(ModalScreen):
             with TabbedContent(id="settings-tabs"):
                 for key, title, sections in (
                     ("general", N_("General"), (appearance, editor_box, dashboard, shortcuts)),
-                    ("queues", N_("Queues and context"), (queues, context)),
+                    ("queues", N_("Queues"), (queues,)),
                     ("notifications", N_("Notifications"), (telegram, discord)),
                     ("presets", N_("Presets"), (prompt_box, preset_box)),
                     ("data", N_("Data"), (exports, archive_box, data)),
@@ -694,10 +665,6 @@ class SettingsModal(ModalScreen):
             self.notify(_("That isn't a Discord webhook URL (https://discord.com/api/webhooks/…)."),
                         title=_("Not saved"), severity="error")
             return
-        if int(self.query_one("#settings-context-warn", Select).value) >= int(
-                self.query_one("#settings-context-danger", Select).value):
-            self.notify(_("The context warning must be lower than the alarm."), title=_("Not saved"), severity="error")
-            return
         editor = self.query_one("#settings-editor", Select).value
         s.set_setting(external_editor.SETTING_KEY, "" if editor == "auto" else str(editor))
         s.set_setting(groups.MODE_KEY, str(self.query_one("#settings-groups", Select).value))
@@ -713,12 +680,6 @@ class SettingsModal(ModalScreen):
         s.set_setting(RESERVE_KEY, "" if reserve == "off" else str(reserve))
         review_model = self.query_one("#settings-review-model", Select).value
         s.set_setting(REVIEW_MODEL_KEY, "" if review_model == "same" else str(review_model))
-        window = self.query_one("#settings-context-window", Select).value
-        s.set_setting(context_fill.WINDOW_KEY, "" if window == "auto" else str(window))
-        s.set_setting(context_fill.WARN_KEY, str(self.query_one("#settings-context-warn", Select).value))
-        s.set_setting(context_fill.DANGER_KEY, str(self.query_one("#settings-context-danger", Select).value))
-        notify = self.query_one("#settings-context-notify", Select).value
-        s.set_setting(context_fill.NOTIFY_KEY, "" if notify == "on" else "off")
         dashboard_columns.save(s, list(self.query_one("#settings-dashboard-columns", SelectionList).selected))
         save_prompt_presets(s, self._prompt_presets)
         s.set_setting(EXPORT_FOLDER_KEY, self._export_folder_value())

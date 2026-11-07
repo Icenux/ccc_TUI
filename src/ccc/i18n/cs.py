@@ -441,7 +441,6 @@ CS: dict[str, str] = {
     "Archive finished months now": "Archivovat skončené měsíce hned",
     "Data": "Data",
     "General": "Obecné",
-    "Queues and context": "Fronty a kontext",
     "Notifications": "Notifikace",
     "Presets": "Předvolby",
     "Connection and updates": "Připojení a aktualizace",
@@ -1222,27 +1221,6 @@ CS: dict[str, str] = {
     "Close this window first (Esc).": "Nejdřív zavři toto okno (Esc).",
     "Open the next conversation that needs you (also from Claude Code)":
         "Otevřít další konverzaci, která tě potřebuje (i z Claude Code)",
-    # --- context fill (context_fill) ------------------------------------------
-    "context {tokens} tokens (window unknown)": "kontext {tokens} tokenů (velikost okna neznámá)",
-    "context {percent} %": "kontext {percent} %",
-    "consider /compact or a new conversation": "zvaž /compact nebo novou konverzaci",
-    "⚠️ {name}: context {percent} % full — consider /compact or a new conversation":
-        "⚠️ {name}: kontext zaplněn na {percent} % — zvaž /compact nebo novou konverzaci",
-    "Context": "Kontext",
-    "Window": "Okno",
-    "Auto": "Automaticky",
-    "Auto: 1M when --model has [1m] or the conversation already went past 200k, else 200k "
-    "for a Claude model. Choose 1M if your model runs with the 1M window by default.":
-        "Automaticky: 1M, když má --model [1m] nebo konverzace už přesáhla 200k, jinak 200k "
-        "u modelu Claude. Zvol 1M, pokud tvůj model běží s 1M oknem i bez [1m].",
-    "Warning": "Varování",
-    "Alarm": "Poplach",
-    "The context fill in Conversations turns yellow at the warning and red at the alarm.":
-        "Zaplnění kontextu v Konverzacích zežloutne od varování a zčervená od poplachu.",
-    "Notify": "Upozornit",
-    "Telegram / Discord message once when a conversation reaches the warning.":
-        "Zpráva do Telegramu / Discordu jednou, když konverzace dosáhne varování.",
-    "The context warning must be lower than the alarm.": "Varování kontextu musí být nižší než poplach.",
     # --- list filter (list_filter) --------------------------------------------
     "Filter the list (name, folder, state)": "Filtrovat seznam (název, složka, stav)",
     "Filter": "Filtr",
@@ -1524,7 +1502,6 @@ CS: dict[str, str] = {
         "nástroj ke schválení, brána workflow, odpověď na otázku",
     "Results": "Výsledky",
     "a workflow, a goal or a review ended": "workflow, cíl nebo review skončilo",
-    "a conversation's context is nearly full": "kontext konverzace je skoro plný",
     "a new ccc version is available": "je dostupná nová verze ccc",
     "Conversation started": "Konverzace začala",
     "a conversation starts working after a quiet time": "konverzace začne pracovat po delším klidu",

@@ -77,6 +77,13 @@ def test_api_shows_and_changes_the_choice(storage):
         assert error.value.status == 400
 
 
+def test_an_older_app_may_still_send_the_retired_context_category(storage):
+    endpoint = api.Api(storage)
+    after = endpoint.change_settings({"notify_telegram": {"context": True, CAT_QUEUE: False}})
+    assert after["notify_telegram"][CAT_QUEUE] is False
+    assert "context" not in after["notify_telegram"]
+
+
 def test_a_device_signed_out_or_given_another_role_is_told(storage, both):
     notifier, telegram, _discord = both
     first, _ = api.add_device(storage, "Phone")

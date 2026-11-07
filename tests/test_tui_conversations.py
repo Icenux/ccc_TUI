@@ -749,3 +749,25 @@ async def test_a_changed_label_updates_the_cell_without_rebuilding_the_list(tmp_
         storage.create_queue("proj-c", "/tmp/proj-c", "s3")  # a new row still rebuilds
         await screen._refresh_current()
         assert rebuilt == [1]
+
+
+@pytest.mark.asyncio
+async def test_f2_renames_the_selected_conversation(tmp_path, monkeypatch):
+    monkeypatch.setattr("ccc.transcript.PROJECTS_ROOT", tmp_path / "projects")
+    storage = Storage(tmp_path / "h.db")
+    from textual.widgets import Input
+
+    q = storage.create_queue("stary", "/tmp/a", "sa")
+    app = _filter_host(ConversationsScreen(storage))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app.screen.query_one("#conversation-queue-list").focus()
+        await pilot.press("f2")
+        await pilot.pause()
+        box = app.screen.query_one("#rename-name", Input)
+        assert box.value == "stary"
+        box.value = "novy  nazev"
+        await pilot.press("enter")
+        await pilot.pause()
+        assert storage.get_queue(q.id).name == "novy nazev"
+        assert _list_names(app) == ["novy"]

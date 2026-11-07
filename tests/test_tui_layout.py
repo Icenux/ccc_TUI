@@ -128,8 +128,8 @@ async def test_sidebar_buttons_are_only_the_views_own_actions(tmp_path):
         "d": [],  # only an overview
         "s": ["Add prompt (+)", "Reload session list (r)"],
         "a": [],
-        "h": ["f Filter"],  # Archive: nothing to start from there, only the filter
-        "c": ["f Filter", "New conversation (n)", "Archive (x)", "Retry blocked queue (r)"],
+        "h": ["f Filter", "F2 Rename"],  # Archive: nothing to start from there, only the filter
+        "c": ["f Filter", "F2 Rename", "New conversation (n)", "Archive (x)", "Retry blocked queue (r)"],
     }
     async with app.run_test() as pilot:
         await pilot.pause()

@@ -37,7 +37,7 @@ FORMAT = "ccc-keys"
 VIEWS = ("dashboard", "conversations", "archive", "sessions", "analytics", "queue_detail")
 WINDOWS = ("help", "confirm", "approval", "tasks", "task_edit", "preset_edit", "settings", "keys",
            "new_conversation", "preset_name", "add_prompt", "diff", "diff_comment", "search", "attach", "routines", "routine_edit",
-           "review", "goal", "workflow", "group", "update")
+           "review", "goal", "workflow", "group", "rename", "update")
 CLAUDE = "claude"
 EVERYWHERE = (*VIEWS, *WINDOWS, CLAUDE)
 _CONVERSATIONS = ("conversations", "archive")
@@ -91,6 +91,7 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("conversations.approve", "p", N_("Approve a tool call"), _CONVERSATIONS),
     KeyAction("conversations.search", "slash", N_("Search all conversations"), _CONVERSATIONS),
     KeyAction("conversations.filter", "f", N_("Filter the list (name, folder, state)"), _CONVERSATIONS),
+    KeyAction("conversations.rename", "f2", N_("Rename the conversation"), _CONVERSATIONS),
     KeyAction("conversations.group", "m", N_("Put the conversation into a group / rename the group"), _CONVERSATIONS),
     KeyAction("conversations.next_group", "ctrl+down", N_("Next group in the list"), _CONVERSATIONS),
     KeyAction("conversations.prev_group", "ctrl+up", N_("Previous group in the list"), _CONVERSATIONS),

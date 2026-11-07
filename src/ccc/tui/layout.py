@@ -62,6 +62,8 @@ NEW_CONVERSATION_BUTTON = SidebarButton(
 
 # Above the conversation list: opens the filter (f); a strip like the key list at the bottom.
 FILTER_BUTTON = SidebarButton("sidebar-filter", _("{key} Filter"), "strip", "filter", "conversations.filter")
+# Next to the filter: renames the selected conversation (F2).
+RENAME_BUTTON = SidebarButton("sidebar-rename", _("{key} Rename"), "strip", "rename", "conversations.rename")
 # Under New conversation: archives the selected conversation (x).
 ARCHIVE_BUTTON = SidebarButton("sidebar-archive", _("Archive ({key})"), "teal", "toggle_archive",
                                "conversations.archive")
@@ -255,6 +257,13 @@ SidebarScreen.-short Button.nav-button {
     border: none;
 }
 /* Filter: a strip like the key list at the bottom (one row, blue, orange key) */
+#sidebar-strip-row {
+    height: 1;
+}
+#sidebar-strip-row Button.sidebar-button-strip {
+    width: auto;
+    min-width: 0;
+}
 Button.sidebar-button-strip {
     height: 1;
     border: none;

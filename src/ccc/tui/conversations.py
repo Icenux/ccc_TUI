@@ -24,6 +24,7 @@ from ccc.tui.claude_pane import ClaudePane
 from ccc.tui.layout import (
     ARCHIVE_BUTTON,
     FILTER_BUTTON,
+    RENAME_BUTTON,
     NEW_CONVERSATION_BUTTON,
     RETRY_BUTTON,
     ConfirmModal,
@@ -104,6 +105,8 @@ class ConversationsScreen(SidebarScreen):
         keymap.binding("conversations.search", "search", _("Search")),
         # Its button is above the list (FILTER_BUTTON), not in the footer.
         keymap.binding("conversations.filter", "filter", _("Filter"), show=False),
+        # Its button is next to the filter (RENAME_BUTTON), not in the footer.
+        keymap.binding("conversations.rename", "rename", _("Rename"), show=False),
         keymap.binding("conversations.group", "group", _("Group")),
         keymap.binding("conversations.next_group", "next_group", _("Next group"), show=False),
         keymap.binding("conversations.prev_group", "prev_group", _("Previous group"), show=False),
@@ -312,10 +315,10 @@ class ConversationsScreen(SidebarScreen):
         return self.storage.find_queue(self._current_queue_id) if self._current_queue_id is not None else None
 
     def top_sidebar_buttons(self):
-        return [FILTER_BUTTON]
+        return [FILTER_BUTTON, RENAME_BUTTON]
 
     def compose_sidebar_section(self):
-        yield self._make_button(FILTER_BUTTON)
+        yield Horizontal(self._make_button(FILTER_BUTTON), self._make_button(RENAME_BUTTON), id="sidebar-strip-row")
         # Disabled while hidden: the screen's first focus would land in it.
         yield Input(placeholder=_("name, folder · ! ? x *"), id="conversation-filter", disabled=True)
         yield ConversationList(id="conversation-queue-list", classes="sidebar-list")
@@ -1194,6 +1197,21 @@ class ConversationsScreen(SidebarScreen):
                 self._restore_cursor()
 
         self.app.push_screen(modal, closed)
+
+    def action_rename(self) -> None:
+        """F2: rename the selected conversation."""
+        from ccc.tui.rename import RenameModal
+
+        if self._current_queue_id is None:
+            return
+        queue_id = self._current_queue_id
+
+        def closed(changed: bool) -> None:
+            if changed:
+                self._rebuild_queue_list()
+                self._restore_cursor()
+
+        self.app.push_screen(RenameModal(self.storage, queue_id), closed)
 
     # --- list filter (f) -------------------------------------------------
 

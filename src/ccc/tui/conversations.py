@@ -10,6 +10,7 @@ from rich.text import Text
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.content import Content
+from textual.screen import ModalScreen
 from textual.widgets import Collapsible, DataTable, Input, Markdown, Static
 
 from ccc import groups, keymap, list_filter
@@ -276,6 +277,7 @@ class ConversationsScreen(SidebarScreen):
         self._cache: dict[int, dict] = {}
         # Opened without a target (a menu button, Alt+...): back onto the
         # conversation that was open when the user left this list.
+        self._zoomed_for_dialog = False  # ccc zoomed in tmux while a dialog is on top
         self._current_queue_id: int | None = select_queue_id if select_queue_id is not None else _LAST_OPEN.get(storage, {}).get(self.ARCHIVED)
         # Opened for a specific (usually just-started) conversation: put the
         # cursor straight into the message box.
@@ -530,10 +532,25 @@ class ConversationsScreen(SidebarScreen):
         interactive one: no Claude Code to show."""
         return queue is None or (queue.delivery_mode.managed and queue.archived)
 
+    def _covered_by_dialog(self) -> bool:
+        """Only dialogs (modal screens) are on top of this screen."""
+        stack = self.app.screen_stack
+        if self not in stack:
+            return False
+        above = stack[stack.index(self) + 1 :]
+        return bool(above) and all(isinstance(screen, ModalScreen) for screen in above)
+
+    def _is_visible(self) -> bool:
+        """This screen is on top, or only a dialog is: the chat stays as it
+        was behind a dialog (#235). app.screen, not is_current: that is also
+        true under a dialog."""
+        return self.app.screen is self or self._covered_by_dialog()
+
     def _sync_cli_pane(self) -> None:
         """Open, switch or close the Claude Code pane to match the selected
-        conversation. Closed while another window (dialog, Settings) is on
-        top, so that one gets the whole width."""
+        conversation. Closed while another view or Settings is on top; under
+        a dialog it stays (the window is zoomed to ccc meanwhile, see
+        on_screen_suspend)."""
         queue = self.storage.find_queue(self._current_queue_id) if self._current_queue_id is not None else None
         self.set_class(self._shows_nothing(queue), "-no-conversation")
         if cli_pane.embedded():
@@ -542,8 +559,7 @@ class ConversationsScreen(SidebarScreen):
         if not cli_pane.available():
             return
         queue = self._cli_queue()
-        # app.screen, not is_current: that is also true under a dialog.
-        want = queue is not None and self.app.screen is self and queue.id != self._cli_closed_for
+        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for
         shown = cli_pane.find()
         if want and shown is None and self._cli_open_for == queue.id:
             # It was open and is gone: you closed it (Ctrl+]).
@@ -583,7 +599,7 @@ class ConversationsScreen(SidebarScreen):
         The pane is therefore remembered at once (self._embedded_pane), and
         there is never more than one for the selected conversation."""
         queue = self._cli_queue()
-        want = queue is not None and self.app.screen is self and queue.id != self._cli_closed_for
+        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for
         keep = self._embedded_pane
         if not (want and keep is not None and keep.queue_id == queue.id):
             keep = None
@@ -672,7 +688,15 @@ class ConversationsScreen(SidebarScreen):
             self.query_one("#message-input", MessageBox).focus()
 
     def on_screen_suspend(self) -> None:
-        # A dialog / Settings / another view on top: give it the window.
+        if self._covered_by_dialog():
+            # A dialog on top: the chat stays as it was (#235). With Claude
+            # Code in a tmux pane ccc is only the sidebar's columns, so the
+            # window is zoomed to ccc for the dialog (the pane is hidden,
+            # not closed).
+            if self._cli_open_for is not None and not cli_pane.embedded():
+                self._zoomed_for_dialog = cli_pane.zoom_ccc()
+            return
+        # Another view on top: give it the window.
         self._close_own_cli_pane()
         self.remove_class("-cli-open")
 
@@ -993,6 +1017,8 @@ class ConversationsScreen(SidebarScreen):
         bar.set_class(not presets, "-empty")
 
     async def on_screen_resume(self) -> None:
+        cli_pane.unzoom_ccc(self._zoomed_for_dialog)
+        self._zoomed_for_dialog = False
         # Back from Settings (or any window): presets may have changed.
         await self._refresh_prompt_presets_bar()
         self._sync_cli_pane()

@@ -180,13 +180,14 @@ def main(argv: list[str] | None = None) -> None:
         "archive-analytics", help=_("Archive finished months into the analytics folder now (the daemon does it hourly)")
     )
 
-    from ccc import api_cli, goals_cli, keys_cli, revert_cli, reviews_cli, routines_cli, workflows_cli
+    from ccc import api_cli, goals_cli, keys_cli, profiles_cli, revert_cli, reviews_cli, routines_cli, workflows_cli
 
     keys_cli.add_parser(subparsers)
     routines_cli.add_parser(subparsers)
     reviews_cli.add_parser(subparsers)
     goals_cli.add_parser(subparsers)
     revert_cli.add_parser(subparsers)
+    profiles_cli.add_parser(subparsers)
     workflows_cli.add_parser(subparsers)
     api_cli.add_parser(subparsers)
 
@@ -277,6 +278,9 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.command == "runs":
         sys.exit(revert_cli.run_runs(Storage(str(default_db_path())), args))
+
+    if args.command == "profile":
+        sys.exit(profiles_cli.run(args))
 
     if args.command == "revert":
         sys.exit(revert_cli.run_revert(Storage(str(default_db_path())), args))

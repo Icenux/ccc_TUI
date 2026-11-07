@@ -8,7 +8,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, DirectoryTree, Input, OptionList, Select, Static
 from textual.widgets.option_list import Option
 
-from ccc import keymap, mcp_servers, plugins
+from ccc import keymap, mcp_servers, plugins, profiles
 from ccc.i18n import _
 from ccc.launch_options import (
     DEFAULT_SELECTION, FORK, GROUPS, MCP_PREFIX, MCP_SELECT, PLUGIN_PREFIX, PLUGINS_SELECT, SESSION_FROM_PR, SESSION_NEW, SESSION_RESUME,
@@ -187,6 +187,13 @@ class NewConversationModal(ModalScreen):
                     right.append(OptionList(id="resume-sessions"))
                 elif option.key == SESSION_FROM_PR:
                     right.append(Input(placeholder=_("PR number or URL"), id="from-pr-input"))
+        # Only when accounts were added (`ccc profile add`): nobody else sees a change.
+        if profiles.list_profiles():
+            right.append(Static(_("Claude account"), classes="group-title"))
+            right.append(Select(
+                [(_("(default)"), "")] + [(p.name, p.name) for p in profiles.list_profiles()],
+                allow_blank=False, value="", id="profile-select",
+            ))
         # Not a `claude` flag: ccc's own behaviour at usage limits.
         right.append(Static("ccc", classes="group-title"))
         right.append(Checkbox(_("Auto-continue after usage limit"), value=self._initial.auto_continue, id="auto-continue"))
@@ -370,6 +377,10 @@ class NewConversationModal(ModalScreen):
         self.query_one("#remote-control", Checkbox).value = choice.remote_control
         self._sync_session_widgets()
 
+    def _profile(self) -> str:
+        found = self.query("#profile-select")
+        return str(found.first(Select).value) if found else ""
+
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id != "preset-select" or event.value is Select.NULL:
             return
@@ -414,6 +425,7 @@ class NewConversationModal(ModalScreen):
                 auto_continue=self.query_one("#auto-continue", Checkbox).value,
                 remote_control=self.query_one("#remote-control", Checkbox).value,
                 worktree=self.query_one("#own-worktree", Checkbox).value,
+                profile=self._profile(),
             )
         except ValueError as exc:
             error.update(Content(str(exc)))

@@ -5,7 +5,8 @@ import os
 import json
 from dataclasses import dataclass, field
 
-from ccc import mcp_servers, plugins
+from ccc import mcp_servers, plugins, profiles
+from ccc.i18n import _
 from ccc.models import RunStatus
 
 RATE_LIMIT_PATTERNS = (
@@ -41,6 +42,34 @@ class RunResult:
     # cache_creation_tokens}}, from Claude Code's "modelUsage" field — lets a
     # run be attributed to the specific model(s) it actually used.
     model_usage: dict[str, dict[str, int]] = field(default_factory=dict)
+    # The run failed because the account must sign in again (not a limit, not a bug).
+    login_expired: bool = False
+
+
+# Claude Code's wording when the saved login no longer works ("Login expired
+# · Please run /login", errors page of its docs) or there is none.
+LOGIN_EXPIRED_PATTERNS = (
+    "login expired",
+    "please run /login",
+    "not logged in",
+    "invalid authentication credentials",
+    "oauth token has expired",
+)
+AUTH_API_ERROR_STATUS = 401
+
+
+def is_login_expired(text: str | None, data: dict | None = None) -> bool:
+    if data is not None and data.get("api_error_status") == AUTH_API_ERROR_STATUS:
+        return True
+    lowered = (text or "").lower()
+    return any(p in lowered for p in LOGIN_EXPIRED_PATTERNS)
+
+
+def login_expired_message(profile: str = "") -> str:
+    """What to tell the user, with the exact way to sign in again."""
+    if profile:
+        return _("The login of account '{profile}' expired. Sign in again: ccc profile login {profile}").format(profile=profile)
+    return _("The Claude login expired. Sign in again: run claude and type /login")
 
 
 def _is_rate_limited(data: dict | None, combined_lower: str) -> bool:
@@ -66,6 +95,9 @@ def classify_output(stdout: str, stderr: str, exit_code: int) -> RunResult:
 
     if data is not None:
         if data.get("is_error"):
+            if not _is_rate_limited(data, combined) and is_login_expired(f"{data.get('result') or ''}\n{stderr}", data):
+                return RunResult(status=RunStatus.ERROR, error_text=login_expired_message(), session_id=data.get("session_id"),
+                                 login_expired=True)
             status = RunStatus.RATE_LIMITED if _is_rate_limited(data, combined) else RunStatus.ERROR
             return RunResult(
                 status=status,
@@ -101,6 +133,9 @@ def classify_output(stdout: str, stderr: str, exit_code: int) -> RunResult:
     if _is_rate_limited(None, combined):
         return RunResult(status=RunStatus.RATE_LIMITED, error_text=stderr.strip() or stdout.strip())
 
+    if is_login_expired(combined):
+        return RunResult(status=RunStatus.ERROR, error_text=login_expired_message(), login_expired=True)
+
     if exit_code == 0 and stdout.strip():
         return RunResult(status=RunStatus.ERROR, error_text=f"unparseable stdout: {stdout[:500]}")
 
@@ -130,6 +165,7 @@ def build_command(
     launch_flags: list[str] | None = None,
     first_run_flags: list[str] | None = None,
     project_path: str | None = None,
+    profile: str = "",
 ) -> list[str]:
     first = list(first_run_flags or [])
     if any(flag in first for flag in _SESSION_SELECTING_FLAGS):
@@ -138,7 +174,7 @@ def build_command(
         session_flag = ["--resume", session_id] if resume else ["--session-id", session_id]
     flags = LEGACY_FLAGS if launch_flags is None else list(launch_flags)
     if project_path is not None:
-        flags = plugins.resolve_flags(mcp_servers.resolve_flags(flags, project_path))
+        flags = plugins.resolve_flags(mcp_servers.resolve_flags(flags, project_path, profile), profile)
     return ["claude", *session_flag, *first, "-p", prompt, "--output-format", "json", *flags]
 
 
@@ -149,14 +185,15 @@ async def execute(
     resume: bool,
     launch_flags: list[str] | None = None,
     first_run_flags: list[str] | None = None,
+    profile: str = "",
 ) -> RunResult:
-    env = None
+    env = profiles.env_for(profile)
     if launch_flags and "--permission-prompt-tool" in launch_flags:
         # The permission tool waits for the user without a time limit;
         # don't let Claude Code give up on the MCP call first.
-        env = {**os.environ, "MCP_TOOL_TIMEOUT": str(PERMISSION_TOOL_TIMEOUT_MS)}
+        env = {**(env if env is not None else os.environ), "MCP_TOOL_TIMEOUT": str(PERMISSION_TOOL_TIMEOUT_MS)}
     proc = await asyncio.create_subprocess_exec(
-        *build_command(session_id, prompt, resume, launch_flags, first_run_flags, project_path),
+        *build_command(session_id, prompt, resume, launch_flags, first_run_flags, project_path, profile),
         cwd=project_path,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
@@ -170,4 +207,6 @@ async def execute(
     )
     if result.session_id is None:
         result.session_id = session_id
+    if result.login_expired and profile:
+        result.error_text = login_expired_message(profile)
     return result

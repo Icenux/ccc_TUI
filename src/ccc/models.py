@@ -81,6 +81,8 @@ class Queue:
     first_run_flags: list[str] | None = None
     # Resume by itself once a usage limit resets (else PAUSED_LIMIT).
     auto_continue: bool = True
+    # Claude account (ccc.profiles) the conversation runs under; "" = the default one.
+    profile: str = ""
     # Manually paused from the Tasks editor: start no further items.
     paused: bool = False
     # Hidden from the TUI lists (still processed by the daemon).

@@ -34,6 +34,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
 
+      - name: Notify the Icenux site
+        # The site (Icenux/icenux.github.io) rebuilds on this event and picks up the new version.
+        continue-on-error: true
+        run: gh api repos/Icenux/icenux.github.io/dispatches -f event_type=app-released
+        env:
+          GH_TOKEN: ${{ secrets.SITE_DISPATCH_TOKEN }}
+
   # Tests and the build run with a read-only token; only the small publish job below can write.
   tui-build:
     needs: release

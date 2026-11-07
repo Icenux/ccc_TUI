@@ -2,6 +2,7 @@
 next to ccc (tui.cli_pane is faked here)."""
 import pytest
 from textual.app import App
+from textual.screen import Screen
 from textual.widgets import DataTable
 
 from ccc.models import DeliveryMode
@@ -108,7 +109,12 @@ async def test_enter_focuses_claude_and_closed_pane_stays_closed(storage, pane):
 
 
 @pytest.mark.asyncio
-async def test_dialog_on_top_gets_the_whole_window(storage, pane):
+async def test_dialog_on_top_keeps_the_chat_and_zooms_ccc(storage, pane, monkeypatch):
+    """#235: a dialog doesn't change the chat behind it; it gets the whole
+    window by zooming ccc (the pane is hidden by tmux, not closed)."""
+    zoom = []
+    monkeypatch.setattr(cli_pane, "zoom_ccc", lambda: zoom.append("zoom") or True)
+    monkeypatch.setattr(cli_pane, "unzoom_ccc", lambda zoomed: zoomed and zoom.append("unzoom"))
     ids = _ids(storage)
     app = _host(ConversationsScreen(storage, select_queue_id=ids["cli"]))
     async with app.run_test(size=(140, 40)) as pilot:
@@ -116,13 +122,26 @@ async def test_dialog_on_top_gets_the_whole_window(storage, pane):
         assert pane.shown == ids["cli"]
         app.push_screen(ConfirmModal("t", "x"))
         await pilot.pause()
-        assert pane.shown is None
         conversations = next(s for s in app.screen_stack if isinstance(s, ConversationsScreen))
+        assert pane.shown == ids["cli"] and conversations.has_class("-cli-open")
+        assert zoom == ["zoom"]
         await conversations._refresh_current()  # the 2-second refresh, under the dialog
-        assert pane.shown is None
+        assert pane.shown == ids["cli"] and pane.closed == 0
         await pilot.press("escape")
         await pilot.pause()
+        assert pane.shown == ids["cli"] and zoom == ["zoom", "unzoom"]
+
+
+@pytest.mark.asyncio
+async def test_another_view_on_top_closes_the_pane(storage, pane):
+    ids = _ids(storage)
+    app = _host(ConversationsScreen(storage, select_queue_id=ids["cli"]))
+    async with app.run_test(size=(140, 40)) as pilot:
+        await pilot.pause()
         assert pane.shown == ids["cli"]
+        await app.push_screen(Screen())  # not a dialog
+        await pilot.pause()
+        assert pane.shown is None
 
 
 @pytest.mark.asyncio

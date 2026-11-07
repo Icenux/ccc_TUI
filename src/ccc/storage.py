@@ -495,6 +495,11 @@ class Storage:
             row = conn.execute("SELECT * FROM queues WHERE id = ?", (queue_id,)).fetchone()
             return self._row_to_queue(row)
 
+    def rename_queue(self, queue_id: int, name: str) -> None:
+        with closing(self._connect()) as conn, conn:
+            conn.execute("UPDATE queues SET name = ?, updated_at = ? WHERE id = ?",
+                         (name, datetime.now().isoformat(), queue_id))
+
     def list_queues(self) -> list[Queue]:
         with closing(self._connect()) as conn:
             rows = conn.execute("SELECT * FROM queues ORDER BY name").fetchall()

@@ -42,7 +42,7 @@ _DISCORD_WEBHOOK_RE = re.compile(r"^https://(?:(?:ptb|canary)\.)?(?:discord|disc
 # What can be switched on and off, per service (#146). A message belongs to one
 # category; `None` (a test message, an export) is never filtered.
 CAT_QUEUE, CAT_LIMITS, CAT_ATTENTION, CAT_RESULTS = "queue", "limits", "attention", "results"
-CAT_CONTEXT, CAT_UPDATES, CAT_STARTED, CAT_ROUTINES = "context", "updates", "started", "routines"
+CAT_UPDATES, CAT_STARTED, CAT_ROUTINES = "updates", "started", "routines"
 CAT_DEVICES, CAT_SECURITY, CAT_HEALTH, CAT_DIGEST = "devices", "security", "health", "digest"
 # (key, label, what it covers, on until the user switches it on)
 CATEGORIES = (
@@ -50,7 +50,6 @@ CATEGORIES = (
     (CAT_LIMITS, N_("Usage limits"), N_("waiting for the limit to reset, and continuing"), True),
     (CAT_ATTENTION, N_("Needs you"), N_("a tool to approve, a workflow gate, an answer to a question"), True),
     (CAT_RESULTS, N_("Results"), N_("a workflow, a goal or a review ended"), True),
-    (CAT_CONTEXT, N_("Context"), N_("a conversation's context is nearly full"), True),
     (CAT_UPDATES, N_("Updates"), N_("a new ccc version is available"), True),
     (CAT_STARTED, N_("Conversation started"), N_("a conversation starts working after a quiet time"), False),
     (CAT_ROUTINES, N_("Routines"), N_("a routine started, or was skipped"), False),
@@ -60,6 +59,8 @@ CATEGORIES = (
     (CAT_DIGEST, N_("Daily summary"), N_("one message a day with what happened"), False),
 )
 CATEGORY_KEYS = tuple(c[0] for c in CATEGORIES)
+# Categories that no longer exist; apps from before still send them (ignored).
+RETIRED_CATEGORIES = ("context",)
 CHANNELS = ("telegram", "discord")
 
 

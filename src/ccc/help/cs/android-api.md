@@ -76,8 +76,7 @@ aplikaci povol běh na pozadí, jinak ji systém zastaví.
 
 Aplikace se aktualizuje podle verze, ne přes ccc, a z vlastního repozitáře: tag `X.Y.Z` (bez `v`) v [ccc_android](https://github.com/Luquas95/ccc_android) spustí GitHub Actions, které aplikaci sestaví a otestují; správce ji pak podepíše na svém počítači a k vydání přiloží `ccc.apk` (podpisový klíč se na GitHub nedostane). Aplikace se GitHubu ptá na nejnovější vydání toho repozitáře (když přijde do popředí, nejvýš jednou za šest hodin; žádný token se neposílá) a když má nižší verzi, ukáže „K dispozici je nová verze aplikace: X“ s tlačítkem *Stáhnout a nainstalovat*. Stažení jde do instalátoru Androidu, který se nejdřív zeptá — a poprvé také na povolení instalace z aplikace. Sestavení vytvořené ručně má verzi `0.0.0-dev` a nikdy se neptá. Aplikace a ccc mají každé svou verzi; API zůstává kompatibilní, takže starší aplikace funguje i s novějším ccc.
 
-**Co seznam ukazuje** (Připojení → *Seznam konverzací*): zaplnění kontextu,
-stav gitu, úkoly ve frontě a složku, každé zapnuté nebo vypnuté — pamatuje
+**Co seznam ukazuje** (Připojení → *Seznam konverzací*): stav gitu, úkoly ve frontě a složku, každé zapnuté nebo vypnuté — pamatuje
 si to telefon, takže malá obrazovka může ukazovat méně.
 
 ## Co smí zařízení (role)
@@ -175,7 +174,7 @@ jen to, co platí pro obě strany.
 | | |
 |---|---|
 | `GET /status` | běží daemon?, kolik konverzací, kolik běží, kolik čeká na schválení |
-| `GET /conversations` | seznam v pořadí jako v TUI, se skupinami, stavy, zprávami ve frontě a značkami, zaplněním kontextového okna (`context`: tokeny, procenta, úroveň) a stavem gitu (`git`: větev, přidané, odebrané, před, za; `null`, kde Claude nesmí spouštět příkazy) a její poslední [smyčkou k cíli](goal.md) (`goal`: id, status, status_label, phase_label, round, max_rounds, finished_at; za běhu a den po skončení, jinak `null`); `?archived=1` archiv |
+| `GET /conversations` | seznam v pořadí jako v TUI, se skupinami, stavy, zprávami ve frontě a značkami, a stavem gitu (`git`: větev, přidané, odebrané, před, za; `null`, kde Claude nesmí spouštět příkazy) a její poslední [smyčkou k cíli](goal.md) (`goal`: id, status, status_label, phase_label, round, max_rounds, finished_at; za běhu a den po skončení, jinak `null`); `?archived=1` archiv |
 | `GET /conversations/{id}` | jedna konverzace s jejími zprávami ve frontě a čekajícími schváleními |
 | `GET /conversations/{id}/messages` | její přepis, každá zpráva s `index`; `?after=N` jen novější, `?before=N` starší, `?limit=` kolik (200) |
 | `POST /conversations/{id}/messages` | `{"text": "…"}` zařadí zprávu do fronty, jako pole pro zprávu |

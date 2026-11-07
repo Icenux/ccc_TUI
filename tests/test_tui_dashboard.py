@@ -155,7 +155,6 @@ def test_shortened_path_always_keeps_the_last_folder():
 
 def _setup(tmp_path, monkeypatch):
     from ccc import gitops
-    from ccc.context_fill import ContextFill
     from ccc.models import PermissionRequest  # noqa: F401
     from ccc.storage import Storage
 
@@ -165,8 +164,6 @@ def _setup(tmp_path, monkeypatch):
     add_command(db_path, str(project), "do a thing")
     storage = Storage(db_path)
     queue = storage.list_queues()[0]
-    monkeypatch.setattr("ccc.context_fill.ContextTracker.fills",
-                        lambda self, st, queues: {q.id: ContextFill(124_000, 200_000) for q in queues})
     monkeypatch.setattr("ccc.gitops.work_status",
                         lambda cwd: gitops.WorkStatus(12, 3, 2, 0, "origin/main", "feature-x"))
     return db_path, storage, queue
@@ -180,7 +177,7 @@ def _cells(app):
 
 
 @pytest.mark.asyncio
-async def test_dashboard_shows_context_and_git_and_what_waits_for_you(tmp_path, monkeypatch):
+async def test_dashboard_shows_git_and_what_waits_for_you(tmp_path, monkeypatch):
     from ccc.models import QueueStatus
     from textual.widgets import Static
 
@@ -191,9 +188,9 @@ async def test_dashboard_shows_context_and_git_and_what_waits_for_you(tmp_path, 
         await pilot.pause(0.5)
         app.screen.refresh_table()
         headers, rows = _cells(app)
-        assert headers == ["Project", "Status", "Goal", "Pending", "Today's tokens", "Context", "Git", "Path"]
+        assert headers == ["Project", "Status", "Goal", "Pending", "Today's tokens", "Git", "Path"]
         row = rows[0]
-        assert row[5] == "62%" and row[6] == "feature-x +12−3 ↑2" and row[7].endswith("shop-api")
+        assert row[5] == "feature-x +12−3 ↑2" and row[6].endswith("shop-api")
         assert "1 waiting for you" in app.screen.query_one("#dashboard-overview", Static).render().plain
 
 
@@ -205,7 +202,7 @@ async def test_columns_choice_does_not_depend_on_window_width(tmp_path, monkeypa
     app = CCContinueApp(db_path)
     async with app.run_test(size=(80, 30)) as pilot:
         await pilot.pause(0.5)
-        assert len(_cells(app)[0]) == 8  # the default is everything, even in a narrow window
+        assert len(_cells(app)[0]) == 7  # the default is everything, even in a narrow window
         dashboard_columns.save(storage, [dashboard_columns.GIT, dashboard_columns.PATH])
         app.screen.refresh_table()
         headers, rows = _cells(app)

@@ -22,7 +22,7 @@ from datetime import date, datetime
 from http import HTTPStatus
 from pathlib import Path
 
-from ccc import api_scope, context_fill, groups, i18n, routines
+from ccc import api_scope, groups, i18n, routines
 from ccc.api_common import ApiError, int_of, iso, route, text_of
 from ccc.i18n import _
 from ccc.models import RoutineTarget
@@ -242,7 +242,6 @@ class ViewEndpoints:
         from ccc.reviews import MODEL_CHOICES, MODEL_KEY
 
         s = self.storage
-        warn, danger = context_fill.thresholds(s)
         token_set = bool(s.get_setting(TELEGRAM_TOKEN_KEY))
         chat = s.get_setting(TELEGRAM_CHAT_KEY) or ""
         return {
@@ -257,12 +256,6 @@ class ViewEndpoints:
             "reserve_choices": RESERVE_CHOICES,
             "review_model": s.get_setting(MODEL_KEY) or "",
             "review_models": [{"value": v, "label": _(label) if not v else label} for v, label in MODEL_CHOICES],
-            "context_window": context_fill.window_setting(s),
-            "window_choices": list(context_fill.WINDOW_CHOICES),
-            "context_warn": warn,
-            "context_danger": danger,
-            "threshold_choices": list(context_fill.THRESHOLD_CHOICES),
-            "context_notify": context_fill.notify_enabled(s),
             "export_folder": s.get_setting(EXPORT_FOLDER_KEY) or "",
             "export_send": s.get_setting(EXPORT_SEND_KEY) or "",
             "send_choices": [{"value": v, "label": _(label)} for v, label in SEND_CHOICES],
@@ -282,7 +275,7 @@ class ViewEndpoints:
         from ccc.analytics_archive import FOLDER_KEY as ARCHIVE_FOLDER_KEY
         from ccc.export_paths import FOLDER_KEY as EXPORT_FOLDER_KEY, SEND_CHOICES, SEND_KEY as EXPORT_SEND_KEY
         from ccc.notify import (
-            CATEGORY_KEYS, DISCORD_WEBHOOK_KEY, TELEGRAM_CHAT_KEY, TELEGRAM_TOKEN_KEY, category_states,
+            CATEGORY_KEYS, DISCORD_WEBHOOK_KEY, RETIRED_CATEGORIES, TELEGRAM_CHAT_KEY, TELEGRAM_TOKEN_KEY, category_states,
             is_discord_webhook, set_category_states,
         )
         from ccc.orchestrator import DEFAULT_CONTINUE_TEXT, RESERVE_KEY
@@ -304,18 +297,7 @@ class ViewEndpoints:
         choice("groups", {groups.BY_PROJECT, groups.OWN_ONLY}, groups.MODE_KEY)
         choice("usage_reserve", set(current["reserve_choices"]) | {None}, RESERVE_KEY, off=None)
         choice("review_model", {v for v, _label in MODEL_CHOICES}, MODEL_KEY)
-        choice("context_window", set(current["window_choices"]) | {None}, context_fill.WINDOW_KEY, off=None)
-        choice("context_warn", set(current["threshold_choices"]), context_fill.WARN_KEY)
-        choice("context_danger", set(current["threshold_choices"]), context_fill.DANGER_KEY)
-        if "context_notify" in body:
-            if not isinstance(body["context_notify"], bool):
-                raise ApiError(HTTPStatus.BAD_REQUEST, _("{name} must be true or false.").format(name="context_notify"))
-            changes[context_fill.NOTIFY_KEY] = "" if body["context_notify"] else "off"
         choice("export_send", {v for v, _label in SEND_CHOICES}, EXPORT_SEND_KEY)
-        warn = int(changes.get(context_fill.WARN_KEY, current["context_warn"]))
-        danger = int(changes.get(context_fill.DANGER_KEY, current["context_danger"]))
-        if warn >= danger:
-            raise ApiError(HTTPStatus.BAD_REQUEST, _("The context warning must be lower than the alarm."))
         if "continue_text" in body:
             changes["continue_text"] = text_of(body, "continue_text").strip() or DEFAULT_CONTINUE_TEXT
         if "export_folder" in body:
@@ -338,6 +320,8 @@ class ViewEndpoints:
             if field not in body:
                 continue
             given = body[field]
+            if isinstance(given, dict):  # an older app still sends the retired "context" category
+                given = {k: v for k, v in given.items() if k not in RETIRED_CATEGORIES}
             if not isinstance(given, dict) or any(k not in CATEGORY_KEYS or not isinstance(v, bool)
                                                  for k, v in given.items()):
                 raise ApiError(HTTPStatus.BAD_REQUEST,

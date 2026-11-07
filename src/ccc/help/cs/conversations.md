@@ -20,10 +20,6 @@ Každá konverzace má před názvem značku a za ním `·N`, když v její
 | `◆` | nová odpověď, kterou jsi ještě neviděl(a) |
 | `○` | nečinná a poslední odpověď jsi už viděl(a) |
 
-Za názvem je, jak moc je zaplněné kontextové okno konverzace, např.
-`62%` — od prahu varování žlutě, od poplachu červeně (viz
-*Zaplnění kontextu* níže).
-
 Když nemáš žádnou konverzaci, stojí vpravo **BEZ KONVERZACE** — stiskni
 `n` a nějakou založ.
 
@@ -147,31 +143,6 @@ bez terminálu. U nich ukazuje přepis sám ccc:
 Nahoře je název konverzace, složka projektu a volby Claude Code, jestli
 je zapnuté automatické pokračování a u konverzace se
 [vzdáleným ovládáním](remote-control.md) odkaz pro telefon.
-
-### Zaplnění kontextu
-
-Pod tím je, jak moc je zaplněné kontextové okno, např.
-`kontext 62 % · 124k / 200k`. Když se zaplní, Claude Code konverzaci sám
-zkompaktuje a detaily z dřívější práce se ztratí — číslo ti to řekne
-včas, abys spustil(a) `/compact` nebo založil(a) novou konverzaci. Od
-80 % je žluté, od 90 % červené, s nápovědou *zvaž /compact nebo novou
-konverzaci*; oba prahy jsou v [Nastavení](settings.md) → Kontext.
-
-Počítá se z promptu poslední odpovědi Clauda (vstupní tokeny + cache,
-stejně jako `/context` v Claude Code) děleno velikostí okna modelu:
-
-- **1M**, když má `--model` konverzace `[1m]`, nebo konverzace už
-  přesáhla 200k (to pojme jen 1M okno),
-- okno zvolené v Nastavení → Kontext → Okno,
-- jinak **200k** u modelu Claude.
-
-U modelu, který ccc nezná, se ukážou jen tokeny bez %. Když tvůj model
-běží s 1M oknem i bez `[1m]`, zvol v Nastavení *1M* — jinak vychází %
-moc vysoko, dokud konverzace nepřesáhne 200k.
-
-S nastaveným Telegramem nebo Discordem ti ccc jednou napíše, když
-konverzace dosáhne varování (znovu až poté, co klesla pod něj, např. po
-`/compact`); vypíná se v Nastavení → Kontext → Upozornit.
 
 ## Zmínky souborů
 

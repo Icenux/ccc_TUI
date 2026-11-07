@@ -5,7 +5,7 @@ from datetime import date
 from rich.text import Text
 from textual.widgets import DataTable, Static
 
-from ccc import attention, context_fill, dashboard_columns, gitops, keymap
+from ccc import attention, dashboard_columns, gitops, keymap
 from ccc.i18n import _
 from ccc.models import QueueStatus
 from ccc.storage import Storage
@@ -21,9 +21,8 @@ PATH_COLUMN_WIDTH = 48  # until the table's width is known
 MIN_PATH_WIDTH = 14
 CELL_PADDING = 2  # a DataTable column has a space on each side of its content
 BRANCH_WIDTH = 20
-# How often the transcripts (context fill) and the git folders are looked at,
-# in a thread, so the 2 s refresh of the table never waits for them.
-CONTEXT_SECONDS = 5.0
+# How often the git folders are looked at, in a thread, so the 2 s refresh
+# of the table never waits for them.
 GIT_STATUS_SECONDS = 15.0
 
 # Instead of an empty table, until the first conversation exists.
@@ -79,29 +78,11 @@ class DashboardScreen(SidebarScreen):
     def on_mount(self) -> None:
         table = self.query_one("#dashboard-table", DataTable)
         table.cursor_type = "row"
-        self._context_fills: dict[int, context_fill.ContextFill] = {}
-        self._context_tracker = context_fill.ContextTracker()
         self._git_status: dict[int, gitops.WorkStatus | None] = {}
         self.refresh_table()
         self.set_interval(2.0, self.refresh_table)
-        self._refresh_context()
-        self.set_interval(CONTEXT_SECONDS, self._refresh_context)
         self._refresh_git_status()
         self.set_interval(GIT_STATUS_SECONDS, self._refresh_git_status)
-
-    def _refresh_context(self) -> None:
-        if dashboard_columns.CONTEXT not in (self._columns or []):
-            return
-        queues = self._visible_queues()
-        tracker, storage = self._context_tracker, self.storage
-
-        def work() -> None:
-            self.app.call_from_thread(self._set_context, tracker.fills(storage, queues))
-
-        self.run_worker(work, thread=True, group="dashboard-context", exclusive=True)
-
-    def _set_context(self, fills: dict) -> None:
-        self._context_fills = fills
 
     def _refresh_git_status(self) -> None:
         """Only where Claude may run commands (ccc runs git only there, see
@@ -133,7 +114,6 @@ class DashboardScreen(SidebarScreen):
             table.add_column(_(titles[column]))
         self._columns = columns
         # A column that just appeared has nothing to show until its worker ran.
-        self._refresh_context()
         self._refresh_git_status()
 
     @staticmethod
@@ -171,12 +151,6 @@ class DashboardScreen(SidebarScreen):
             return Text("–", style="dim")
         return Text(goals.short_text(goal), style=STATUS_STYLES[goal.status])
 
-    def _context_cell(self, queue, warn: int, danger: int) -> Text:
-        fill = self._context_fills.get(queue.id)
-        if fill is None:
-            return Text("–", style="dim")
-        return Text(context_fill.list_text(fill), style=context_fill.LEVEL_STYLES[context_fill.level(fill, warn, danger)])
-
     def refresh_table(self) -> None:
         table = self.query_one("#dashboard-table", DataTable)
         columns = dashboard_columns.shown(self.storage)
@@ -189,7 +163,6 @@ class DashboardScreen(SidebarScreen):
         queues = self._visible_queues()
         unseen = self.storage.unseen_queue_ids()
         waiting = self.storage.queues_waiting_for_approval()
-        warn, danger = context_fill.thresholds(self.storage)
         latest_goals = self.storage.latest_goals()
         rows = []
         for queue in queues:
@@ -206,7 +179,6 @@ class DashboardScreen(SidebarScreen):
                     dashboard_columns.GOAL: self._goal_cell(latest_goals.get(queue.id)),
                     dashboard_columns.PENDING: Text(str(pending)),
                     dashboard_columns.TOKENS: Text(f"{today_tokens:,}"),
-                    dashboard_columns.CONTEXT: self._context_cell(queue, warn, danger),
                     dashboard_columns.GIT: self._git_cell(queue),
                 },
                 queue.project_path,

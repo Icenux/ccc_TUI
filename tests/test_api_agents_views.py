@@ -133,15 +133,14 @@ def test_settings_read_change_and_refuse(storage):
     assert before["telegram"] == {"token_set": False, "chat": "", "on": False}
 
     after = endpoint.route("POST", "/api/v1/settings", {}, {
-        "usage_reserve": 80, "context_warn": 60, "context_danger": 90, "context_notify": False,
+        "usage_reserve": 80,
         "telegram_token": "123:abc", "telegram_chat": "42", "groups": "own", "continue_text": "go on"})[1]
-    assert (after["usage_reserve"], after["context_warn"], after["context_notify"], after["continue_text"]) == \
-        (80, 60, False, "go on")
+    assert (after["usage_reserve"], after["continue_text"]) == (80, "go on")
+    assert not any(key.startswith("context") for key in after)  # the context fill is gone
     assert after["telegram"] == {"token_set": True, "chat": "42", "on": True}
     assert "123:abc" not in str(after)  # the token never leaves ccc
 
     assert _error(lambda: endpoint.change_settings({"usage_reserve": 33})).status == 400
-    assert _error(lambda: endpoint.change_settings({"context_warn": 95, "context_danger": 90})).status == 400
     assert _error(lambda: endpoint.change_settings({"discord_webhook": "https://example.com/x"})).status == 400
     assert endpoint.settings()["usage_reserve"] == 80
     assert endpoint.change_settings({"usage_reserve": None})["usage_reserve"] is None

@@ -25,7 +25,6 @@ Jeden řádek na konverzaci (archivované jsou v [Archivu](archive.md)):
 | Cíl | její poslední [smyčka k cíli](goal.md): `◎ 3/5` (kolo / kol) za běhu, den po skončení `✅ splněno 3/5` / `⛔ zaseknuto 4/5` / `⛔ došla kola 5/5` / `✖ selhalo` / `■ zastaveno`; jinak `–` |
 | Čeká | úkoly čekající v její [frontě](tasks.md) |
 | Tokeny dnes | tokeny, které dnes spotřebovala |
-| Kontext | jak je plné její kontextové okno (žlutě / červeně podle prahů v Nastavení), jako v seznamu Konverzací; `–`, dokud není odpověď, ze které se dá přečíst |
 | Git | větev, neuložené řádky (`+12−3`) a commity před `↑` / za `↓` základní větví; `–` mimo git a u konverzace, kde Claude nesmí sám spouštět příkazy (ccc spouští git jen tam, viz [Git](git.md)) |
 | Cesta | složka projektu, ve které Claude pracuje, zkrácená zepředu — poslední složka je vidět vždy |
 

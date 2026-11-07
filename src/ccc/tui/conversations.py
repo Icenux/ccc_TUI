@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import subprocess
 import sys
+import weakref
 from datetime import datetime
 
 from rich.text import Text
@@ -83,6 +84,11 @@ class ConversationList(DataTable):
         row = event.style.meta.get("row")
         if row in self.heading_rows:
             self.move_cursor(row=row)
+
+
+# The conversation last open in each list (Conversations / Archive): switching
+# to Analytics or Dashboard and back builds a fresh screen (#233).
+_LAST_OPEN: "weakref.WeakKeyDictionary[Storage, dict[bool, int]]" = weakref.WeakKeyDictionary()
 
 
 class ConversationsScreen(SidebarScreen):
@@ -268,7 +274,9 @@ class ConversationsScreen(SidebarScreen):
         # "events": list[TranscriptEvent]} so switching back to an
         # already-viewed queue doesn't re-parse its transcript from zero.
         self._cache: dict[int, dict] = {}
-        self._current_queue_id: int | None = select_queue_id
+        # Opened without a target (a menu button, Alt+...): back onto the
+        # conversation that was open when the user left this list.
+        self._current_queue_id: int | None = select_queue_id if select_queue_id is not None else _LAST_OPEN.get(storage, {}).get(self.ARCHIVED)
         # Opened for a specific (usually just-started) conversation: put the
         # cursor straight into the message box.
         self._focus_input_on_mount = select_queue_id is not None
@@ -494,6 +502,7 @@ class ConversationsScreen(SidebarScreen):
         from ccc import gitops
 
         self._current_queue_id = queue_id
+        _LAST_OPEN.setdefault(self.storage, {})[self.ARCHIVED] = queue_id
         queue = self.storage.find_queue(queue_id)
         if queue is not None:
             # @ in the message box offers this conversation's files.

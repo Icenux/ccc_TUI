@@ -12,8 +12,8 @@ on a yes — in the TUI's Update window or from the phone:
   is fetched and the checkout fast-forwarded to it — only on main, clean,
   with nothing of its own, while no task runs — then the install script
   runs again and the services restart;
-- ccc installed from the system package (.deb): the package manager updates
-  it (`apt upgrade`, the Icenux APT repository); ccc only tells that there is a
+- ccc installed from the system package (.deb or the Arch package): the package manager updates
+  it (`apt upgrade` with the Icenux APT repository, `pacman -Syu` with the Icenux pacman repository); ccc only tells that there is a
   newer release and never touches /usr itself;
 - ccc installed as a package (pip / pipx): the release's `ccc.tar.gz` is
   downloaded and pip-installed into the environment ccc runs from.
@@ -113,7 +113,7 @@ def is_checkout(repo: Path = PROJECT_DIR) -> bool:
 
 
 def installed_by_system() -> str | None:
-    """How the system package manager installed ccc ("deb"), None when it did not:
+    """How the system package manager installed ccc ("deb" or "pacman"), None when it did not:
     the package ships /usr/lib/ccc/install-kind next to its virtualenv."""
     try:
         return (Path(sys.prefix).parent / "install-kind").read_text().strip() or None
@@ -313,7 +313,10 @@ def apply(storage, repo: Path = PROJECT_DIR, spawn=spawn_install, units=installe
         return False, _("Can't look for the update: {error}").format(error=state.error)
     if not state.available:
         return False, _("ccc is up to date.")
-    if installed_by_system():
+    kind = installed_by_system()
+    if kind == "pacman":
+        return False, _("ccc was installed from a system package — update it with: sudo pacman -Syu")
+    if kind:
         return False, _("ccc was installed from a system package — update it with: sudo apt update && sudo apt upgrade")
     checkout = is_checkout(repo)
     if checkout:

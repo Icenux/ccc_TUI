@@ -110,6 +110,7 @@ jobs:
       - name: Build the package
         run: |
           packaging/build.sh "$GITHUB_REF_NAME"
+          bash packaging/build-arch.sh "$GITHUB_REF_NAME"
           packaging/package.sh "$GITHUB_REF_NAME"
       - uses: actions/upload-artifact@v4
         with:
@@ -142,3 +143,29 @@ jobs:
           ccc --help > /dev/null
           test "$(cat /usr/lib/ccc/install-kind)" = deb
           /usr/lib/ccc/venv/bin/python -c "import ccc, ccc.daemon, ccc.help; print(ccc.__version__)"
+
+  # The Arch package has no bundled virtualenv: the pacman hook builds it for the installed Python (rolling release).
+  arch-test:
+    needs: deb-build
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: deb
+          path: rel
+      - name: Install the package
+        run: |
+          pacman -Syu --noconfirm
+          pacman -U --noconfirm "$PWD"/rel/ccc-*-any.pkg.tar.zst
+          test -f /usr/lib/systemd/user/ccc.service
+          test -f /usr/share/libalpm/hooks/ccc-venv.hook
+      - name: ccc runs
+        run: |
+          ccc --help > /dev/null
+          test "$(cat /usr/lib/ccc/install-kind)" = pacman
+          /usr/lib/ccc/venv/bin/python -c "import ccc, ccc.daemon, ccc.help, segno, textual, pyte; print(ccc.__version__)"
+          test "$(/usr/lib/ccc/venv/bin/python -c 'import ccc; print(ccc.__version__)')" = "${GITHUB_REF_NAME}"
+          # the virtualenv is rebuilt by the hook when the package is installed again (what an upgrade does)
+          pacman -U --noconfirm "$PWD"/rel/ccc-*-any.pkg.tar.zst
+          ccc --help > /dev/null

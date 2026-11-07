@@ -1,6 +1,10 @@
-# The .deb from the built tree (dist/ccc, packaging/build.sh) — called by packaging/package.sh.
-# Besides the application it sets up the shared Icenux APT repository (github.com/Icenux/icenux,
-# by packaging/files/postinst.sh), so later versions arrive with the ordinary system update.
+# The .deb from the built tree (dist/ccc, packaging/build.sh) and the Arch package (.pkg.tar.zst) from
+# dist/ccc-arch (packaging/build-arch.sh) — called by packaging/package.sh.
+# Besides the application the .deb sets up the shared Icenux APT repository (github.com/Icenux/icenux,
+# by packaging/files/postinst.sh), so later versions arrive with the ordinary system update. The Arch
+# package comes from the Icenux pacman repository (the same repository, /arch/x86_64): it has no bundled
+# virtualenv, packaging/files/arch-setup.sh builds it on the machine for the installed Python
+# (run by the pacman hook packaging/files/ccc-venv.hook).
 name: ccc
 arch: all
 platform: linux
@@ -24,11 +28,22 @@ depends:
   - systemd
 recommends:
   - git
+overrides:
+  archlinux:
+    depends:
+      - python
+      - python-textual
+      - python-pyte
+      - tmux
+      - systemd
+    scripts:
+      postremove: packaging/files/postrm-arch.sh
 
 contents:
   - src: dist/ccc/
     dst: /usr/lib/ccc
     type: tree
+    packager: deb
   - src: packaging/files/ccc
     dst: /usr/bin/ccc
     file_info: { mode: 0755 }
@@ -39,6 +54,7 @@ contents:
   # how it was installed (ccc then points to apt instead of updating itself)
   - src: packaging/files/install-kind.deb
     dst: /usr/lib/ccc/install-kind
+    packager: deb
 
   # systemd user units: `systemctl --user enable --now ccc ccc-tui`
   - src: packaging/files/ccc.service
@@ -71,8 +87,27 @@ contents:
   # the Icenux package source: the files lie next to the application, postinst.sh puts them in place
   - src: packaging/files/icenux.asc
     dst: /usr/lib/ccc/icenux.asc
+    packager: deb
   - src: packaging/files/icenux.list
     dst: /usr/lib/ccc/icenux.list
+    packager: deb
+
+  # Arch: the tree (ccc + segno + supervisor script), the script that builds the virtualenv at install time and the
+  # pacman hook that rebuilds it after a Python upgrade
+  - src: dist/ccc-arch/
+    dst: /usr/lib/ccc
+    type: tree
+    packager: archlinux
+  - src: packaging/files/arch-setup.sh
+    dst: /usr/lib/ccc/arch-setup.sh
+    file_info: { mode: 0755 }
+    packager: archlinux
+  - src: packaging/files/ccc-venv.hook
+    dst: /usr/share/libalpm/hooks/ccc-venv.hook
+    packager: archlinux
+  - src: packaging/files/install-kind.pacman
+    dst: /usr/lib/ccc/install-kind
+    packager: archlinux
 
 scripts:
   postinstall: packaging/files/postinst.sh

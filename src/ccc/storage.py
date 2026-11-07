@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS queues (
     last_seen_at TEXT,
     remote_control_url TEXT,
     live_busy INTEGER NOT NULL DEFAULT 0,
-    live_finished_at TEXT
+    live_finished_at TEXT,
+    profile TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS queue_items (
@@ -383,6 +384,9 @@ class Storage:
             # would show the "new reply" marker after upgrading.
             conn.execute("UPDATE queues SET last_seen_at = ?", (datetime.now().isoformat(),))
             conn.commit()
+        if "profile" not in columns:
+            conn.execute("ALTER TABLE queues ADD COLUMN profile TEXT NOT NULL DEFAULT ''")
+            conn.commit()
         for column, default in (("auto_continue", 1), ("paused", 0), ("archived", 0)):
             if column not in columns:
                 conn.execute(f"ALTER TABLE queues ADD COLUMN {column} INTEGER NOT NULL DEFAULT {default}")
@@ -447,13 +451,14 @@ class Storage:
         first_run_flags: list[str] | None = None,
         auto_continue: bool = True,
         routine_id: int | None = None,
+        profile: str = "",
     ) -> Queue:
         now = datetime.now().isoformat()
         with closing(self._connect()) as conn:
             cur = conn.execute(
                 "INSERT INTO queues (name, project_path, session_id, status, created_at, updated_at, "
-                "always_resume, delivery_mode, launch_flags, first_run_flags, auto_continue, routine_id) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "always_resume, delivery_mode, launch_flags, first_run_flags, auto_continue, routine_id, profile) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     name,
                     project_path,
@@ -467,6 +472,7 @@ class Storage:
                     _dump_flags(first_run_flags),
                     int(auto_continue),
                     routine_id,
+                    profile,
                 ),
             )
             conn.commit()
@@ -1607,6 +1613,7 @@ class Storage:
             remote_control_url=row["remote_control_url"],
             routine_id=row["routine_id"],
             live_busy=bool(row["live_busy"]),
+            profile=row["profile"] or "",
         )
 
     @staticmethod

@@ -92,10 +92,11 @@ class UsageCollector:
         self._offsets: dict[Path, int] = {}
 
     def _transcripts(self, session_id: str) -> list[Path]:
-        root = self.projects_root or transcript.PROJECTS_ROOT
-        main = list(root.glob(f"*/{session_id}.jsonl"))
-        subagents = list(root.glob(f"*/{session_id}/subagents/*.jsonl"))
-        return main[:1] + sorted(subagents)
+        for root in ([self.projects_root] if self.projects_root else transcript.every_project_root()):
+            main = list(root.glob(f"*/{session_id}.jsonl"))
+            if main:
+                return main[:1] + sorted(root.glob(f"*/{session_id}/subagents/*.jsonl"))
+        return []
 
     def collect(self, storage) -> int:
         """Read new replies of every interactive conversation; returns how

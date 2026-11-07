@@ -4,6 +4,8 @@ import json
 import subprocess
 from dataclasses import dataclass
 
+from ccc import profiles
+
 
 @dataclass
 class DiscoveredSession:
@@ -17,7 +19,20 @@ class DiscoveredSession:
 
 
 def discover_sessions() -> list[DiscoveredSession]:
-    """Live Claude Code sessions on this machine (interactive + background),
+    """Live sessions of the default account and of every named profile
+    (each account keeps its own, so each is asked), without duplicates."""
+    found = _discover("")
+    seen = {s.session_id for s in found}
+    for profile in profiles.list_profiles():
+        for session in _discover(profile.name):
+            if session.session_id not in seen:
+                seen.add(session.session_id)
+                found.append(session)
+    return found
+
+
+def _discover(profile: str) -> list[DiscoveredSession]:
+    """Live Claude Code sessions of one account (interactive + background),
     via `claude agents --json`. Returns [] on any failure (claude not on
     PATH, no active sessions, unexpected output) — never raises, since
     this is a nice-to-have discovery aid, not load-bearing for the daemon."""
@@ -27,6 +42,7 @@ def discover_sessions() -> list[DiscoveredSession]:
             capture_output=True,
             text=True,
             timeout=10,
+            env=profiles.env_for(profile),
         )
         if result.returncode != 0 or not result.stdout.strip():
             return []

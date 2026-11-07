@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from ccc import profiles
 from ccc.i18n import _
 
 # Overridable in tests via monkeypatch — real default is Claude Code's own
@@ -14,6 +15,25 @@ from ccc.i18n import _
 # encoded project path we deliberately do NOT try to reconstruct — see
 # find_transcript_path).
 PROJECTS_ROOT = Path.home() / ".claude" / "projects"
+
+
+def project_roots(profile: str = "") -> list[Path]:
+    """Where transcripts of a profile live. For the default profile that is
+    PROJECTS_ROOT; a named profile has its own folder. `None`-like "all" is
+    `every_project_root`."""
+    named = profiles.get(profile)
+    return [named.config_dir / "projects"] if named else [PROJECTS_ROOT]
+
+
+def every_project_root() -> list[Path]:
+    """The transcript folders of the default profile and of every named one
+    (a session id is a UUID, so searching all of them finds the one)."""
+    roots = [PROJECTS_ROOT]
+    for profile in profiles.list_profiles():
+        root = profile.config_dir / "projects"
+        if root not in roots:
+            roots.append(root)
+    return roots
 
 
 @dataclass
@@ -34,8 +54,11 @@ def find_transcript_path(session_id: str) -> Path | None:
     character with "-", confirmed live on this machine; e.g. both "/" and
     "_" in a real path both became "-"), which would be fragile to
     reconstruct by hand. Returns None if no matching file exists."""
-    matches = list(PROJECTS_ROOT.glob(f"*/{session_id}.jsonl"))
-    return matches[0] if matches else None
+    for root in every_project_root():
+        matches = list(root.glob(f"*/{session_id}.jsonl"))
+        if matches:
+            return matches[0]
+    return None
 
 
 TOOL_PREVIEW_MAX_CHARS = 80
@@ -153,16 +176,17 @@ def encode_project_dir(path: str) -> str:
     return re.sub(r"[^A-Za-z0-9]", "-", path)
 
 
-def list_sessions_for_directory(path: str, limit: int = 50) -> list[SessionSummary]:
+def list_sessions_for_directory(path: str, limit: int = 50, profile: str = "") -> list[SessionSummary]:
     """Claude Code sessions recorded for a directory, newest first. Tries
     the path as given AND its realpath — ~/DEV is a symlink, and sessions
     started from either spelling land in different directories."""
     files: dict[str, Path] = {}
-    for candidate in {path.rstrip("/") or "/", os.path.realpath(path)}:
-        project_dir = PROJECTS_ROOT / encode_project_dir(candidate)
-        if project_dir.is_dir():
-            for f in project_dir.glob("*.jsonl"):
-                files.setdefault(f.stem, f)
+    for root in project_roots(profile):
+        for candidate in {path.rstrip("/") or "/", os.path.realpath(path)}:
+            project_dir = root / encode_project_dir(candidate)
+            if project_dir.is_dir():
+                for f in project_dir.glob("*.jsonl"):
+                    files.setdefault(f.stem, f)
     newest = sorted(files.values(), key=lambda f: f.stat().st_mtime, reverse=True)[:limit]
     summaries = []
     for f in newest:
@@ -173,13 +197,17 @@ def list_sessions_for_directory(path: str, limit: int = 50) -> list[SessionSumma
     return summaries
 
 
-def session_recorded_in(session_id: str, path: str) -> bool:
+def session_recorded_in(session_id: str, path: str, profile: str = "") -> bool:
     """Was this session really recorded in `path`? The transcript folder's name is a lossy encoding of the
     path (every / and . becomes "-"), so two folders can share it: the `cwd` the transcript itself records
     must be this folder too (#160)."""
     wanted = os.path.realpath(path)
-    for candidate in {path.rstrip("/") or "/", wanted}:
-        transcript = PROJECTS_ROOT / encode_project_dir(candidate) / f"{session_id}.jsonl"
+    candidates = [
+        root / encode_project_dir(candidate) / f"{session_id}.jsonl"
+        for root in project_roots(profile)
+        for candidate in {path.rstrip("/") or "/", wanted}
+    ]
+    for transcript in candidates:
         if not transcript.is_file():
             continue
         try:

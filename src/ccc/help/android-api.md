@@ -181,7 +181,7 @@ settings it shows are the ones that apply to both sides.
 | | |
 |---|---|
 | `GET /status` | the daemon running?, how many conversations, running, waiting for approval |
-| `GET /conversations` | the list in the TUI's order, with groups, states, queued messages and markers, and its git state (`git`: branch, added, removed, ahead, behind; `null` where Claude may not run commands) and its latest [goal loop](goal.md) (`goal`: id, status, status_label, phase_label, round, max_rounds, finished_at; while it runs and for a day after it ended, else `null`); `?archived=1` the archive |
+| `GET /conversations` | the list in the TUI's order, with groups, states (`status` is the queue's; `live_busy` is true while an interactive Claude Code works in its terminal, so the TUI and the app show it as running), queued messages and markers, and its git state (`git`: branch, added, removed, ahead, behind; `null` where Claude may not run commands) and its latest [goal loop](goal.md) (`goal`: id, status, status_label, phase_label, round, max_rounds, finished_at; while it runs and for a day after it ended, else `null`); `?archived=1` the archive |
 | `GET /conversations/{id}` | one, with its queued messages and approvals waiting |
 | `GET /conversations/{id}/messages` | its transcript, each message with an `index`; `?after=N` only newer ones, `?before=N` older ones, `?limit=` how many (200) |
 | `POST /conversations/{id}/messages` | `{"text": "…"}` queues a message, as the message box does |

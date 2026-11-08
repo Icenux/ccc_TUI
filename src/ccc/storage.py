@@ -658,7 +658,19 @@ class Storage:
             conn.commit()
 
     def set_queue_auto_continue(self, queue_id: int, value: bool) -> None:
+        """Switch auto-continue; a conversation already waiting at a usage
+        limit changes its wait accordingly (#243): turning it on makes a
+        stopped one carry on at the reset, turning it off makes a waiting one
+        stop and wait for the user."""
         self._set_queue_flag(queue_id, "auto_continue", value)
+        queue = self.find_queue(queue_id)
+        if queue is None or queue.next_retry_at is None:
+            return
+        if value and queue.status == QueueStatus.PAUSED_LIMIT:
+            self.update_queue_status(queue_id, QueueStatus.WAITING_RETRY, next_retry_at=queue.next_retry_at)
+        elif not value and queue.status == QueueStatus.WAITING_RETRY and queue.last_error is None:
+            # (a wait for the user's usage reserve keeps its note and stays)
+            self.update_queue_status(queue_id, QueueStatus.PAUSED_LIMIT, next_retry_at=queue.next_retry_at)
 
     def set_queue_paused(self, queue_id: int, value: bool) -> None:
         self._set_queue_flag(queue_id, "paused", value)

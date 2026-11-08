@@ -9,7 +9,8 @@ from ccc.storage import Storage
 
 
 def git(cwd, *args):
-    subprocess.run(["git", "-C", str(cwd), "-c", "user.email=t@t", "-c", "user.name=t", *args],
+    subprocess.run(["git", "-C", str(cwd), "-c", "user.email=t@t", "-c", "user.name=t",
+                    "-c", "tag.gpgsign=false", "-c", "commit.gpgsign=false", *args],
                    check=True, capture_output=True)
 
 

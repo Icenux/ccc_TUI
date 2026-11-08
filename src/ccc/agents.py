@@ -17,7 +17,10 @@ import json
 import logging
 import os
 import re
+import shutil
+import tempfile
 from dataclasses import dataclass, replace
+from datetime import datetime
 from pathlib import Path
 
 from ccc import profiles
@@ -42,6 +45,7 @@ class Agent:
     prompt: str = ""
     problem: str = ""  # why Claude Code would skip the file ("" when it loads)
     overridden: bool = False  # an agent of the same name closer to the project wins
+    stamp: tuple[int, int] = (0, 0)  # (size, mtime_ns) of the file when it was read: edits refuse a changed file
 
 
 def user_dir(profile: str = "") -> Path:
@@ -152,7 +156,8 @@ def read_file(path: Path, scope: str) -> Agent | None:
     """The agent in `path`; None for a file Claude Code treats as documentation
     (no frontmatter or no name) — and for a file that cannot be read."""
     try:
-        if path.stat().st_size > MAX_FILE_BYTES:
+        info = path.stat()
+        if info.st_size > MAX_FILE_BYTES:
             return None
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
@@ -171,7 +176,8 @@ def read_file(path: Path, scope: str) -> Agent | None:
         problem = N_("no description")
     model = fields.get("model")
     return Agent(name=name, description=description, scope=scope, path=path, tools=_tools(fields.get("tools")),
-                 model=model if isinstance(model, str) else "", prompt=parts[1], problem=problem)
+                 model=model if isinstance(model, str) else "", prompt=parts[1], problem=problem,
+                 stamp=(info.st_size, info.st_mtime_ns))
 
 
 def _read_dir(folder: Path, scope: str) -> list[Agent]:
@@ -295,3 +301,104 @@ def display_path_of(path: Path) -> str:
     home = str(Path.home())
     text = os.fspath(path)
     return "~" + text[len(home):] if text.startswith(home + os.sep) else text
+
+
+# --- editing and deleting (#220) ----------------------------------------------------------
+
+
+def _is_key_line(line: str) -> bool:
+    return bool(line) and line[0] not in " \t-#" and ":" in line
+
+
+def replace_fields(front: list[str], updates: dict[str, str | None]) -> list[str]:
+    """`front` (the frontmatter's lines) with the given top-level fields set to the new `key: value`
+    line (None removes the field). A field's own lines — a list, a block text — go with it; every
+    other line (hooks, mcpServers, comments …) stays exactly as it was. A missing field is added."""
+    out: list[str] = []
+    seen: set[str] = set()
+    skipping = False
+    for line in front:
+        if _is_key_line(line):
+            key = line.partition(":")[0].strip()
+            skipping = key in updates
+            if skipping:
+                seen.add(key)
+                if updates[key] is not None:
+                    out.append(updates[key])
+                continue
+        elif skipping:
+            continue  # the continuation of a field that was replaced
+        out.append(line)
+    out += [value for key, value in updates.items() if key not in seen and value is not None]
+    return out
+
+
+def _tools_line(tools: tuple[str, ...] | None) -> str | None:
+    if tools is None:
+        return None
+    if not (tools and all(_TOOL.fullmatch(t) for t in tools)):
+        raise ValueError(_("Unknown tool list."))
+    return "tools: " + ", ".join(tools)
+
+
+def update_agent(agent: Agent, description: str, tools: tuple[str, ...] | None, model: str, prompt: str) -> None:
+    """Change an agent's description, tools, model and prompt in its file; the name and every other
+    field stay as they are. ValueError (a message for the user) when the file is a symbolic link,
+    has changed since it was read, or a value is not valid."""
+    path = agent.path
+    if path.is_symlink():
+        raise ValueError(_("{file} is a symbolic link: change its target in an editor.").format(
+            file=display_path_of(path)))
+    description = " ".join(description.split())
+    if not description:
+        raise ValueError(_("An agent needs a description: Claude decides by it when to call the agent."))
+    if model != agent.model and model not in MODELS:  # a model the file already has is left alone
+        raise ValueError(_("Unknown model: {model}").format(model=model))
+    updates = {"description": f"description: {json.dumps(description, ensure_ascii=False)}",
+               "tools": _tools_line(tools), "model": f"model: {model}" if model else None}
+    try:
+        info = path.stat()
+        if (info.st_size, info.st_mtime_ns) != agent.stamp:
+            raise ValueError(_("The file changed on disk since the window was opened; open it again."))
+        parts = split_frontmatter(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError) as error:
+        raise ValueError(_("Could not read the agent: {error}").format(error=getattr(error, "strerror", error))) from None
+    if parts is None:
+        raise ValueError(_("The file has no frontmatter any more; open it again."))
+    front = replace_fields(parts[0], updates)
+    text = "\n".join(["---", *front, "---", "", prompt.strip(), ""])
+    # The scratch file is made fresh under an unpredictable name (O_EXCL): the folder may come from a
+    # cloned repository, and a symbolic link planted at a guessable name must not be followed.
+    scratch = None
+    try:
+        fd, scratch = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".ccc-tmp", dir=path.parent)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(text)
+        os.chmod(scratch, info.st_mode & 0o777)
+        os.replace(scratch, path)
+    except OSError as error:
+        if scratch is not None:
+            Path(scratch).unlink(missing_ok=True)
+        raise ValueError(_("Could not write the agent: {error}").format(error=error.strerror or error)) from None
+
+
+def trash_dir() -> Path:
+    return Path(os.environ.get("CCC_AGENT_TRASH") or Path.home() / ".local" / "share" / "ccc" / "deleted-agents")
+
+
+def delete_agent(agent: Agent) -> Path:
+    """Take an agent away from Claude Code: its file moves to ccc's own folder (not deleted for good),
+    and that path is returned. Only a file ccc found in an agent folder is touched."""
+    path = agent.path
+    if path.suffix != ".md" or path.parent.name != "agents":
+        raise ValueError(_("{file} is not an agent file.").format(file=display_path_of(path)))
+    target_dir = trash_dir()
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    target = target_dir / f"{stamp}-{agent.scope}-{path.name}"
+    try:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        os.chmod(target_dir, 0o700)
+        shutil.move(os.fspath(path), os.fspath(target))
+    except OSError as error:
+        raise ValueError(_("Could not remove the agent: {error}").format(error=error.strerror or error)) from None
+    return target

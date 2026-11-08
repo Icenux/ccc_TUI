@@ -11,7 +11,7 @@ from textual.widgets import Button, DataTable, Input, Select, Static, TextArea
 
 from ccc import agent_templates, agent_wizard, agents, keymap
 from ccc.i18n import N_, _
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import ConfirmModal, MODAL_CSS
 
 SCOPE_LABELS = {agents.SCOPE_PROJECT: N_("project"), agents.SCOPE_USER: N_("all projects")}
 PROMPT_LINES = 4
@@ -250,6 +250,95 @@ class AgentCreateModal(ModalScreen):
         self.dismiss(None)
 
 
+class AgentEditModal(ModalScreen):
+    """Change an existing agent's description, tools, model and prompt. The name, the file and every
+    other field of the file stay as they are. Dismisses with True when saved, else None."""
+
+    DEFAULT_CSS = MODAL_CSS.format(cls="AgentEditModal") + """
+    AgentEditModal > Container {
+        width: 95%;
+        max-width: 120;
+        max-height: 95%;
+        overflow-y: auto;
+    }
+    AgentEditModal Select {
+        margin-bottom: 1;
+    }
+    AgentEditModal #agent-edit-file, AgentEditModal .modal-hint {
+        color: $text-muted;
+    }
+    AgentEditModal #agent-edit-file {
+        margin-bottom: 1;
+    }
+    AgentEditModal #agent-edit-prompt {
+        height: 14;
+    }
+    AgentEditModal .modal-buttons .modal-hint {
+        width: 1fr;
+        padding-top: 1;
+    }
+    """
+
+    BINDINGS = [
+        keymap.binding("window.save", "save", _("Save"), priority=True),
+        keymap.binding("window.cancel", "cancel", _("Cancel"), priority=True),
+    ]
+
+    def __init__(self, agent: agents.Agent):
+        super().__init__()
+        self.agent = agent
+
+    def compose(self):
+        a = self.agent
+        models = list(agents.MODELS) + ([a.model] if a.model not in agents.MODELS else [])
+        box = Container(
+            Static(f"{a.name}  ·  {agents.display_path(a)}", id="agent-edit-file"),
+            Static(_("What is it for? Say what it does and when Claude should use it."), classes="modal-label"),
+            Input(a.description, id="agent-edit-description"),
+            Static(_("Tools (comma-separated; empty = every tool)"), classes="modal-label"),
+            Input(", ".join(a.tools or ()), placeholder="Read, Grep, Glob", id="agent-edit-tools"),
+            Static(_("Model"), classes="modal-label"),
+            Select([(m or _("the session's"), m) for m in models], value=a.model, allow_blank=False,
+                   id="agent-edit-model"),
+            Static(_("Its instructions (the prompt)"), classes="modal-label"),
+            TextArea(a.prompt, id="agent-edit-prompt"),
+            Static("", id="agent-edit-error", classes="modal-error"),
+            Horizontal(
+                Static(_("Ctrl+S save  ·  Esc cancel  ·  Ctrl+E editor"), classes="modal-hint"),
+                Button(_("Cancel"), id="agent-edit-cancel", classes="modal-cancel"),
+                Button(_("Save"), id="agent-edit-save", classes="modal-submit"),
+                classes="modal-buttons",
+            ),
+        )
+        box.border_title = _("Edit agent")
+        yield box
+
+    def on_mount(self) -> None:
+        self.query_one("#agent-edit-description", Input).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        event.stop()
+        if event.button.id == "agent-edit-save":
+            self.action_save()
+        elif event.button.id == "agent-edit-cancel":
+            self.action_cancel()
+
+    def action_save(self) -> None:
+        names = tuple(t.strip() for t in self.query_one("#agent-edit-tools", Input).value.split(",") if t.strip())
+        try:
+            agents.update_agent(
+                self.agent, self.query_one("#agent-edit-description", Input).value, names or None,
+                self.query_one("#agent-edit-model", Select).value,
+                self.query_one("#agent-edit-prompt", TextArea).text)
+        except ValueError as problem:
+            self.query_one("#agent-edit-error", Static).update(str(problem))
+            return
+        self.dismiss(True)
+
+    def action_cancel(self) -> None:
+        self.dismiss(None)
+
+
 class AgentsModal(ModalScreen):
     DEFAULT_CSS = MODAL_CSS.format(cls="AgentsModal") + """
     AgentsModal > Container {
@@ -271,6 +360,7 @@ class AgentsModal(ModalScreen):
     }
     AgentsModal .agents-actions Button {
         height: 3;
+        margin-right: 1;
     }
     AgentsModal #agents-detail {
         height: auto;
@@ -281,6 +371,8 @@ class AgentsModal(ModalScreen):
 
     BINDINGS = [
         keymap.binding("agents.add", "add", _("Add")),
+        keymap.binding("agents.edit", "edit", _("Edit")),
+        keymap.binding("agents.delete", "delete", _("Delete")),
         keymap.binding("window.cancel", "close", _("Close")),
     ]
 
@@ -293,7 +385,12 @@ class AgentsModal(ModalScreen):
         box = Container(
             DataTable(id="agents-table", cursor_type="row"),
             Static("", id="agents-detail"),
-            Horizontal(Button(_("Add from a template"), id="agents-add"), classes="agents-actions"),
+            Horizontal(
+                Button(_("Add"), id="agents-add"),
+                Button(_("Edit"), id="agents-edit"),
+                Button(_("Delete"), id="agents-delete"),
+                classes="agents-actions",
+            ),
         )
         box.border_title = _("Agents — helpers Claude Code can call")
         yield box
@@ -348,8 +445,12 @@ class AgentsModal(ModalScreen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         event.stop()
-        if event.button.id == "agents-add":
-            self.action_add()
+        {"agents-add": self.action_add, "agents-edit": self.action_edit,
+         "agents-delete": self.action_delete}.get(event.button.id, lambda: None)()
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        event.stop()
+        self.action_edit() if self._agents else self.action_add()
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         self._show_detail()
@@ -360,6 +461,44 @@ class AgentsModal(ModalScreen):
                 self._refresh(select_path=path)
 
         self.app.push_screen(AgentCreateModal(self.project_path), created)
+
+    def action_edit(self) -> None:
+        a = self.selected()
+        if a is None:
+            return
+        if agents.valid_name(a.name):  # the name is the file's own field: not changed here
+            self.notify(_("Change the name in an editor first: {problem}").format(problem=_(agents.valid_name(a.name))),
+                        severity="warning")
+            return
+
+        def saved(done: bool | None) -> None:
+            if done:
+                self._refresh(select_path=str(a.path))
+                self.notify(_("Saved. Claude Code picks the change up within seconds."))
+
+        self.app.push_screen(AgentEditModal(a), saved)
+
+    def action_delete(self) -> None:
+        a = self.selected()
+        if a is None:
+            return
+
+        def answered(yes: bool) -> None:
+            if not yes:
+                return
+            try:
+                kept = agents.delete_agent(a)
+            except ValueError as problem:
+                self.notify(str(problem), severity="error")
+                return
+            self._refresh()
+            self.notify(_("Removed. The file is kept in {path} if you want it back.").format(
+                path=agents.display_path_of(kept)))
+
+        self.app.push_screen(ConfirmModal(
+            _("Delete agent"), _("Remove the agent “{name}” ({file})? Claude Code stops finding it; the file is moved "
+                                 "to ccc's own folder, not deleted for good.").format(
+                                     name=a.name, file=agents.display_path(a))), answered)
 
     def action_close(self) -> None:
         self.dismiss()

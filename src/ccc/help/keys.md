@@ -121,7 +121,9 @@ name the default keys.
 | Key | |
 |---|---|
 | `a` | Add an agent from a template (name, where it is kept, preview of the file) |
-| `Ctrl+S` | Create the agent in the new-agent window |
+| `e` | Edit the agent: description, tools, model, prompt (also Enter) |
+| `Del` | Delete the agent (its file moves to ccc's own folder) |
+| `Ctrl+S` | Create / save the agent in its window |
 
 ## Review (v)
 

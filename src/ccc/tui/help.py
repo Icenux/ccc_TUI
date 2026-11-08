@@ -100,7 +100,9 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
     ]),
     (N_("Agents (A)"), [
         ("agents.add", N_("Add an agent from a template (name, where it is kept, preview of the file)")),
-        ("window.save", N_("Create the agent in the new-agent window")),
+        ("agents.edit", N_("Edit the agent: description, tools, model, prompt (also Enter)")),
+        ("agents.delete", N_("Delete the agent (its file moves to ccc's own folder)")),
+        ("window.save", N_("Create / save the agent in its window")),
     ]),
     (N_("Review (v)"), [
         ("window.save", N_("Start the review")),

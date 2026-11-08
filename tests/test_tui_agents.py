@@ -220,3 +220,86 @@ async def test_a_failed_generation_keeps_the_outline_and_says_why(tmp_path, monk
         assert "usage limit reached" in str(dialog.query_one("#agent-status", Static).render())
         assert dialog.query_one("#agent-prompt", TextArea).text == before
         assert not dialog.query_one("#agent-generate", Button).disabled  # may try again
+
+
+@pytest.mark.asyncio
+async def test_edit_an_agent_in_the_window(tmp_path):
+    from textual.widgets import Input, Select, TextArea
+    from ccc import agents
+    from ccc.tui.agents import AgentEditModal
+
+    project, app = _project(tmp_path)
+    _write(project / ".claude" / "agents", "x.md",
+           "---\nname: x\ndescription: Old\ntools: Read\nmodel: haiku\nmemory: project\n---\nOld prompt")
+    async with app.run_test(size=(140, 55)) as pilot:
+        await pilot.pause()
+        await pilot.press("c")
+        await pilot.pause()
+        await pilot.press("A")
+        await pilot.pause()
+        await pilot.press("e")
+        await pilot.pause()
+        dialog = app.screen
+        assert isinstance(dialog, AgentEditModal)
+        assert dialog.query_one("#agent-edit-description", Input).value == "Old"
+        dialog.query_one("#agent-edit-description", Input).value = "New description"
+        dialog.query_one("#agent-edit-tools", Input).value = "Read, Grep"
+        dialog.query_one("#agent-edit-model", Select).value = "sonnet"
+        dialog.query_one("#agent-edit-prompt", TextArea).text = "New prompt"
+        await pilot.press("ctrl+s")
+        await pilot.pause()
+        assert app.screen.__class__.__name__ == "AgentsModal"
+    [a] = agents.list_agents(str(project))
+    assert (a.description, a.tools, a.model, a.prompt.strip()) == ("New description", ("Read", "Grep"), "sonnet", "New prompt")
+    assert "memory: project" in a.path.read_text()
+
+
+@pytest.mark.asyncio
+async def test_an_invalid_edit_shows_why_and_changes_nothing(tmp_path):
+    from textual.widgets import Input, Static
+
+    project, app = _project(tmp_path)
+    _write(project / ".claude" / "agents", "x.md", "---\nname: x\ndescription: Old\n---\nPrompt")
+    before = (project / ".claude" / "agents" / "x.md").read_text()
+    async with app.run_test(size=(140, 55)) as pilot:
+        await pilot.pause()
+        await pilot.press("c")
+        await pilot.pause()
+        await pilot.press("A")
+        await pilot.pause()
+        await pilot.press("enter")  # Enter edits the selected agent
+        await pilot.pause()
+        dialog = app.screen
+        dialog.query_one("#agent-edit-description", Input).value = "   "
+        await pilot.press("ctrl+s")
+        await pilot.pause()
+        assert "needs a description" in str(dialog.query_one("#agent-edit-error", Static).render())
+        assert app.screen is dialog
+    assert (project / ".claude" / "agents" / "x.md").read_text() == before
+
+
+@pytest.mark.asyncio
+async def test_delete_asks_first_and_keeps_the_file_in_ccc_s_folder(tmp_path, monkeypatch):
+    from ccc import agents
+
+    monkeypatch.setenv("CCC_AGENT_TRASH", str(tmp_path / "trash"))
+    project, app = _project(tmp_path)
+    _write(project / ".claude" / "agents", "x.md", "---\nname: x\ndescription: d\n---\nPrompt")
+    async with app.run_test(size=(140, 55)) as pilot:
+        await pilot.pause()
+        await pilot.press("c")
+        await pilot.pause()
+        await pilot.press("A")
+        await pilot.pause()
+        await pilot.press("delete")
+        await pilot.pause()
+        await pilot.press("n")  # No
+        await pilot.pause()
+        assert (project / ".claude" / "agents" / "x.md").exists()
+        await pilot.press("delete")
+        await pilot.pause()
+        await pilot.press("y")
+        await pilot.pause()
+        assert not (project / ".claude" / "agents" / "x.md").exists()
+        assert agents.list_agents(str(project)) == []
+        assert len(list((tmp_path / "trash").iterdir())) == 1

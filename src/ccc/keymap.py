@@ -36,13 +36,13 @@ FORMAT = "ccc-keys"
 # pane beside ccc (only the keys ccc binds in tmux reach ccc from there).
 VIEWS = ("dashboard", "conversations", "archive", "sessions", "analytics", "queue_detail")
 WINDOWS = ("help", "confirm", "approval", "tasks", "task_edit", "preset_edit", "settings", "keys",
-           "new_conversation", "preset_name", "add_prompt", "diff", "diff_comment", "search", "attach", "routines", "routine_edit", "agents", "agent_new",
+           "new_conversation", "preset_name", "add_prompt", "diff", "diff_comment", "search", "attach", "routines", "routine_edit", "agents", "agent_new", "agent_edit",
            "review", "goal", "workflow", "group", "rename", "update")
 CLAUDE = "claude"
 EVERYWHERE = (*VIEWS, *WINDOWS, CLAUDE)
 _CONVERSATIONS = ("conversations", "archive")
 _BACK = ("conversations", "archive", "sessions", "analytics", "queue_detail")
-_EDITORS = ("task_edit", "preset_edit", "settings", "keys", "routine_edit", "review", "goal", "workflow", "agent_new")
+_EDITORS = ("task_edit", "preset_edit", "settings", "keys", "routine_edit", "review", "goal", "workflow", "agent_new", "agent_edit")
 
 
 @dataclass(frozen=True)
@@ -117,6 +117,8 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("routines.run", "r", N_("Run the routine now"), ("routines",)),
     KeyAction("routines.delete", "delete", N_("Delete the routine"), ("routines",)),
     KeyAction("agents.add", "a", N_("Add an agent from a template"), ("agents",)),
+    KeyAction("agents.edit", "e", N_("Edit the agent"), ("agents",)),
+    KeyAction("agents.delete", "delete", N_("Delete the agent"), ("agents",)),
     KeyAction("answer.yes", "y", N_("Yes / allow"), ("approval", "confirm")),
     KeyAction("approval.always", "a", N_("Always allow this tool in this conversation"), ("approval",)),
     KeyAction("answer.no", "n", N_("No / deny"), ("approval", "confirm")),

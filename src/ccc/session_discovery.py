@@ -36,6 +36,9 @@ def _discover(profile: str) -> list[DiscoveredSession]:
     via `claude agents --json`. Returns [] on any failure (claude not on
     PATH, no active sessions, unexpected output) — never raises, since
     this is a nice-to-have discovery aid, not load-bearing for the daemon."""
+    agent = profiles.get(profile)
+    if agent is not None and agent.is_command:
+        return []  # not Claude Code: nothing to ask it
     try:
         result = subprocess.run(
             ["claude", "agents", "--json"],

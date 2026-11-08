@@ -178,6 +178,24 @@ def build_command(
     return ["claude", *session_flag, *first, "-p", prompt, "--output-format", "json", *flags]
 
 
+async def _execute_command(agent, project_path, session_id, prompt, resume, env) -> RunResult:
+    """One headless run of a command profile (ccc.backends)."""
+    from ccc import backends
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *backends.run_command(agent, session_id, prompt, resume, project_path),
+            cwd=project_path, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env,
+        )
+    except OSError as exc:
+        return RunResult(status=RunStatus.ERROR, error_text=str(exc), session_id=session_id)
+    stdout_bytes, stderr_bytes = await proc.communicate()
+    return backends.classify(
+        stdout_bytes.decode("utf-8", errors="replace"), stderr_bytes.decode("utf-8", errors="replace"),
+        proc.returncode or 0, session_id,
+    )
+
+
 async def execute(
     project_path: str,
     session_id: str,
@@ -188,6 +206,9 @@ async def execute(
     profile: str = "",
 ) -> RunResult:
     env = profiles.env_for(profile)
+    agent = profiles.get(profile)
+    if agent is not None and agent.is_command:
+        return await _execute_command(agent, project_path, session_id, prompt, resume, env)
     if launch_flags and "--permission-prompt-tool" in launch_flags:
         # The permission tool waits for the user without a time limit;
         # don't let Claude Code give up on the MCP call first.

@@ -191,9 +191,11 @@ class NewConversationModal(ModalScreen):
         if profiles.list_profiles():
             right.append(Static(_("Claude account"), classes="group-title"))
             right.append(Select(
-                [(_("(default)"), "")] + [(p.name, p.name) for p in profiles.list_profiles()],
+                [(_("(default)"), "")] + [(f"{p.name} (API)" if p.is_command else p.name, p.name) for p in profiles.list_profiles()],
                 allow_blank=False, value="", id="profile-select",
             ))
+            if any(p.is_command for p in profiles.list_profiles()):
+                right.append(Static(_(profiles.API_LIMITS_NOTICE), classes="hint"))
         # Not a `claude` flag: ccc's own behaviour at usage limits.
         right.append(Static("ccc", classes="group-title"))
         right.append(Checkbox(_("Auto-continue after usage limit"), value=self._initial.auto_continue, id="auto-continue"))

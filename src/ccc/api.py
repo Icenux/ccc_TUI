@@ -357,6 +357,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             "path": q.project_path,
             "status": q.status.value,
             "live_busy": q.live_busy,
+            "context": self._context_of(q),
             "delivery_mode": q.delivery_mode.value,
             "archived": q.archived,
             "paused": q.paused,
@@ -372,6 +373,13 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             "git": self._git_of(q),
             "goal": self._goal_of(goal),
         }
+
+    @staticmethod
+    def _context_of(q) -> dict | None:
+        """How full its context window is, as Claude Code's status line reported it (null: not reported)."""
+        if q.context_percent is None:
+            return None
+        return {"percent": q.context_percent, "tokens": q.context_tokens, "window": q.context_window}
 
     @staticmethod
     def _goal_of(goal) -> dict | None:
@@ -922,6 +930,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             result[q.id] = (
                 q.name, q.status.value, q.archived, q.paused, q.last_error, own.get(q.id),
                 self.storage.count_pending_items(q.id), q.id in waiting, q.id in unseen, size, q.live_busy,
+                q.context_percent, q.context_tokens, q.context_window,
             )
         # Not a conversation: a new ccc version (updates) — told to the app as "update".
         state = updates.load(self.storage)

@@ -656,6 +656,10 @@ CS: dict[str, str] = {
     "ccc database (default: the usual one)": "databáze ccc (výchozí: ta obvyklá)",
     "tmux client to show an error on": "klient tmuxu, kde ukázat chybu",
     "that client's tmux server socket": "socket tmux serveru toho klienta",
+    "Claude Code's status line: tells ccc how full the context is (reads JSON on stdin)":
+        "Stavový řádek Claude Code: řekne ccc, jak je zaplněný kontext (čte JSON ze stdin)",
+    "your own status line command: gets the same input, its output is shown":
+        "tvůj vlastní příkaz stavového řádku: dostane stejný vstup, zobrazí se jeho výstup",
     "Back up the ccc database now (the daemon also does it daily)": "Zálohovat databázi ccc hned (daemon to dělá i denně)",
     "Archive finished months into the analytics folder now (the daemon does it hourly)":
         "Archivovat skončené měsíce do složky analytiky hned (daemon to dělá každou hodinu)",

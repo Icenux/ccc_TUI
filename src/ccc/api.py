@@ -356,6 +356,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             "name": q.name,
             "path": q.project_path,
             "status": q.status.value,
+            "live_busy": q.live_busy,
             "delivery_mode": q.delivery_mode.value,
             "archived": q.archived,
             "paused": q.paused,
@@ -920,7 +921,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
                 size = 0
             result[q.id] = (
                 q.name, q.status.value, q.archived, q.paused, q.last_error, own.get(q.id),
-                self.storage.count_pending_items(q.id), q.id in waiting, q.id in unseen, size,
+                self.storage.count_pending_items(q.id), q.id in waiting, q.id in unseen, size, q.live_busy,
             )
         # Not a conversation: a new ccc version (updates) — told to the app as "update".
         state = updates.load(self.storage)

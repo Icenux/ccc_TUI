@@ -91,6 +91,7 @@ def test_conversations_list_with_state(storage, tmp_path):
     assert listed[0]["tokens_today"] == 0
     assert listed[0]["needs_approval"] is True
     assert listed[0]["status"] == "idle"
+    assert listed[0]["live_busy"] is False
     assert [c["name"] for c in api.Api(storage).conversations(archived=True)] == ["old"]
 
 
@@ -262,6 +263,21 @@ def test_changes_name_the_conversations_that_changed(storage, tmp_path, projects
     storage.delete_queue(other.id)
 
     assert endpoint.changes(before, endpoint.snapshot()) == {"conversations": [q.id], "removed": [other.id]}
+
+
+def test_live_busy_is_in_the_list_and_detail_and_is_a_change(storage, tmp_path):
+    q = _queue(storage, tmp_path)
+    endpoint = api.Api(storage)
+    before = endpoint.snapshot()
+
+    storage.set_live_busy(q.id, True)
+
+    assert endpoint.conversations()[0]["live_busy"] is True
+    assert endpoint.conversation(q.id)["live_busy"] is True
+    assert endpoint.conversation(q.id)["status"] == "idle"  # the queue's own state is not touched
+    assert endpoint.changes(before, endpoint.snapshot()) == {"conversations": [q.id], "removed": []}
+    storage.set_live_busy(q.id, False)
+    assert endpoint.conversations()[0]["live_busy"] is False
 
 
 # --- over HTTP ------------------------------------------------------------------

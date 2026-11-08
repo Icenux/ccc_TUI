@@ -8,11 +8,11 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, DirectoryTree, Input, OptionList, Select, Static
 from textual.widgets.option_list import Option
 
-from ccc import keymap, mcp_servers, plugins, profiles
+from ccc import agents, keymap, mcp_servers, plugins, profiles
 from ccc.i18n import _
 from ccc.launch_options import (
-    DEFAULT_SELECTION, FORK, GROUPS, MCP_PREFIX, MCP_SELECT, PLUGIN_PREFIX, PLUGINS_SELECT, SESSION_FROM_PR, SESSION_NEW, SESSION_RESUME,
-    is_mcp_server, is_plugin, session_mode, toggle,
+    AGENT_PREFIX, AGENT_SELECT, DEFAULT_SELECTION, FORK, GROUPS, MCP_PREFIX, MCP_SELECT, PLUGIN_PREFIX, PLUGINS_SELECT, SESSION_FROM_PR, SESSION_NEW, SESSION_RESUME,
+    is_agent, is_mcp_server, is_plugin, session_mode, toggle,
 )
 from ccc.orchestrator import start_conversation
 from ccc.presets import LaunchChoice, list_presets, load_last, save_last, save_preset
@@ -96,6 +96,10 @@ class NewConversationModal(ModalScreen):
         height: auto;
         margin-left: 4;
     }
+    NewConversationModal #agent-list {
+        height: auto;
+        margin-left: 4;
+    }
     NewConversationModal #preset-row {
         height: 3;
     }
@@ -161,6 +165,8 @@ class NewConversationModal(ModalScreen):
         self._mcp_generation = 0  # keeps widget ids unique across rebuilds
         self._plugins_shown: list[str] | None = None  # plugin ids currently listed
         self._plugin_generation = 0
+        self._agents_shown: list[str] | None = None  # agent names currently listed
+        self._agent_generation = 0
 
     def _preset_options(self) -> list[tuple[str, str]]:
         return [(name, name) for name in sorted(list_presets(self.storage))]
@@ -183,6 +189,8 @@ class NewConversationModal(ModalScreen):
                     right.append(Vertical(id="mcp-servers"))
                 elif option.key == PLUGINS_SELECT:
                     right.append(Vertical(id="plugin-list"))
+                elif option.key == AGENT_SELECT:
+                    right.append(Vertical(id="agent-list"))
                 elif option.key == SESSION_RESUME:
                     right.append(OptionList(id="resume-sessions"))
                 elif option.key == SESSION_FROM_PR:
@@ -233,6 +241,7 @@ class NewConversationModal(ModalScreen):
         self._sync_session_widgets()
         self._refresh_mcp()
         self._refresh_plugins()
+        self._refresh_agents()
 
     # --- directory ------------------------------------------------------
 
@@ -247,6 +256,7 @@ class NewConversationModal(ModalScreen):
         if event.input.id == "launch-path":
             self._sync_session_widgets()
             self._refresh_mcp()
+            self._refresh_agents()
 
     def _path(self) -> str:
         return str(Path(self.query_one("#launch-path", Input).value.strip()).expanduser())
@@ -302,7 +312,45 @@ class NewConversationModal(ModalScreen):
             if checkbox.value != wanted:
                 checkbox.value = wanted
 
+    def _chosen_agents(self) -> list[str]:
+        return sorted(k.removeprefix(AGENT_PREFIX) for k in self.selection if is_agent(k))
+
+    def _refresh_agents(self) -> None:
+        """List the agents Claude Code finds for the chosen directory (the
+        project's and the user's) under "Whole conversation as one agent"; a
+        ticked one that is gone stays, marked."""
+        box = self.query_one("#agent-list", Vertical)
+        box.display = AGENT_SELECT in self.selection
+        path = self._path() if self.query_one("#launch-path", Input).value.strip() else ""
+        found = sorted({a.name for a in agents.list_agents(path if Path(path).is_dir() else "")
+                        if not a.problem and not a.overridden and is_agent(AGENT_PREFIX + a.name)})
+        names = sorted(set(found) | set(self._chosen_agents()))
+        if names != self._agents_shown:
+            self._agents_shown = names
+            self._agent_generation += 1
+            box.remove_children()
+            for i, name in enumerate(names):
+                label = name if name in found else _("{name} (not found here)").format(name=name)
+                checkbox = Checkbox(Content(label), id=f"agent-{self._agent_generation}-{i}")
+                checkbox.agent_name = name
+                box.mount(checkbox)
+            box.mount(Static(_("Its prompt replaces Claude Code's own instructions.") if names else
+                             _("No agents here. Press A for Agents; they are files in .claude/agents."),
+                             classes="hint"))
+        for checkbox in box.query(Checkbox):
+            wanted = f"{AGENT_PREFIX}{checkbox.agent_name}" in self.selection
+            if checkbox.value != wanted:
+                checkbox.value = wanted
+
     def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
+        agent = getattr(event.checkbox, "agent_name", None)
+        if agent is not None:
+            key = f"{AGENT_PREFIX}{agent}"
+            if event.value != (key in self.selection):
+                self.selection = toggle(self.selection, key, event.value)
+                self.query_one(f"#opt-{AGENT_SELECT}", Checkbox).value = AGENT_SELECT in self.selection
+                self._refresh_agents()
+            return
         pid = getattr(event.checkbox, "plugin_id", None)
         if pid is not None:
             key = f"{PLUGIN_PREFIX}{pid}"
@@ -336,6 +384,7 @@ class NewConversationModal(ModalScreen):
         self._sync_session_widgets()
         self._refresh_mcp()
         self._refresh_plugins()
+        self._refresh_agents()
 
     def _sync_session_widgets(self) -> None:
         mode = session_mode(self.selection)
@@ -375,6 +424,7 @@ class NewConversationModal(ModalScreen):
                     checkbox.value = wanted
         self._refresh_mcp()
         self._refresh_plugins()
+        self._refresh_agents()
         self.query_one("#auto-continue", Checkbox).value = choice.auto_continue
         self.query_one("#remote-control", Checkbox).value = choice.remote_control
         self._sync_session_widgets()
@@ -411,6 +461,10 @@ class NewConversationModal(ModalScreen):
         if not self.query_one("#launch-path", Input).value.strip():
             error.update(_("Choose a directory."))
             return
+        for name in self._chosen_agents():
+            if agents.find(name, self._path()) is None:
+                error.update(_("There is no agent “{name}” for this folder.").format(name=name))
+                return
         session_id = None
         if session_mode(self.selection) == SESSION_RESUME:
             highlighted = self.query_one("#resume-sessions", OptionList).highlighted

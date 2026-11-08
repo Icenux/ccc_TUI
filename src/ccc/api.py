@@ -860,6 +860,9 @@ class Api(AgentEndpoints, ViewEndpoints):
         folder = api_scope.check_folder(self.storage, path.strip())
         selection = self._selection(body.get("options"))
         api_scope.check_selection(self.storage, selection)
+        for name in launch_options.agent_names(selection):
+            if agents.find(name, folder) is None:
+                raise ApiError(HTTPStatus.BAD_REQUEST, _("There is no agent “{name}” for this folder.").format(name=name))
         try:
             queue = start_conversation(
                 self.storage, folder, selection,
@@ -895,10 +898,14 @@ class Api(AgentEndpoints, ViewEndpoints):
             if group.required and not chosen:
                 selection |= {o.key for o in group.options} & defaults
         known = {o.key for g in launch_options.GROUPS for o in g.options}
-        unknown = {k for k in selection - known if not (launch_options.is_mcp_server(k) or launch_options.is_plugin(k))}
+        unknown = {k for k in selection - known if not (launch_options.is_mcp_server(k) or launch_options.is_plugin(k) or launch_options.is_agent(k))}
         if unknown:
             raise ApiError(HTTPStatus.BAD_REQUEST,
                            _("Unknown options: {options}.").format(options=", ".join(sorted(unknown))))
+        chosen_agents = launch_options.agent_names(selection)
+        if len(chosen_agents) > 1:
+            raise ApiError(HTTPStatus.BAD_REQUEST,
+                           _("Choose one of: {options}.").format(options=", ".join(f"agent:{n}" for n in chosen_agents)))
         return frozenset(selection)
 
     # --- changes (the events stream) -----------------------------------------

@@ -82,6 +82,23 @@ s jakými pluginy běží.
 - Plugin, který jsi mezitím odinstaloval, se přeskočí.
 - Instalace a odebírání pluginů zůstává v Claude Code (`/plugin`).
 
+## Agent
+
+Zaškrtni **Celá konverzace jako jeden agent** a pod volbou se objeví
+[agenti](agents.md), které Claude Code pro složku najde; vyber jednoho.
+Claude Code pak naběhne jako ten agent (`claude --agent <jméno>`) a jeho
+instrukce, nástroje i model platí pro celou konverzaci. Hodí se na *roli*
+(„revizor“, „překladatel“), ne na pomocníka, kterého má Claude zavolat čas
+od času: toho volá sám i bez této volby.
+
+- Prompt agenta **nahrazuje** vlastní instrukce Claude Code. Vyber agenta
+  napsaného pro tohle: krátký prompt pomocníka dělá špatného hlavního
+  asistenta.
+- Platí pro celou konverzaci, pamatuje se na příště a ukládá do předvoleb;
+  detail konverzace ho ukazuje.
+- Agent, který mezitím zmizel, je označen „nenalezeno zde“; ccc s ním
+  nespustí.
+
 ## Předvolby
 
 Okno si pamatuje tvou poslední volbu. Pokud často používáš pár

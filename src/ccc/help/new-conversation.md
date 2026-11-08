@@ -82,6 +82,22 @@ conversation's detail shows which plugins it runs with.
 - A plugin that has since been uninstalled is skipped.
 - Installing or removing plugins stays in Claude Code (`/plugin`).
 
+## Agent
+
+Tick **Whole conversation as one agent** and the [agents](agents.md) Claude
+Code finds for the folder appear below it; tick one. Claude Code then starts
+as that agent (`claude --agent <name>`) and keeps its instructions, tools and
+model for the whole conversation. Use it for a *role* ("reviewer",
+"translator"), not for a helper Claude should call now and then: those
+Claude calls by itself without this option.
+
+- The agent's prompt **replaces** Claude Code's own instructions. Pick one
+  written for this: a short helper prompt makes a poor main assistant.
+- It holds for the whole conversation, is remembered for next time and
+  saved in presets; the conversation's detail shows it.
+- An agent that has since been deleted is marked "not found here"; ccc
+  won't start with it.
+
 ## Presets
 
 The window remembers your last choice. If you use a few combinations

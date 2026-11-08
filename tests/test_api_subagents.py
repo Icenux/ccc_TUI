@@ -150,9 +150,10 @@ def test_a_parents_agent_is_shown_but_not_changed_from_a_subfolder(world):
     sub.mkdir()
     world.storage.create_queue("pkg", str(sub), "s2")
     put(world.project / ".claude" / "agents", "reviewer.md", GOOD)  # the repository's, above the folder asked for
-    assert call(world, "GET", "/agents/project/reviewer", {"path": str(sub)})[1]["name"] == "reviewer"
-    body = {"path": str(sub), "description": "d", "tools": ["Read"], "model": "", "prompt": "p",
-            "version": call(world, "GET", "/agents/project/reviewer", {"path": str(sub)})[1]["version"]}
+    listed = call(world, "GET", "/agents", {"path": str(sub)})[1]
+    assert [a["name"] for a in listed] == ["reviewer"] and "prompt" not in listed[0]  # shown in the list …
+    assert error_of(world, "GET", "/agents/project/reviewer", {"path": str(sub)}).status == 403  # … but not read in full
+    body = {"path": str(sub), "description": "d", "tools": ["Read"], "model": "", "prompt": "p", "version": "1-1"}
     assert error_of(world, "POST", "/agents/project/reviewer", body=body).status == 403
     assert error_of(world, "DELETE", "/agents/project/reviewer", {"path": str(sub)}).status == 403
     assert (world.project / ".claude" / "agents" / "reviewer.md").exists()
@@ -233,3 +234,37 @@ def test_the_audit_keeps_the_folder_of_a_new_agent_not_its_text():
     assert _Handler._detail("POST", "/api/v1/agents", body) == "/home/u/shop"
     assert _Handler._detail("POST", "/api/v1/agents/prompt", {"description": "x"}) == ""
     assert _Handler._detail("GET", "/api/v1/agents", body) == ""
+
+
+def test_a_file_that_is_a_link_to_another_file_is_not_read_through_the_api(world):
+    """A cloned repository can hold `.claude/agents/x.md` -> any Markdown file: its content must not be handed out."""
+    secret = world.tmp / "notes.md"
+    secret.write_text("---\nname: x\ndescription: private\n---\nTop secret prompt\n")
+    folder = world.project / ".claude" / "agents"
+    folder.mkdir(parents=True)
+    (folder / "x.md").symlink_to(secret)
+    fetched = error_of(world, "GET", "/agents/project/x", {"path": str(world.project)})
+    assert fetched.status == 403 and "secret" not in fetched.message
+    assert error_of(world, "DELETE", "/agents/project/x", {"path": str(world.project)}).status == 403
+    assert secret.exists()
+
+
+def test_a_parents_agent_prompt_is_not_handed_out_either(world):
+    sub = world.project / "pkg"
+    sub.mkdir()
+    world.storage.create_queue("pkg", str(sub), "s2")
+    put(world.project / ".claude" / "agents", "reviewer.md", GOOD)
+    refused = error_of(world, "GET", "/agents/project/reviewer", {"path": str(sub)})
+    assert refused.status == 403 and "You review" not in refused.message
+
+
+def test_the_list_says_why_a_file_is_skipped_in_the_requests_language(world):
+    from ccc import i18n
+
+    put(world.project / ".claude" / "agents", "bad.md", "---\nname: bad\n---\nx")
+    assert call(world, "GET", "/agents", {"path": str(world.project)})[1][0]["problem"] == "no description"
+    i18n.set_language("cs")
+    try:
+        assert call(world, "GET", "/agents", {"path": str(world.project)})[1][0]["problem"] == "chybí popis"
+    finally:
+        i18n.set_language("en")

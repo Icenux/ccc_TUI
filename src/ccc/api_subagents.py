@@ -2,7 +2,8 @@
 same with ccc.agents). Not to be mixed up with ccc.api_agents, which is about reviews, goals and workflows.
 
 GET    /api/v1/agents?path=                    the agents of a folder (its project's and the user's), without prompts
-GET    /api/v1/agents/{scope}/{name}?path=     one agent with its prompt and a `version` (scope: project | user)
+GET    /api/v1/agents/{scope}/{name}?path=     one agent with its prompt and a `version` (scope: project | user); 403 for
+                                               one outside the folder or a link to another file
 POST   /api/v1/agents                          create {"scope", "path", "name", "description", "tools", "model", "prompt"}
 POST   /api/v1/agents/{scope}/{name}           change {"path", "description", "tools", "model", "prompt", "version"}
 DELETE /api/v1/agents/{scope}/{name}?path=     remove (the file moves to ccc's own folder)
@@ -111,17 +112,22 @@ class SubagentEndpoints:
 
     @staticmethod
     def _inside(agent: agents.Agent, folder: str) -> None:
-        """What is changed lies in the folder asked for: not a parent folder's agent, and not a file behind a
-        symbolic link that leads out of it. (A user's agent is the user's own folder.)"""
+        """What is read in full (its prompt), changed or removed lies in the folder asked for: not a parent
+        folder's agent, not an agents folder that leads out of it, and not a file that is itself a symbolic
+        link (its target can be any Markdown file on the computer). The list still shows such agents, with no
+        prompt. (A user's agent is the user's own folder.)"""
         if agent.scope == agents.SCOPE_USER:
             return
         real_folder = os.path.realpath(folder)
         real_file = os.path.realpath(agent.path.parent)
         if real_file != real_folder and not real_file.startswith(real_folder + os.sep):
             raise ApiError(HTTPStatus.FORBIDDEN, _("This agent is outside the folder: change it on the computer."))
+        if agent.path.is_symlink():
+            raise ApiError(HTTPStatus.FORBIDDEN, _("This agent is a link to another file: open it on the computer."))
 
     def agent(self, scope: str, name: str, path: str) -> dict:
-        found, _folder = self._find(scope, name, path)
+        found, folder = self._find(scope, name, path)
+        self._inside(found, folder)  # the prompt is the file's content: only of what lies in the folder asked for
         return {**agents.as_dict(found), "prompt": found.prompt, "version": version_of(found)}
 
     def agent_options(self) -> dict:

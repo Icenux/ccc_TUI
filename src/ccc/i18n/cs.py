@@ -910,6 +910,7 @@ CS: dict[str, str] = {
     "Claude is already writing instructions; wait for it.": "Claude už instrukce píše; počkej na něj.",
     "There is no agent “{name}” here.": "Agent „{name}“ tu není.",
     "Unknown access: {access}": "Neznámý přístup: {access}",
+    "This agent is a link to another file: open it on the computer.": "Tento agent je odkaz na jiný soubor: otevři ho v počítači.",
     "Edit the agent": "Upravit agenta",
     "Delete the agent": "Smazat agenta",
     "Edit agent": "Upravit agenta",

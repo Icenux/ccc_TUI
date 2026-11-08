@@ -94,7 +94,7 @@ whole computer:
 |---|---|
 | `read` | look: every `GET` (lists, conversations, diffs, the events stream); without the links that control a conversation (`remote_control_url`) |
 | `operate` | also steer the conversations that exist: messages, approvals, queue, tasks, reviews, goals, workflows |
-| `admin` | also start conversations (any folder), type into a terminal, prompt live sessions, routines, revert a run, settings and presets, backup, update ccc and build the app, manage other devices |
+| `admin` | also start conversations (any folder), type into a terminal, prompt live sessions, routines, revert a run, settings and presets, create, change and remove [agents](agents.md), backup, update ccc and build the app, manage other devices |
 
 A newly paired phone is `operate`; `ccc api pair --role admin` (or
 *Change role* in the Devices list, or `ccc api role ID admin`) gives it
@@ -215,6 +215,11 @@ settings it shows are the ones that apply to both sides.
 | `GET /launch-options` | the options a conversation can be started with (keys and labels) |
 | `GET /projects` | recently used folders |
 | `GET /plugins` | `{installed, enabled}`: ids of installed Claude Code plugins and those on by default (tick them as `plugin:<id>` in `options`, together with `plugins_select`) |
+| `GET /agents?path=` | the Claude Code [agents](agents.md) of a folder (its project's and the user's) without their prompts: `name`, `description`, `scope` (`project` / `user`), `tools` (`null` = every tool), `model`, `problem` (why Claude Code would skip the file, else empty), `overridden`, `file`. A folder outside the allowed ones gets `403` |
+| `GET /agents/{scope}/{name}?path=` | one agent with its `prompt` and a `version`; `POST` on the same path changes it `{"path", "description", "tools", "model", "prompt", "version"}` (`409` when the file changed since that `version`; the name and the file's other fields stay), `DELETE` removes it (the file moves to ccc's own folder). Admin; an agent of a parent folder or behind a link that leads out of the folder is not changed (`403`) |
+| `POST /agents` | admin: creates `{"scope", "path", "name", "description", "tools", "model", "prompt"}`; `name` is lowercase letters, digits and hyphens, an existing file is never overwritten (`400`). Answers `201` with the agent, `version` and `new_folder` (Claude Code needs a restart to see the first agent of a new folder) |
+| `GET /agent-options` | the templates (key, title, description, tools, model, prompt — in the request's language) and the wizard's choices: `access` (what the agent may do → tools), `effort` (→ model), the allowed `models` |
+| `POST /agents/prompt` | admin: `{"description", "access", "claude"}` → `{"prompt", "by"}`: a short outline, or with `"claude": true` instructions written by Claude (one call without tools, one at a time: `429` when another is running, `502` with the reason when Claude could not) |
 | `GET /mcp-servers?path=` | names of the MCP servers configured for a folder (tick them as `mcp:<name>` in `options`, together with `mcp_select`) |
 | `GET /sessions?path=` | Claude Code sessions recorded in a folder, newest first (to resume one: `session_id` in `POST /conversations` with `session_resume`) |
 | `GET /launch-presets` | the New conversation presets and the last choice |

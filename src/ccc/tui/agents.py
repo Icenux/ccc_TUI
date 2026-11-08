@@ -9,7 +9,7 @@ from textual.containers import Container, Horizontal
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Select, Static, TextArea
 
-from ccc import agent_templates, agents, keymap
+from ccc import agent_templates, agent_wizard, agents, keymap
 from ccc.i18n import N_, _
 from ccc.tui.layout import MODAL_CSS
 
@@ -21,25 +21,39 @@ def tools_label(agent: agents.Agent) -> str:
     return ", ".join(agent.tools) if agent.tools else _("all tools")
 
 
+CUSTOM = "_custom"  # the first "Start from" entry: the user's own description
+
+
 class AgentCreateModal(ModalScreen):
-    """A new agent from a template: pick one, name it, say where it is kept —
-    the file is shown as it will be written. Dismisses with the new file's
-    path, or None."""
+    """A new agent: from a template, or from the user's own description (three plain
+    questions; the prompt is an outline or written by Claude). Shows what will be
+    written. Dismisses with the new file's path, or None."""
 
     DEFAULT_CSS = MODAL_CSS.format(cls="AgentCreateModal") + """
     AgentCreateModal > Container {
         width: 95%;
         max-width: 120;
+        max-height: 95%;
+        overflow-y: auto;
     }
     AgentCreateModal Select {
         margin-bottom: 1;
     }
-    AgentCreateModal #agent-about {
+    AgentCreateModal #agent-about, AgentCreateModal #agent-status {
         color: $text-muted;
         margin-bottom: 1;
     }
     AgentCreateModal #agent-preview {
         height: 14;
+    }
+    AgentCreateModal #agent-prompt {
+        height: 10;
+    }
+    AgentCreateModal #agent-custom {
+        height: auto;
+    }
+    AgentCreateModal #agent-generate {
+        margin-bottom: 1;
     }
     AgentCreateModal .modal-hint {
         color: $text-muted;
@@ -57,21 +71,38 @@ class AgentCreateModal(ModalScreen):
         super().__init__()
         self.project_path = project_path
         self.has_project = bool(project_path) and agents.folder_exists(project_path)
+        self._outline = ""  # the prompt text while it is still the untouched outline
+        self._generating = False
 
     def compose(self):
         scopes = ([(_("This project (.claude/agents)"), agents.SCOPE_PROJECT)] if self.has_project else []) + [
             (_("All projects (~/.claude/agents)"), agents.SCOPE_USER)]
-        first = agent_templates.TEMPLATES[0]
+        choices = [(_("Describe it myself…"), CUSTOM)] + [(_(t.title), t.key) for t in agent_templates.TEMPLATES]
         box = Container(
             Static(_("Start from"), classes="modal-label"),
-            Select([(_(t.title), t.key) for t in agent_templates.TEMPLATES], value=first.key, allow_blank=False,
-                   id="agent-template"),
+            Select(choices, value=CUSTOM, allow_blank=False, id="agent-template"),
             Static("", id="agent-about"),
+            Container(
+                Static(_("What is it for? Say what it does and when Claude should use it."), classes="modal-label"),
+                Input(placeholder=_("e.g. Checks that every new text has an English and a Czech version"),
+                      id="agent-describe"),
+                Static(_("May it change anything?"), classes="modal-label"),
+                Select([(_(c.label), c.key) for c in agent_wizard.ACCESS], value=agent_wizard.DEFAULT_ACCESS,
+                       allow_blank=False, id="agent-access"),
+                Static(_("How thorough?"), classes="modal-label"),
+                Select([(_(c.label), c.key) for c in agent_wizard.EFFORT], value=agent_wizard.DEFAULT_EFFORT,
+                       allow_blank=False, id="agent-effort"),
+                Static(_("Its instructions (the prompt)"), classes="modal-label"),
+                TextArea("", id="agent-prompt"),
+                Button(_("Write the instructions with Claude"), id="agent-generate"),
+                Static("", id="agent-status"),
+                id="agent-custom",
+            ),
             Static(_("Name (letters, digits, hyphens)"), classes="modal-label"),
-            Input(first.key, id="agent-name"),
+            Input("my-agent", id="agent-name"),
             Static(_("Kept in"), classes="modal-label"),
             Select(scopes, value=scopes[0][1], allow_blank=False, id="agent-scope"),
-            Static(_("The file"), classes="modal-label"),
+            Static(_("The file"), classes="modal-label", id="agent-preview-label"),
             TextArea("", read_only=True, id="agent-preview"),
             Static("", id="agent-error", classes="modal-error"),
             Horizontal(
@@ -85,39 +116,77 @@ class AgentCreateModal(ModalScreen):
         yield box
 
     def on_mount(self) -> None:
+        self._sync_mode()
+        self._refresh_outline()
         self._show()
-        self.query_one("#agent-template", Select).focus()
+        self.query_one("#agent-describe", Input).focus()
+
+    # --- what is chosen -------------------------------------------------------------
+
+    def _is_custom(self) -> bool:
+        return self.query_one("#agent-template", Select).value == CUSTOM
 
     def _template(self) -> agent_templates.Template:
         return agent_templates.BY_KEY[self.query_one("#agent-template", Select).value]
 
-    def _file_text(self) -> str:
-        description, tools, model, prompt = self._template().parts()
-        return agents.render(self.query_one("#agent-name", Input).value.strip(), description, tools, model, prompt)
+    def _fields(self) -> tuple[str, tuple[str, ...], str, str]:
+        """(description, tools, model, prompt) of the agent as it stands."""
+        if not self._is_custom():
+            return self._template().parts()
+        access = agent_wizard.BY_ACCESS[self.query_one("#agent-access", Select).value]
+        effort = agent_wizard.BY_EFFORT[self.query_one("#agent-effort", Select).value]
+        return (self.query_one("#agent-describe", Input).value, access.tools, effort.model,
+                self.query_one("#agent-prompt", TextArea).text)
+
+    def _sync_mode(self) -> None:
+        custom = self._is_custom()
+        self.query_one("#agent-custom").display = custom
+        self.query_one("#agent-preview").display = not custom
+        self.query_one("#agent-preview-label").display = not custom
+        self.query_one("#agent-about").display = not custom
+
+    def _refresh_outline(self) -> None:
+        """Keep the starting prompt in step with the description until the user writes their own."""
+        if not self._is_custom():
+            return
+        prompt = self.query_one("#agent-prompt", TextArea)
+        if prompt.text in ("", self._outline):
+            self._outline = agent_wizard.outline_prompt(self.query_one("#agent-describe", Input).value,
+                                                        self.query_one("#agent-access", Select).value)
+            prompt.text = self._outline
 
     def _show(self) -> None:
-        """The chosen template's tools and model, and the file as it will be written (or why it can't be)."""
-        t = self._template()
-        about = _("Tools: {tools} · model: {model}").format(
-            tools=", ".join(t.tools), model=t.model or _("the session's"))
-        self.query_one("#agent-about", Static).update(about)
         error = self.query_one("#agent-error", Static)
         try:
-            self.query_one("#agent-preview", TextArea).text = self._file_text()
+            description, tools, model, prompt = self._fields()
+            text = agents.render(self.query_one("#agent-name", Input).value.strip(), description, tools, model, prompt)
             error.update("")
         except ValueError as problem:
-            error.update(str(problem))
+            text = ""
+            error.update(str(problem) if not self._is_custom() or self.query_one("#agent-describe", Input).value.strip()
+                         else "")
+        if not self._is_custom():
+            t = self._template()
+            self.query_one("#agent-about", Static).update(_("Tools: {tools} · model: {model}").format(
+                tools=", ".join(t.tools), model=t.model or _("the session's")))
+            self.query_one("#agent-preview", TextArea).text = text
+
+    # --- events ---------------------------------------------------------------------
 
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id == "agent-template":
-            # A name still equal to some template's key follows the choice; a name the user typed stays.
+            # A name still equal to the previous suggestion follows the choice; one the user typed stays.
             name = self.query_one("#agent-name", Input)
-            if name.value in agent_templates.BY_KEY:
-                name.value = event.value
+            if name.value in agent_templates.BY_KEY or name.value == "my-agent":
+                name.value = "my-agent" if event.value == CUSTOM else event.value
+            self._sync_mode()
+        self._refresh_outline()
         self._show()
 
     def on_input_changed(self, event: Input.Changed) -> None:
-        if event.input.id == "agent-name":
+        if event.input.id == "agent-describe":
+            self._refresh_outline()
+        if event.input.id in ("agent-name", "agent-describe"):
             self._show()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -126,15 +195,51 @@ class AgentCreateModal(ModalScreen):
             self.action_save()
         elif event.button.id == "agent-cancel":
             self.action_cancel()
+        elif event.button.id == "agent-generate":
+            self._generate()
+
+    def _generate(self) -> None:
+        """Ask Claude for the prompt; the answer replaces the text for the user to read and change."""
+        if self._generating:
+            return
+        job = self.query_one("#agent-describe", Input).value
+        tools = agent_wizard.BY_ACCESS[self.query_one("#agent-access", Select).value].tools
+        status = self.query_one("#agent-status", Static)
+        if not job.strip():
+            status.update(Text(_("Describe what the agent is for first."), style="red"))
+            return
+        self._generating = True
+        self.query_one("#agent-generate", Button).disabled = True
+        status.update(_("Claude is writing the instructions…"))
+        self.run_worker(self._generate_prompt(job, tools), exclusive=True)
+
+    async def _generate_prompt(self, job: str, tools: tuple[str, ...]) -> None:
+        try:
+            text = await agent_wizard.generate_prompt(job, tools)
+            message, style = _("Written by Claude — read it and change what you want."), ""
+        except ValueError as problem:
+            text, message, style = "", str(problem), "red"
+        if not self.is_attached:
+            return
+        self._generating = False
+        self.query_one("#agent-generate", Button).disabled = False
+        if text:
+            self.query_one("#agent-prompt", TextArea).text = text
+            self._outline = ""  # no longer the outline: not replaced when the description changes
+        self.query_one("#agent-status", Static).update(Text(message, style=style))
 
     def action_save(self) -> None:
-        description, tools, model, prompt = self._template().parts()
+        description, tools, model, prompt = self._fields()
+        error = self.query_one("#agent-error", Static)
+        if self._is_custom() and not prompt.strip():
+            error.update(_("The agent needs instructions: write them, or let Claude write them."))
+            return
         try:
             path, new_folder = agents.write_agent(
                 self.query_one("#agent-name", Input).value.strip(), description, tools, model, prompt,
                 self.query_one("#agent-scope", Select).value, self.project_path)
         except ValueError as problem:
-            self.query_one("#agent-error", Static).update(str(problem))
+            error.update(str(problem))
             return
         if new_folder:
             self.app.notify(_("Claude Code only watches agent folders that existed when it started: restart it "

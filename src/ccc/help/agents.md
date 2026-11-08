@@ -17,10 +17,21 @@ for the selected conversation.
 
 ## Adding an agent
 
-`a` opens **New agent**. Pick a template, give the agent a name and say
-where it is kept: this project or all projects. Under the fields you see the
-file exactly as it will be written; `Ctrl+S` creates it and the new agent is
-selected in the list.
+`a` opens **New agent**. Give the agent a name and say where it is kept:
+this project or all projects; `Ctrl+S` creates it and the new agent is
+selected in the list. You start from one of two things:
+
+- **Describe it myself** (the default): say in one sentence what the agent
+  does and *when* Claude should use it, whether it may only read, also run
+  commands or also change files, and how thorough it should be (a cheaper
+  model for simple jobs). ccc turns that into the file's fields. The
+  instructions start as a short outline; **Write the instructions with
+  Claude** lets Claude write them instead (a one-off call that can't read,
+  write or run anything; it counts against your usage like a short
+  question). Read the result and change what you want: nothing is saved
+  until you press Create.
+- **A template**; under the fields you see the file exactly as it will be
+  written:
 
 - **Code reviewer**, **Test runner**, **Code explorer**, **Translator**: each
   has one job, a description that says when to use it, only the tools that

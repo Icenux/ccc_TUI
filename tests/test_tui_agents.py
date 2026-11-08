@@ -103,6 +103,8 @@ async def test_window_creates_an_agent_from_a_template(tmp_path):
         await pilot.pause()
         dialog = app.screen
         assert isinstance(dialog, AgentCreateModal)
+        dialog.query_one("#agent-template", Select).value = "code-reviewer"
+        await pilot.pause()
         preview = dialog.query_one("#agent-preview", TextArea).text
         assert preview.startswith("---\nname: code-reviewer\n") and "tools: Read, Grep, Glob, Bash" in preview
         dialog.query_one("#agent-template", Select).value = "test-runner"
@@ -115,3 +117,106 @@ async def test_window_creates_an_agent_from_a_template(tmp_path):
         assert modal.__class__.__name__ == "AgentsModal"
         assert [a.name for a in modal._agents] == ["test-runner"]
         assert modal.selected().name == "test-runner"
+
+
+def _project(tmp_path):
+    project = tmp_path / "shop"
+    (project / ".git").mkdir(parents=True)
+    db_path = tmp_path / "history.db"
+    Storage(db_path).create_queue("shop", str(project), "s1")
+    return project, CCContinueApp(str(db_path))
+
+
+async def _open_new_agent(app, pilot):
+    await pilot.pause()
+    await pilot.press("c")
+    await pilot.pause()
+    await pilot.press("A")
+    await pilot.pause()
+    await pilot.press("a")
+    await pilot.pause()
+    return app.screen
+
+
+@pytest.mark.asyncio
+async def test_describe_it_myself_with_the_outline_prompt(tmp_path):
+    from ccc import agents
+    from textual.widgets import Input, Select, TextArea
+
+    project, app = _project(tmp_path)
+    async with app.run_test(size=(140, 70)) as pilot:
+        dialog = await _open_new_agent(app, pilot)
+        assert dialog.query_one("#agent-custom").display and not dialog.query_one("#agent-preview").display
+        await pilot.press("ctrl+s")  # nothing described yet: nothing is written
+        await pilot.pause()
+        assert not (project / ".claude" / "agents").exists()
+        dialog.query_one("#agent-describe", Input).value = "Checks that texts exist in EN and CS. Use after text changes."
+        dialog.query_one("#agent-effort", Select).value = "fast"
+        dialog.query_one("#agent-name", Input).value = "text-checker"
+        await pilot.pause()
+        prompt = dialog.query_one("#agent-prompt", TextArea).text
+        assert "Checks that texts exist" in prompt and "never change a file" in prompt  # the outline follows the description
+        await pilot.press("ctrl+s")
+        await pilot.pause()
+    [a] = agents.list_agents(str(project))
+    assert (a.name, a.tools, a.model) == ("text-checker", ("Read", "Grep", "Glob"), "haiku")
+    assert a.description.startswith("Checks that texts exist") and "never change a file" in a.prompt
+
+
+@pytest.mark.asyncio
+async def test_claude_writes_the_prompt_and_the_user_may_still_change_it(tmp_path, monkeypatch):
+    from ccc import agent_wizard, agents
+    from textual.widgets import Button, Input, Select, Static, TextArea
+
+    seen = {}
+
+    async def fake(job, tools, run_fn=None):
+        seen["args"] = (job, tools)
+        return "You check texts.\n\nReport what is missing."
+
+    monkeypatch.setattr(agent_wizard, "generate_prompt", fake)
+    project, app = _project(tmp_path)
+    async with app.run_test(size=(140, 70)) as pilot:
+        dialog = await _open_new_agent(app, pilot)
+        dialog.query_one("#agent-describe", Input).value = "Checks texts"
+        dialog.query_one("#agent-access", Select).value = "run"
+        await pilot.pause()
+        dialog.query_one("#agent-generate", Button).press()
+        for _n in range(20):
+            await pilot.pause(0.1)
+            if "Written by Claude" in str(dialog.query_one("#agent-status", Static).render()):
+                break
+        assert seen["args"] == ("Checks texts", ("Read", "Grep", "Glob", "Bash"))
+        assert dialog.query_one("#agent-prompt", TextArea).text.startswith("You check texts.")
+        dialog.query_one("#agent-describe", Input).value = "Checks texts and docs"  # must not overwrite Claude's text
+        await pilot.pause()
+        assert dialog.query_one("#agent-prompt", TextArea).text.startswith("You check texts.")
+        await pilot.press("ctrl+s")
+        await pilot.pause()
+    [a] = agents.list_agents(str(project))
+    assert a.prompt.startswith("You check texts.") and a.tools == ("Read", "Grep", "Glob", "Bash")
+
+
+@pytest.mark.asyncio
+async def test_a_failed_generation_keeps_the_outline_and_says_why(tmp_path, monkeypatch):
+    from ccc import agent_wizard
+    from textual.widgets import Button, Input, Static, TextArea
+
+    async def fail(job, tools, run_fn=None):
+        raise ValueError("usage limit reached")
+
+    monkeypatch.setattr(agent_wizard, "generate_prompt", fail)
+    _project_dir, app = _project(tmp_path)
+    async with app.run_test(size=(140, 70)) as pilot:
+        dialog = await _open_new_agent(app, pilot)
+        dialog.query_one("#agent-describe", Input).value = "Checks texts"
+        await pilot.pause()
+        before = dialog.query_one("#agent-prompt", TextArea).text
+        dialog.query_one("#agent-generate", Button).press()
+        for _n in range(20):
+            await pilot.pause(0.1)
+            if "usage limit" in str(dialog.query_one("#agent-status", Static).render()):
+                break
+        assert "usage limit reached" in str(dialog.query_one("#agent-status", Static).render())
+        assert dialog.query_one("#agent-prompt", TextArea).text == before
+        assert not dialog.query_one("#agent-generate", Button).disabled  # may try again

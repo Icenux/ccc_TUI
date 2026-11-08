@@ -17,10 +17,19 @@ najde pro vybranou konverzaci.
 
 ## Přidání agenta
 
-`a` otevře **Nový agent**. Vyber šablonu, pojmenuj agenta a řekni, kam se
-uloží: do tohoto projektu, nebo do všech projektů. Pod poli vidíš soubor
-přesně tak, jak se zapíše; `Ctrl+S` ho vytvoří a nový agent se v seznamu
-vybere.
+`a` otevře **Nový agent**. Pojmenuj agenta a řekni, kam se uloží: do tohoto
+projektu, nebo do všech projektů; `Ctrl+S` ho vytvoří a nový agent se v
+seznamu vybere. Začínáš jednou ze dvou věcí:
+
+- **Popíšu ho sám** (výchozí): jednou větou řekni, co agent dělá a *kdy* ho
+  má Claude použít, zda smí jen číst, také spouštět příkazy, nebo i měnit
+  soubory, a jak důkladný má být (na jednoduché úkoly levnější model). ccc z
+  toho složí pole souboru. Instrukce začnou jako stručná osnova; **Napsat
+  instrukce pomocí Claude** je nechá napsat Claudem (jednorázové volání,
+  které nemůže nic číst, zapisovat ani spouštět; započítá se do tvé
+  spotřeby jako krátká otázka). Výsledek si přečti a změň, co chceš: dokud
+  nestiskneš Vytvořit, nic se neuloží.
+- **Šablona**; pod poli vidíš soubor přesně tak, jak se zapíše:
 
 - **Revizor kódu**, **Spouštěč testů**, **Průzkumník kódu**,
   **Překladatel**: každý má jeden úkol, popis, který říká, kdy ho použít,

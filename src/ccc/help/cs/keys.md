@@ -121,7 +121,9 @@ uvádějí výchozí klávesy.
 | Klávesa | |
 |---|---|
 | `a` | Přidat agenta ze šablony (jméno, kam se uloží, náhled souboru) |
-| `Ctrl+S` | Vytvořit agenta v okně nového agenta |
+| `e` | Upravit agenta: popis, nástroje, model, prompt (také Enter) |
+| `Del` | Smazat agenta (soubor se přesune do složky ccc) |
+| `Ctrl+S` | Vytvořit / uložit agenta v jeho okně |
 
 ## Recenze (v)
 

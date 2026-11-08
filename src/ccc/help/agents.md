@@ -12,7 +12,9 @@ for the selected conversation.
 | Key | |
 |---|---|
 | `↑` / `↓` | choose an agent; below the list you see its file, tools and the start of its prompt |
-| `a` | add an agent from a template |
+| `a` | add an agent (describe it yourself, or from a template) |
+| `e` / `Enter` | edit the selected agent |
+| `Delete` | delete the selected agent |
 | `Esc` | close |
 
 ## Adding an agent
@@ -44,6 +46,20 @@ selected in the list. You start from one of two things:
   already runs (ccc tells you).
 - To make a whole conversation run as an agent, see
   [Starting a conversation](new-conversation.md#agent).
+
+## Editing and deleting
+
+`e` (or `Enter`) edits the selected agent: description, tools, model and
+instructions. `Ctrl+E` opens the instructions in your external editor.
+Saving changes **only those four things**: the name and every other field of
+the file (hooks, memory, MCP servers, your comments) stay exactly as they
+were. If someone else changed the file while the window was open, ccc
+refuses to overwrite it; a file that is a symbolic link is left alone too
+(change its target in an editor).
+
+`Delete` removes the agent after a question. The file is **not deleted for
+good**: it moves to `~/.local/share/ccc/deleted-agents/` with the date in its
+name, so you can put it back by moving it into the agents folder.
 
 ## Where agents live
 

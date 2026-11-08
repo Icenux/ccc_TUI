@@ -288,3 +288,139 @@ def test_czech_templates_are_written_in_czech(claude_dir):
     finally:
         i18n.set_language("en")
     assert "Spustí testy" in description and "Spouštíš testy" in prompt
+
+
+# --- editing and deleting (#220) ---------------------------------------------------------
+
+RICH = """---
+name: rich
+description: Old description
+tools: Read, Grep
+model: haiku
+memory: project
+hooks:
+  PreToolUse:
+    - matcher: Bash
+      hooks:
+        - type: command
+          command: ./check.sh
+# a comment
+---
+
+Old prompt.
+"""
+
+
+def test_edit_changes_only_what_was_asked(claude_dir):
+    write(claude_dir / "agents", "rich.md", RICH)
+    [a] = agents.list_agents()
+    agents.update_agent(a, 'New: "description"', ("Read", "Bash"), "sonnet", "New prompt.\n\nSecond paragraph.")
+    text = (claude_dir / "agents" / "rich.md").read_text()
+    assert "memory: project" in text and "command: ./check.sh" in text and "# a comment" in text  # untouched
+    assert "name: rich" in text and "Old" not in text
+    [b] = agents.list_agents()
+    assert (b.name, b.description, b.tools, b.model) == ("rich", 'New: "description"', ("Read", "Bash"), "sonnet")
+    assert b.prompt.strip() == "New prompt.\n\nSecond paragraph."
+
+
+def test_edit_can_drop_tools_and_model_and_adds_missing_ones(claude_dir):
+    write(claude_dir / "agents", "rich.md", RICH)
+    [a] = agents.list_agents()
+    agents.update_agent(a, "d", None, "", "p")  # inherit every tool, the session's model
+    text = (claude_dir / "agents" / "rich.md").read_text()
+    assert "tools:" not in text and "model:" not in text and "memory: project" in text
+    write(claude_dir / "agents", "bare.md", "---\nname: bare\ndescription: d\n---\nx")
+    bare = next(x for x in agents.list_agents() if x.name == "bare")
+    agents.update_agent(bare, "d", ("Read",), "opus", "x")
+    assert "tools: Read" in (claude_dir / "agents" / "bare.md").read_text()
+    assert next(x for x in agents.list_agents() if x.name == "bare").model == "opus"
+
+
+def test_edit_replaces_a_list_or_block_field_with_all_its_lines(claude_dir):
+    write(claude_dir / "agents", "a.md", "---\nname: a\ndescription: >\n  long\n  text\ntools:\n  - Read\n  - Bash\nmodel: opus\n---\nx")
+    [a] = agents.list_agents()
+    agents.update_agent(a, "short", ("Grep",), "opus", "x")
+    text = (claude_dir / "agents" / "a.md").read_text()
+    assert "long" not in text and "- Read" not in text and "- Bash" not in text and "tools: Grep" in text
+    assert agents.list_agents()[0].tools == ("Grep",)
+
+
+def test_edit_keeps_a_model_the_file_already_has_but_refuses_a_new_unknown_one(claude_dir):
+    write(claude_dir / "agents", "a.md", "---\nname: a\ndescription: d\nmodel: claude-opus-5-5\n---\nx")
+    [a] = agents.list_agents()
+    agents.update_agent(a, "d2", None, "claude-opus-5-5", "x")
+    with pytest.raises(ValueError, match="Unknown model"):
+        agents.update_agent(agents.list_agents()[0], "d3", None, "gpt-5", "x")
+
+
+@pytest.mark.parametrize("bad", [{"description": "  "}, {"tools": ()}, {"tools": ("a b",)}])
+def test_edit_refuses_bad_values_and_leaves_the_file(claude_dir, bad):
+    write(claude_dir / "agents", "rich.md", RICH)
+    [a] = agents.list_agents()
+    fields = {"description": "d", "tools": ("Read",), **bad}
+    with pytest.raises(ValueError):
+        agents.update_agent(a, fields["description"], fields["tools"], "haiku", "p")
+    assert (claude_dir / "agents" / "rich.md").read_text() == RICH
+
+
+def test_edit_refuses_a_file_changed_since_it_was_read(claude_dir):
+    write(claude_dir / "agents", "rich.md", RICH)
+    [a] = agents.list_agents()
+    (claude_dir / "agents" / "rich.md").write_text(RICH + "\nSomeone else wrote this.\n")
+    with pytest.raises(ValueError, match="changed on disk"):
+        agents.update_agent(a, "d", ("Read",), "haiku", "p")
+    assert "Someone else" in (claude_dir / "agents" / "rich.md").read_text()
+
+
+def test_edit_refuses_a_symbolic_link_and_keeps_the_mode(claude_dir, tmp_path):
+    real = tmp_path / "shared.md"
+    real.write_text(RICH)
+    (claude_dir / "agents" / "rich.md").symlink_to(real)
+    [a] = agents.list_agents()
+    with pytest.raises(ValueError, match="symbolic link"):
+        agents.update_agent(a, "d", ("Read",), "haiku", "p")
+    assert real.read_text() == RICH
+    (claude_dir / "agents" / "rich.md").unlink()
+    write(claude_dir / "agents", "mode.md", RICH.replace("name: rich", "name: mode"))
+    (claude_dir / "agents" / "mode.md").chmod(0o600)
+    agents.update_agent(agents.list_agents()[0], "d", ("Read",), "haiku", "p")
+    assert (claude_dir / "agents" / "mode.md").stat().st_mode & 0o777 == 0o600
+    assert not list((claude_dir / "agents").glob(".*ccc-tmp"))  # no scratch file left
+
+
+def test_delete_moves_the_file_to_ccc_s_folder(claude_dir, tmp_path, monkeypatch):
+    monkeypatch.setenv("CCC_AGENT_TRASH", str(tmp_path / "trash"))
+    write(claude_dir / "agents", "gone.md", GOOD.replace("reviewer", "gone"))
+    [a] = agents.list_agents()
+    kept = agents.delete_agent(a)
+    assert not (claude_dir / "agents" / "gone.md").exists() and agents.list_agents() == []
+    assert kept.parent == tmp_path / "trash" and kept.name.endswith("-user-gone.md")
+    assert "You review." in kept.read_text()  # recoverable
+    assert kept.parent.stat().st_mode & 0o777 == 0o700
+
+
+def test_delete_touches_only_agent_files(claude_dir, tmp_path, monkeypatch):
+    monkeypatch.setenv("CCC_AGENT_TRASH", str(tmp_path / "trash"))
+    stray = tmp_path / "elsewhere" / "notes.md"
+    stray.parent.mkdir()
+    stray.write_text("keep")
+    fake = agents.Agent(name="x", description="d", scope="user", path=stray)
+    with pytest.raises(ValueError, match="not an agent file"):
+        agents.delete_agent(fake)
+    assert stray.read_text() == "keep"
+
+
+def test_edit_does_not_follow_a_symlink_planted_at_a_guessable_scratch_name(claude_dir, tmp_path):
+    """The agents folder can come from a cloned repository: a link at `.<file>.ccc-tmp` must not make ccc
+    overwrite what it points to."""
+    write(claude_dir / "agents", "rich.md", RICH)
+    victim = tmp_path / "victim.txt"
+    victim.write_text("keep me")
+    for guess in (".rich.md.ccc-tmp", "rich.md.ccc-tmp", ".rich.md.tmp"):
+        (claude_dir / "agents" / guess).symlink_to(victim)
+    [a] = agents.list_agents()
+    agents.update_agent(a, "d", ("Read",), "haiku", "p")
+    assert victim.read_text() == "keep me"
+    assert agents.list_agents()[0].description == "d"
+    left = [p.name for p in (claude_dir / "agents").iterdir() if p.is_symlink()]
+    assert sorted(left) == sorted([".rich.md.ccc-tmp", "rich.md.ccc-tmp", ".rich.md.tmp"])  # theirs, untouched

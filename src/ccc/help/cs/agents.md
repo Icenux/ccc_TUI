@@ -12,7 +12,9 @@ najde pro vybranou konverzaci.
 | Klávesa | |
 |---|---|
 | `↑` / `↓` | vybere agenta; pod seznamem vidíš jeho soubor, nástroje a začátek promptu |
-| `a` | přidá agenta ze šablony |
+| `a` | přidá agenta (popíšeš ho sám, nebo ze šablony) |
+| `e` / `Enter` | upraví vybraného agenta |
+| `Delete` | smaže vybraného agenta |
 | `Esc` | zavře okno |
 
 ## Přidání agenta
@@ -42,6 +44,19 @@ seznamu vybere. Začínáš jednou ze dvou věcí:
   (ccc to řekne).
 - Aby celá konverzace běžela jako agent, viz
   [Nová konverzace](new-conversation.md#agent).
+
+## Úprava a smazání
+
+`e` (nebo `Enter`) upraví vybraného agenta: popis, nástroje, model a
+instrukce. `Ctrl+E` otevře instrukce v tvém externím editoru. Uložení mění
+**jen tyto čtyři věci**: jméno a všechna ostatní pole souboru (hooks, paměť,
+MCP servery, tvoje komentáře) zůstanou přesně jak byla. Změnil-li soubor
+mezitím někdo jiný, ccc ho nepřepíše; soubor, který je symbolický odkaz,
+také nechá být (změň jeho cíl v editoru).
+
+`Delete` agenta po potvrzení odstraní. Soubor se **nesmaže nadobro**:
+přesune se do `~/.local/share/ccc/deleted-agents/` s datem v názvu, takže
+ho můžeš vrátit zpět přesunem do složky agentů.
 
 ## Kde agenti jsou
 

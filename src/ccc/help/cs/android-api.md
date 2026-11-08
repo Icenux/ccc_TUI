@@ -88,7 +88,7 @@ celého počítače:
 |---|---|
 | `read` | dívat se: každé `GET` (seznamy, konverzace, diffy, proud událostí); bez odkazů, které konverzaci ovládají (`remote_control_url`) |
 | `operate` | i řídit existující konverzace: zprávy, schvalování, fronta, úkoly, revize, cíle, workflow |
-| `admin` | i zakládat konverzace (v jakékoli složce), psát do terminálu, posílat prompty živým relacím, rutiny, vrátit běh, nastavení a presety, záloha, aktualizace ccc a sestavení appky, správa ostatních zařízení |
+| `admin` | i zakládat konverzace (v jakékoli složce), psát do terminálu, posílat prompty živým relacím, rutiny, vrátit běh, nastavení a presety, vytvářet, měnit a odstraňovat [agenty](agents.md), záloha, aktualizace ccc a sestavení appky, správa ostatních zařízení |
 
 Nově spárovaný telefon je `operate`; `ccc api pair --role admin` (nebo
 *Změnit roli* v seznamu Zařízení, nebo `ccc api role ID admin`) dá víc, `read`
@@ -208,6 +208,11 @@ jen to, co platí pro obě strany.
 | `GET /launch-options` | volby, se kterými jde konverzace založit (klíče a popisky) |
 | `GET /projects` | naposledy použité složky |
 | `GET /plugins` | `{installed, enabled}`: id nainstalovaných pluginů Claude Code a těch zapnutých ve výchozím stavu (zaškrtnou se jako `plugin:<id>` v `options`, spolu s `plugins_select`) |
+| `GET /agents?path=` | [agenti](agents.md) Claude Code pro složku (z projektu i uživatelovi) bez promptů: `name`, `description`, `scope` (`project` / `user`), `tools` (`null` = všechny nástroje), `model`, `problem` (proč by Claude Code soubor přeskočil, jinak prázdné), `overridden`, `file`. Složka mimo povolené dostane `403` |
+| `GET /agents/{scope}/{name}?path=` | jeden agent s `prompt` a `version`; `POST` na stejné cestě ho změní `{"path", "description", "tools", "model", "prompt", "version"}` (`409`, když se soubor od té `version` změnil; jméno a ostatní pole souboru zůstanou), `DELETE` ho odstraní (soubor se přesune do složky ccc). Admin; agent z nadřazené složky nebo za odkazem vedoucím ven ze složky se nemění (`403`) |
+| `POST /agents` | admin: vytvoří `{"scope", "path", "name", "description", "tools", "model", "prompt"}`; `name` jsou malá písmena, číslice a pomlčky, existující soubor se nikdy nepřepíše (`400`). Odpoví `201` s agentem, `version` a `new_folder` (Claude Code potřebuje restart, aby viděl prvního agenta v nové složce) |
+| `GET /agent-options` | šablony (key, title, description, tools, model, prompt — v jazyce požadavku) a volby průvodce: `access` (co smí → nástroje), `effort` (→ model), povolené `models` |
+| `POST /agents/prompt` | admin: `{"description", "access", "claude"}` → `{"prompt", "by"}`: stručná osnova, nebo s `"claude": true` instrukce napsané Claudem (jedno volání bez nástrojů, vždy jen jedno: `429`, když už jiné běží, `502` s důvodem, když Claude nemohl) |
 | `GET /mcp-servers?path=` | názvy MCP serverů nastavených pro složku (zaškrtnou se jako `mcp:<název>` v `options`, spolu s `mcp_select`) |
 | `GET /sessions?path=` | relace Claude Code ve složce, nejnovější první (k pokračování: `session_id` v `POST /conversations` se `session_resume`) |
 | `GET /launch-presets` | předvolby okna Nová konverzace a poslední volba |

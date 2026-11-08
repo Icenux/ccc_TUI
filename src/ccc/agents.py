@@ -221,7 +221,7 @@ def as_dict(agent: Agent) -> dict:
     """What the API shows of an agent (the prompt stays in the file)."""
     return {"name": agent.name, "description": agent.description, "scope": agent.scope,
             "tools": list(agent.tools) if agent.tools is not None else None, "model": agent.model,
-            "problem": agent.problem, "overridden": agent.overridden, "file": agent.path.name}
+            "problem": _(agent.problem) if agent.problem else "", "overridden": agent.overridden, "file": agent.path.name}
 
 
 def display_path(agent: Agent) -> str:

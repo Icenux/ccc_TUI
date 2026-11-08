@@ -51,7 +51,8 @@ GET  /api/v1/launch-presets               New conversation presets and the last 
 GET  /api/v1/sessions?path=               Claude Code sessions of a folder (to resume one)
 GET  /api/v1/mcp-servers?path=            names of the MCP servers configured for a folder (to choose from)
 GET  /api/v1/plugins                      installed Claude Code plugins and which ones are on by default
-GET  /api/v1/agents?path=                 Claude Code subagents (.claude/agents of the folder, ~/.claude/agents)
+GET  /api/v1/agents?path=                 Claude Code subagents (.claude/agents of the folder, ~/.claude/agents); create, change, remove
+                                          and the templates: see ccc.api_subagents
 GET  /api/v1/permissions                  every approval waiting
 POST /api/v1/permissions/{id}             {"decision": "allow" | "always" | "deny"}
 GET  /api/v1/usage                        Claude usage limits
@@ -78,6 +79,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from ccc import agents, goals, groups, i18n, launch_options, mcp_servers, plugins, updates
 from ccc.api_agents import AgentEndpoints
+from ccc.api_subagents import SubagentEndpoints
 from ccc import api_audit, api_roles, api_scope
 from ccc.api_common import ApiError, int_of, iso, route, task_line, text_of
 from ccc.api_views import ViewEndpoints
@@ -174,7 +176,7 @@ class _Transcript:
     events: list[TranscriptEvent] = field(default_factory=list)
 
 
-class Api(AgentEndpoints, ViewEndpoints):
+class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
     """The endpoints without HTTP: route() takes a request and returns
     (status, JSON-able body), raising ApiError for an error."""
 
@@ -231,7 +233,6 @@ class Api(AgentEndpoints, ViewEndpoints):
             ok(r"/sessions", lambda ids, q, b: self.sessions(q.get("path", ""))),
             ok(r"/mcp-servers", lambda ids, q, b: self.mcp_servers(q.get("path", ""))),
             ok(r"/plugins", lambda ids, q, b: self.plugins()),
-            ok(r"/agents", lambda ids, q, b: self.agents(q.get("path", ""))),
             ok(r"/launch-options", lambda ids, q, b: self.launch_options()),
             ok(r"/launch-presets", lambda ids, q, b: self.launch_presets()),
             ok(r"/prompt-presets", lambda ids, q, b: self.prompt_presets()),
@@ -239,7 +240,7 @@ class Api(AgentEndpoints, ViewEndpoints):
             ok(r"/devices", lambda ids, q, b: self.devices(int_of(q, CALLER), q.get("all") in ("1", "true"))),
             ok(r"/devices/(\d+)", lambda ids, q, b: self.rename_device(*ids, b), "POST"),
             ok(r"/devices/(\d+)", lambda ids, q, b: self.remove_device(*ids), "DELETE"),
-        ] + self._agent_routes() + self._view_routes()
+        ] + self._agent_routes() + self._subagent_routes() + self._view_routes()
 
     def route(self, method: str, path: str, query: dict[str, str], body: dict) -> tuple[HTTPStatus, object]:
         if not path.startswith(PREFIX + "/"):
@@ -809,12 +810,6 @@ class Api(AgentEndpoints, ViewEndpoints):
         servers Claude Code would load in a folder."""
         return mcp_servers.names(api_scope.check_folder(self.storage, path)) if path.strip() else []
 
-    def agents(self, path: str) -> list[dict]:
-        """The Claude Code subagents of a folder (its project's and the user's),
-        without their prompts; a broken file comes with `problem`."""
-        folder = api_scope.check_folder(self.storage, path) if path.strip() else ""
-        return [agents.as_dict(a) for a in agents.list_agents(folder)]
-
     def plugins(self) -> dict:
         """Ids of the installed Claude Code plugins and the ones the user has
         switched on (what a conversation inherits unless it picks its own)."""
@@ -1027,7 +1022,7 @@ class _Handler(BaseHTTPRequestHandler):
     @staticmethod
     def _detail(method: str, path: str, body: dict) -> str:
         """The one thing worth keeping of a request's body: the folder of a new conversation."""
-        folder = body.get("path") if method == "POST" and path == PREFIX + "/conversations" else None
+        folder = body.get("path") if method == "POST" and path in (PREFIX + "/conversations", PREFIX + "/agents") else None
         return folder if isinstance(folder, str) else ""
 
     def _audit(self, method: str, path: str, status: int, detail: str = "", device=None, denied_folder: str = "") -> None:

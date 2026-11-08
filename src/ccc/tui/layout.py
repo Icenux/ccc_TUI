@@ -259,6 +259,7 @@ SidebarScreen.-short Button.nav-button {
 /* Filter: a strip like the key list at the bottom (one row, blue, orange key) */
 #sidebar-strip-row {
     height: 1;
+    background: $footer-background;
 }
 #sidebar-strip-row Button.sidebar-button-strip {
     width: auto;

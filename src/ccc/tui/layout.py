@@ -450,6 +450,7 @@ class SidebarScreen(Screen):
         keymap.binding("views.new_conversation", "new_conversation", _("New conversation"), show=False),
         keymap.binding("views.help", "key_help", _("Help")),
         keymap.binding("views.routines", "routines", _("Routines")),
+        keymap.binding("views.agents", "agents", _("Agents"), show=False),
         keymap.binding("views.update", "update", _("Update"), show=False),
     ]
 
@@ -728,6 +729,13 @@ class SidebarScreen(Screen):
         from ccc.tui.routines import RoutinesModal
 
         self.app.push_screen(RoutinesModal(self.storage, self.selected_queue_id()))
+
+    def action_agents(self) -> None:
+        from ccc.tui.agents import AgentsModal
+
+        queue_id = self.selected_queue_id()
+        queue = self.storage.find_queue(queue_id) if queue_id is not None else None
+        self.app.push_screen(AgentsModal(queue.project_path if queue else self.default_project_path()))
 
     def action_add_prompt(self) -> None:
         from ccc.tui.queue_detail import AddPromptModal

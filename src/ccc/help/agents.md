@@ -12,7 +12,27 @@ for the selected conversation.
 | Key | |
 |---|---|
 | `↑` / `↓` | choose an agent; below the list you see its file, tools and the start of its prompt |
+| `a` | add an agent from a template |
 | `Esc` | close |
+
+## Adding an agent
+
+`a` opens **New agent**. Pick a template, give the agent a name and say
+where it is kept: this project or all projects. Under the fields you see the
+file exactly as it will be written; `Ctrl+S` creates it and the new agent is
+selected in the list.
+
+- **Code reviewer**, **Test runner**, **Code explorer**, **Translator**: each
+  has one job, a description that says when to use it, only the tools that
+  job needs and, where it is enough, a cheaper model.
+- A file that already exists is never overwritten.
+- The file is yours afterwards: open it in any editor and change what you
+  want. Claude Code picks the change up within seconds.
+- Claude Code watches only agent folders that existed when it started. The
+  first agent in a new folder needs a restart of Claude Code where it
+  already runs (ccc tells you).
+- To make a whole conversation run as an agent, see
+  [Starting a conversation](new-conversation.md#agent).
 
 ## Where agents live
 

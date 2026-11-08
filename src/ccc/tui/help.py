@@ -98,6 +98,10 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("routines.delete", N_("Delete it (tasks it queued stay)")),
         ("window.save", N_("Save in the routine editor")),
     ]),
+    (N_("Agents (A)"), [
+        ("agents.add", N_("Add an agent from a template (name, where it is kept, preview of the file)")),
+        ("window.save", N_("Create the agent in the new-agent window")),
+    ]),
     (N_("Review (v)"), [
         ("window.save", N_("Start the review")),
         ("window.cancel", N_("Close")),

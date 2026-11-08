@@ -80,3 +80,38 @@ async def test_new_conversation_dialog_runs_the_whole_conversation_as_an_agent(t
         dialog.query_one(f"#opt-{lo.AGENT_SELECT}", Checkbox).value = False
         await pilot.pause()
         assert lo.agent_names(dialog.selection) == []
+
+
+@pytest.mark.asyncio
+async def test_window_creates_an_agent_from_a_template(tmp_path):
+    from ccc.tui.agents import AgentCreateModal
+    from textual.widgets import Select, TextArea
+
+    project = tmp_path / "shop"
+    (project / ".git").mkdir(parents=True)
+    db_path = tmp_path / "history.db"
+    Storage(db_path).create_queue("shop", str(project), "s1")
+    app = CCContinueApp(str(db_path))
+    async with app.run_test(size=(140, 55)) as pilot:
+        await pilot.pause()
+        await pilot.press("c")
+        await pilot.pause()
+        await pilot.press("A")
+        await pilot.pause()
+        assert "no agents yet" in str(app.screen.query_one("#agents-table", DataTable).get_row_at(0)[0])
+        await pilot.press("a")
+        await pilot.pause()
+        dialog = app.screen
+        assert isinstance(dialog, AgentCreateModal)
+        preview = dialog.query_one("#agent-preview", TextArea).text
+        assert preview.startswith("---\nname: code-reviewer\n") and "tools: Read, Grep, Glob, Bash" in preview
+        dialog.query_one("#agent-template", Select).value = "test-runner"
+        await pilot.pause()
+        assert dialog.query_one("#agent-name").value == "test-runner"  # the name follows the template
+        await pilot.press("ctrl+s")
+        await pilot.pause()
+        assert (project / ".claude" / "agents" / "test-runner.md").is_file()
+        modal = app.screen
+        assert modal.__class__.__name__ == "AgentsModal"
+        assert [a.name for a in modal._agents] == ["test-runner"]
+        assert modal.selected().name == "test-runner"

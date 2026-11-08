@@ -25,6 +25,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("views.new_conversation", N_("New conversation")),
         ("views.help", N_("This help")),
         ("views.routines", N_("Routines: prompts on a schedule")),
+        ("views.agents", N_("Agents: helpers Claude Code can call")),
         ("views.update", N_("Update ccc — only when a new version is there")),
         ("app.settings", N_("Settings (language, Telegram, queues, presets, shortcuts, backup)")),
         ("app.screenshot", N_("Screenshot of ccc (an SVG in the export folder, see Settings)")),

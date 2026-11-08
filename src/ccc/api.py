@@ -51,6 +51,7 @@ GET  /api/v1/launch-presets               New conversation presets and the last 
 GET  /api/v1/sessions?path=               Claude Code sessions of a folder (to resume one)
 GET  /api/v1/mcp-servers?path=            names of the MCP servers configured for a folder (to choose from)
 GET  /api/v1/plugins                      installed Claude Code plugins and which ones are on by default
+GET  /api/v1/agents?path=                 Claude Code subagents (.claude/agents of the folder, ~/.claude/agents)
 GET  /api/v1/permissions                  every approval waiting
 POST /api/v1/permissions/{id}             {"decision": "allow" | "always" | "deny"}
 GET  /api/v1/usage                        Claude usage limits
@@ -75,7 +76,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
-from ccc import goals, groups, i18n, launch_options, mcp_servers, plugins, updates
+from ccc import agents, goals, groups, i18n, launch_options, mcp_servers, plugins, updates
 from ccc.api_agents import AgentEndpoints
 from ccc import api_audit, api_roles, api_scope
 from ccc.api_common import ApiError, int_of, iso, route, task_line, text_of
@@ -230,6 +231,7 @@ class Api(AgentEndpoints, ViewEndpoints):
             ok(r"/sessions", lambda ids, q, b: self.sessions(q.get("path", ""))),
             ok(r"/mcp-servers", lambda ids, q, b: self.mcp_servers(q.get("path", ""))),
             ok(r"/plugins", lambda ids, q, b: self.plugins()),
+            ok(r"/agents", lambda ids, q, b: self.agents(q.get("path", ""))),
             ok(r"/launch-options", lambda ids, q, b: self.launch_options()),
             ok(r"/launch-presets", lambda ids, q, b: self.launch_presets()),
             ok(r"/prompt-presets", lambda ids, q, b: self.prompt_presets()),
@@ -806,6 +808,12 @@ class Api(AgentEndpoints, ViewEndpoints):
         """Names (never the definitions — they can hold tokens) of the MCP
         servers Claude Code would load in a folder."""
         return mcp_servers.names(api_scope.check_folder(self.storage, path)) if path.strip() else []
+
+    def agents(self, path: str) -> list[dict]:
+        """The Claude Code subagents of a folder (its project's and the user's),
+        without their prompts; a broken file comes with `problem`."""
+        folder = api_scope.check_folder(self.storage, path) if path.strip() else ""
+        return [agents.as_dict(a) for a in agents.list_agents(folder)]
 
     def plugins(self) -> dict:
         """Ids of the installed Claude Code plugins and the ones the user has

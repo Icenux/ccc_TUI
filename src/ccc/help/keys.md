@@ -20,6 +20,7 @@ name the default keys.
 | `n` | New conversation |
 | `?` | This help |
 | `o` | Routines: prompts on a schedule |
+| `A` | Agents: helpers Claude Code can call |
 | `U` | Update ccc — only when a new version is there |
 | `Ctrl+P` | Settings (language, Telegram, queues, presets, shortcuts, backup) |
 | `Alt+S` | Screenshot of ccc (an SVG in the export folder, see Settings) |

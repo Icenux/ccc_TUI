@@ -865,6 +865,13 @@ CS: dict[str, str] = {
     "all projects": "všechny projekty",
     "all tools": "všechny nástroje",
     "Agent": "Agent",
+    "agent": "agent",
+    "Agent: {name}": "Agent: {name}",
+    "Whole conversation as one agent": "Celá konverzace jako jeden agent",
+    "Its prompt replaces Claude Code's own instructions.": "Jeho prompt nahradí vlastní instrukce Claude Code.",
+    "There is no agent “{name}” for this folder.": "Pro tuto složku neexistuje agent „{name}“.",
+    "No agents here. Press A for Agents; they are files in .claude/agents.":
+        "Žádní agenti. Klávesa A otevře Agenty; jsou to soubory v .claude/agents.",
     "What it is for": "K čemu je",
     "no agents yet": "zatím žádní agenti",
     "An agent is a helper with one job. Claude Code calls it on its own when the task fits its description; its files are in .claude/agents (this project) or ~/.claude/agents (all projects).":

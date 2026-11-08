@@ -142,3 +142,66 @@ def test_api_refuses_a_folder_outside_the_allowed_ones(claude_dir, tmp_path):
     with pytest.raises(api.ApiError) as error:
         api.Api(storage).route("GET", "/api/v1/agents", {"path": "/etc"}, None)
     assert error.value.status == 403
+
+
+# --- the whole conversation as an agent (launch options, API) --------------------------
+
+
+def test_agent_launch_option_becomes_the_agent_flag():
+    from ccc import launch_options as lo
+
+    sel = lo.toggle(lo.DEFAULT_SELECTION, "agent:reviewer", True)
+    assert lo.AGENT_SELECT in sel  # ticking an agent turns the mode on
+    assert lo.persistent_flags(sel)[-2:] == ["--agent", "reviewer"]
+    assert lo.describe_flags(lo.persistent_flags(sel)).endswith("Agent: reviewer")
+
+
+def test_only_one_agent_and_untick_clears_it():
+    from ccc import launch_options as lo
+
+    sel = lo.toggle(lo.toggle(lo.DEFAULT_SELECTION, "agent:a", True), "agent:b", True)
+    assert lo.agent_names(sel) == ["b"]
+    assert lo.agent_names(lo.toggle(sel, lo.AGENT_SELECT, False)) == []
+    assert "--agent" not in lo.persistent_flags(lo.toggle(sel, lo.AGENT_SELECT, False))
+
+
+@pytest.mark.parametrize("key", ["agent:", "agent:-x", "agent:a b", "agent:a,b", "agent:" + "n" * 65, "agent:../x"])
+def test_unsafe_agent_names_are_no_agent_keys(key):
+    from ccc import launch_options as lo
+
+    assert not lo.is_agent(key)
+
+
+def test_presets_keep_an_agent():
+    from ccc.presets import _normalise
+
+    assert "agent:reviewer" in _normalise(["agent:reviewer", "agent_select"])
+
+
+def test_api_starts_a_conversation_as_an_agent_only_when_it_exists(claude_dir, tmp_path, monkeypatch):
+    from ccc import api
+    from ccc.orchestrator import start_conversation  # noqa: F401  (patched below)
+    from ccc.storage import Storage
+
+    storage = Storage(str(tmp_path / "ccc.db"))
+    folder = tmp_path / "shop"
+    (folder / ".git").mkdir(parents=True)
+    storage.create_queue("shop", str(folder), "s0")
+    write(folder / ".claude" / "agents", "reviewer.md", GOOD)
+    endpoint = api.Api(storage)
+    chosen = {}
+
+    def fake_start(storage_, path, selection, **kwargs):
+        chosen["selection"] = selection
+        return storage.get_queue_by_path(path)
+
+    monkeypatch.setattr(api, "start_conversation", fake_start)
+    body = {"path": str(folder), "options": ["agent_select", "agent:reviewer"]}
+    status, _ = endpoint.route("POST", "/api/v1/conversations", {}, body)
+    assert status == 201 and "agent:reviewer" in chosen["selection"]
+    with pytest.raises(api.ApiError) as missing:
+        endpoint.route("POST", "/api/v1/conversations", {}, {**body, "options": ["agent:ghost"]})
+    assert missing.value.status == 400
+    with pytest.raises(api.ApiError) as two:
+        endpoint.route("POST", "/api/v1/conversations", {}, {**body, "options": ["agent:reviewer", "agent:other"]})
+    assert two.value.status == 400

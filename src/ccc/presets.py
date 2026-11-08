@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
-from ccc.launch_options import DEFAULT_SELECTION, FORK, GROUPS, SESSION_NEW, group_of, is_mcp_server, is_plugin
+from ccc.launch_options import DEFAULT_SELECTION, FORK, GROUPS, SESSION_NEW, group_of, is_agent, is_mcp_server, is_plugin
 
 LAST_KEY = "last_launch_selection"
 PRESETS_KEY = "launch_presets"
@@ -23,7 +23,7 @@ class LaunchChoice:
 def _normalise(keys) -> frozenset[str]:
     """Keep known keys, start a new session (which session to resume is a
     per-launch decision, never remembered), fill required groups."""
-    sel = {k for k in keys if (k in _KNOWN_KEYS or is_mcp_server(k) or is_plugin(k)) and group_of(k).key not in ("session", "session_extra")}
+    sel = {k for k in keys if (k in _KNOWN_KEYS or is_mcp_server(k) or is_plugin(k) or is_agent(k)) and group_of(k).key not in ("session", "session_extra")}
     sel.add(SESSION_NEW)
     sel.discard(FORK)
     for group in GROUPS:

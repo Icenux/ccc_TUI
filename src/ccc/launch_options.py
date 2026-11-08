@@ -2,6 +2,7 @@
 and the pure logic turning a set of ticked keys into `claude` flags."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from ccc import mcp_servers, plugins
@@ -20,6 +21,13 @@ PLUGINS_SELECT = "plugins_select"
 # One ticked plugin of the "Plugins" group: "plugin:<id>" (ids come from the
 # plugins installed in Claude Code, ccc.plugins).
 PLUGIN_PREFIX = "plugin:"
+AGENT_SELECT = "agent_select"
+# The one ticked agent of the "Agent" group: "agent:<name>" (a Claude Code subagent
+# file of the folder or the user, ccc.agents). The whole conversation runs as that
+# agent (`claude --agent <name>`).
+AGENT_PREFIX = "agent:"
+AGENT_FLAG = "--agent"
+_AGENT_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}")  # what may end up on a command line
 
 
 @dataclass(frozen=True)
@@ -77,6 +85,10 @@ GROUPS: tuple[OptionGroup, ...] = (
     OptionGroup("plugins", N_("Plugins"), (
         LaunchOption(PLUGINS_SELECT, N_("Only selected plugins (predictable behaviour)"), (), N_("plugins")),
     ), exclusive=False, required=False),
+    OptionGroup("agent", N_("Agent"), (
+        LaunchOption(AGENT_SELECT, N_("Whole conversation as one agent"),
+                     (), N_("agent")),
+    ), exclusive=False, required=False),
     OptionGroup("other", N_("Other"), (
         LaunchOption("other_fallback_sonnet", N_("Fallback to Sonnet when overloaded"), ("--fallback-model", "sonnet"), N_("fallback Sonnet")),
         LaunchOption("other_chrome", N_("Claude in Chrome"), ("--chrome",), N_("Chrome")),
@@ -99,7 +111,17 @@ def is_plugin(key: str) -> bool:
     return key.startswith(PLUGIN_PREFIX) and plugins.valid_id(key[len(PLUGIN_PREFIX):])
 
 
+def is_agent(key: str) -> bool:
+    return key.startswith(AGENT_PREFIX) and _AGENT_NAME.fullmatch(key[len(AGENT_PREFIX):]) is not None
+
+
+def agent_names(selection) -> list[str]:
+    return sorted(k[len(AGENT_PREFIX):] for k in selection if is_agent(k))
+
+
 def group_of(key: str) -> OptionGroup:
+    if is_agent(key):
+        return next(g for g in GROUPS if g.key == "agent")
     if is_mcp_server(key):
         return next(g for g in GROUPS if g.key == "mcp")
     if is_plugin(key):
@@ -125,6 +147,14 @@ def toggle(selection: frozenset[str], key: str, checked: bool) -> frozenset[str]
         if checked:
             sel.add(PLUGINS_SELECT)
         return frozenset(sel)
+    if is_agent(key):
+        # One agent at most, and only while the mode is on; ticking one turns it on.
+        sel = {k for k in sel if not is_agent(k)}
+        if checked:
+            sel |= {key, AGENT_SELECT}
+        return frozenset(sel)
+    if key == AGENT_SELECT and not checked:
+        sel = {k for k in sel if not is_agent(k)}
     if key == MCP_SELECT and not checked:
         sel = {k for k in sel if not is_mcp_server(k)}
     if key == PLUGINS_SELECT and not checked:
@@ -159,6 +189,8 @@ def persistent_flags(selection: frozenset[str]) -> list[str]:
         flags.append(mcp_servers.marker(k[len(MCP_PREFIX):] for k in selection if is_mcp_server(k)))
     if PLUGINS_SELECT in selection:
         flags.append(plugins.marker(k[len(PLUGIN_PREFIX):] for k in selection if is_plugin(k)))
+    if AGENT_SELECT in selection and agent_names(selection):
+        flags += [AGENT_FLAG, agent_names(selection)[0]]
     return flags
 
 
@@ -169,7 +201,7 @@ def describe_flags(flags: list[str] | None) -> str:
     remaining = [f for f in flags if not f.startswith((mcp_servers.MARKER, plugins.MARKER))]
     parts: list[str] = []
     for group in GROUPS:
-        if group.key in SESSION_GROUP_KEYS or group.key in ("mcp", "plugins"):
+        if group.key in SESSION_GROUP_KEYS or group.key in ("mcp", "plugins", "agent"):
             continue
         for option in group.options:
             n = len(option.flags)
@@ -178,6 +210,11 @@ def describe_flags(flags: list[str] | None) -> str:
                     parts.append(_(option.short))
                     del remaining[i:i + n]
                     break
+    for i in range(len(remaining) - 1):
+        if remaining[i] == AGENT_FLAG:
+            parts.append(_("Agent: {name}").format(name=remaining[i + 1]))
+            del remaining[i:i + 2]
+            break
     chosen = mcp_servers.selected_names(flags)
     if chosen is not None:
         parts.append(_("MCP: {servers}").format(servers=", ".join(chosen)) if chosen else _("MCP: none"))

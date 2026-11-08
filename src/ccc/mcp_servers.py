@@ -22,6 +22,8 @@ import logging
 import os
 from pathlib import Path
 
+from ccc import profiles
+
 logger = logging.getLogger(__name__)
 
 # Launch-flag marker: "--ccc-mcp=a,b" allows servers a and b, "--ccc-mcp="
@@ -30,7 +32,9 @@ MARKER = "--ccc-mcp="
 OWN_SERVER = "ccc"
 
 
-def claude_json_path() -> Path:
+def claude_json_path(profile: str = "") -> Path:
+    if profile and profiles.get(profile):
+        return profiles.config_dir(profile) / ".claude.json"
     base = os.environ.get("CLAUDE_CONFIG_DIR")
     return (Path(base) if base else Path.home()) / ".claude.json"
 
@@ -62,14 +66,14 @@ def _json_object(path: Path) -> dict:
     return data if isinstance(data, dict) else {}
 
 
-def approved_project_servers(project: str, names) -> set[str]:
+def approved_project_servers(project: str, names, profile: str = "") -> set[str]:
     """Which of the `.mcp.json` servers `names` the user approved for
     `project`, as Claude Code records it: in the project's entry of
     ~/.claude.json or in the user's own settings.json (never in the
     project's, which the repository controls)."""
-    entry = (_json_object(claude_json_path()).get("projects") or {}).get(project)
+    entry = (_json_object(claude_json_path(profile)).get("projects") or {}).get(project)
     entry = entry if isinstance(entry, dict) else {}
-    settings_dir = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    settings_dir = profiles.config_dir(profile)
     user_settings = _json_object(settings_dir / "settings.json")
     approved: set[str] = set()
     disabled: set[str] = set()
@@ -83,23 +87,23 @@ def approved_project_servers(project: str, names) -> set[str]:
     return approved - disabled  # a rejection anywhere wins
 
 
-def discover(project_path: str) -> dict[str, dict]:
+def discover(project_path: str, profile: str = "") -> dict[str, dict]:
     """Servers Claude Code would load in `project_path`, by name: user
     config, then the project's approved .mcp.json servers, then local (per
     project) config — the later one wins, as in Claude Code."""
-    servers = _read_servers(claude_json_path())
+    servers = _read_servers(claude_json_path(profile))
     if not project_path.strip():
         return servers  # no folder yet: only the user's own servers
     project = str(Path(project_path).expanduser())
     from_project = _read_servers(Path(project) / ".mcp.json")
-    approved = approved_project_servers(project, from_project)
+    approved = approved_project_servers(project, from_project, profile)
     servers |= {name: cfg for name, cfg in from_project.items() if name in approved}
-    servers |= _read_servers(claude_json_path(), project)
+    servers |= _read_servers(claude_json_path(profile), project)
     return servers
 
 
-def names(project_path: str) -> list[str]:
-    return sorted(discover(project_path))
+def names(project_path: str, profile: str = "") -> list[str]:
+    return sorted(discover(project_path, profile))
 
 
 def config_dir() -> Path:
@@ -136,14 +140,14 @@ def selected_names(flags: list[str] | None) -> list[str] | None:
     return None
 
 
-def resolve_flags(flags: list[str] | None, project_path: str) -> list[str] | None:
+def resolve_flags(flags: list[str] | None, project_path: str, profile: str = "") -> list[str] | None:
     """`flags` with the marker replaced by what `claude` understands:
     --strict-mcp-config plus --mcp-config for the allowed servers that still
     exist. Without a marker `flags` come back unchanged."""
     if flags is None or not any(f.startswith(MARKER) for f in flags):
         return flags
     wanted = selected_names(flags) or []
-    found = discover(project_path)
+    found = discover(project_path, profile)
     for name in wanted:
         if name not in found:
             logger.warning("MCP server '%s' is no longer configured; skipped", name)

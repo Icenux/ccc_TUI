@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Awaitable, Callable
 
-from ccc import folders, gitops, managed_sessions
+from ccc import folders, gitops, managed_sessions, profiles
 from ccc.i18n import _
 from ccc.launch_options import (
     FORK,
@@ -126,7 +126,7 @@ PULL_REQUEST_RE = re.compile(r"\d{1,9}|https?://[^\s]+")
 
 def start_conversation(
     storage, project_path, selection, *, name=None, session_id=None, pr=None, auto_continue=True,
-    remote_control=False, interactive=True, worktree=False,
+    remote_control=False, interactive=True, worktree=False, profile="",
 ) -> Queue:
     """Create the queue behind a conversation started from the TUI's
     New conversation dialog (see launch_options for what selection
@@ -137,6 +137,9 @@ def start_conversation(
     if not Path(project_path).is_dir():
         raise ValueError(_("'{path}' is not an existing directory").format(path=project_path))
     mode = session_mode(selection)
+    profile = (profile or "").strip()
+    if profile and profiles.get(profile) is None:
+        raise ValueError(_("No account '{name}'.").format(name=profile))
     if session_id and not SESSION_ID_RE.fullmatch(session_id):
         raise ValueError(_("That is not a session id."))
     if pr and pr.strip() and not PULL_REQUEST_RE.fullmatch(pr.strip()):
@@ -164,7 +167,7 @@ def start_conversation(
     if mode == SESSION_NEW:
         return storage.create_queue(
             name, project_path, str(uuid.uuid4()), launch_flags=flags, auto_continue=auto_continue,
-            delivery_mode=delivery,
+            delivery_mode=delivery, profile=profile,
         )
 
     if mode == SESSION_FROM_PR:
@@ -174,7 +177,7 @@ def start_conversation(
         first = ["--from-pr", pr] + (["--fork-session"] if fork else [])
         return storage.create_queue(
             name, project_path, str(uuid.uuid4()), launch_flags=flags, first_run_flags=first,
-            auto_continue=auto_continue, delivery_mode=delivery,
+            auto_continue=auto_continue, delivery_mode=delivery, profile=profile,
         )
 
     if mode == SESSION_CONTINUE:
@@ -196,7 +199,7 @@ def start_conversation(
         return storage.create_queue(
             name, project_path, str(uuid.uuid4()), launch_flags=flags,
             first_run_flags=["--resume", session_id, "--fork-session"],
-            auto_continue=auto_continue, delivery_mode=delivery,
+            auto_continue=auto_continue, delivery_mode=delivery, profile=profile,
         )
     existing = storage.get_queue_by_session_id(session_id)
     if existing is not None:
@@ -206,7 +209,7 @@ def start_conversation(
         return existing
     return storage.create_queue(
         name, project_path, session_id, always_resume=True, launch_flags=flags, auto_continue=auto_continue,
-        delivery_mode=delivery,
+        delivery_mode=delivery, profile=profile,
     )
 
 
@@ -484,8 +487,11 @@ class QueueRuntime:
         else:
             flags = list(flags if flags is not None else LEGACY_FLAGS)
         started_at = datetime.now()
+        # Only a conversation with its own account passes one (the default
+        # one calls run_fn exactly as before accounts existed).
+        extra = {"profile": queue.profile} if queue.profile else {}
         result = await self.run_fn(
-            queue.project_path, queue.session_id, text, resume, flags, queue.first_run_flags
+            queue.project_path, queue.session_id, text, resume, flags, queue.first_run_flags, **extra
         )
         finished_at = datetime.now()
         git_commit = git_note = None

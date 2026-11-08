@@ -15,7 +15,7 @@ import logging
 import os
 from pathlib import Path
 
-from ccc import mcp_servers
+from ccc import mcp_servers, profiles
 
 logger = logging.getLogger(__name__)
 
@@ -24,28 +24,28 @@ logger = logging.getLogger(__name__)
 MARKER = "--ccc-plugins="
 
 
-def _config_dir() -> Path:
-    return Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+def _config_dir(profile: str = "") -> Path:
+    return profiles.config_dir(profile)
 
 
 def valid_id(plugin_id: str) -> bool:
     return bool(plugin_id) and "," not in plugin_id and "=" not in plugin_id and not plugin_id.startswith("-")
 
 
-def installed() -> list[str]:
+def installed(profile: str = "") -> list[str]:
     """Ids (`name@marketplace`) of the installed plugins."""
-    plugins = mcp_servers._json_object(_config_dir() / "plugins" / "installed_plugins.json").get("plugins")
+    plugins = mcp_servers._json_object(_config_dir(profile) / "plugins" / "installed_plugins.json").get("plugins")
     if not isinstance(plugins, dict):
         return []
     return sorted(pid for pid in plugins if isinstance(pid, str) and valid_id(pid))
 
 
-def enabled_by_default() -> list[str]:
+def enabled_by_default(profile: str = "") -> list[str]:
     """Installed plugins the user's own settings.json has switched on."""
-    enabled = mcp_servers._json_object(_config_dir() / "settings.json").get("enabledPlugins")
+    enabled = mcp_servers._json_object(_config_dir(profile) / "settings.json").get("enabledPlugins")
     if not isinstance(enabled, dict):
         return []
-    return sorted(pid for pid in installed() if enabled.get(pid) is True)
+    return sorted(pid for pid in installed(profile) if enabled.get(pid) is True)
 
 
 def marker(selected) -> str:
@@ -61,14 +61,14 @@ def selected_ids(flags: list[str] | None) -> list[str] | None:
     return None
 
 
-def resolve_flags(flags: list[str] | None) -> list[str] | None:
+def resolve_flags(flags: list[str] | None, profile: str = "") -> list[str] | None:
     """`flags` with the marker replaced by `--settings <file>` that enables
     the allowed plugins and disables the other installed ones. Without a
     marker `flags` come back unchanged."""
     if flags is None or not any(f.startswith(MARKER) for f in flags):
         return flags
     wanted = selected_ids(flags) or []
-    found = installed()
+    found = installed(profile)
     for pid in wanted:
         if pid not in found:
             logger.warning("Plugin '%s' is no longer installed; skipped", pid)

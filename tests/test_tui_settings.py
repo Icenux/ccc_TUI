@@ -381,6 +381,14 @@ async def test_dashboard_columns_are_chosen_in_settings(tmp_path):
         assert dc.PATH not in dc.shown(app.storage)
 
 
+async def _wait_for(pilot, condition, seconds=10.0):
+    """Wait until condition() holds (the pairing code is made in a thread, so how long it takes depends on the machine)."""
+    waited = 0.0
+    while not condition() and waited < seconds:
+        await pilot.pause(0.1)
+        waited += 0.1
+
+
 async def _open_connection_tab(pilot, app):
     from textual.widgets import TabbedContent
 
@@ -411,7 +419,7 @@ async def test_devices_are_listed_in_the_tab_with_pairing_above_them(tmp_path, m
         assert pair.region.y < table.region.y
         assert table.row_count == 2  # the signed-out one is only in the history
         pair.press()
-        await pilot.pause(0.5)
+        await _wait_for(pilot, lambda: isinstance(app.screen, PairModal) and "Address:" in str(app.screen.query_one("#pair-info").render()))
         assert isinstance(app.screen, PairModal)
         assert app.storage.get_setting(pairing.CODE_KEY)
         assert "Address: https://xia.ts.net:8737" in str(app.screen.query_one("#pair-info").render())
@@ -437,13 +445,13 @@ async def test_pair_window_closes_by_itself_once_the_phone_has_paired(tmp_path, 
     async with app.run_test(size=(100, 30)) as pilot:
         settings = await _open_connection_tab(pilot, app)
         settings.query_one("#devices-pair", Button).press()
-        await pilot.pause(0.5)
+        await _wait_for(pilot, lambda: isinstance(app.screen, PairModal) and str(app.screen.query_one("#pair-qr", Static).render()).strip())
         assert isinstance(app.screen, PairModal)
         assert str(app.screen.query_one("#pair-qr", Static).render()).strip()
         # The phone scans: the code is traded for a device.
         app.storage.delete_setting_if(pairing.CODE_KEY, app.storage.get_setting(pairing.CODE_KEY))
         api.add_device(app.storage, "Redmi")
-        await pilot.pause(2)
+        await _wait_for(pilot, lambda: app.screen is settings)
         assert app.screen is settings
         assert settings.query_one("#devices-table", DataTable).row_count == 1
         assert "Paired: Redmi" in str(settings.query_one("#devices-info").render())

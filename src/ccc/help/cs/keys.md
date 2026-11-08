@@ -116,6 +116,13 @@ uvádějí výchozí klávesy.
 | `Del` | Smazat ji (úkoly, které zařadila, zůstanou) |
 | `Ctrl+S` | Uložit v editoru routiny |
 
+## Agenti (A)
+
+| Klávesa | |
+|---|---|
+| `a` | Přidat agenta ze šablony (jméno, kam se uloží, náhled souboru) |
+| `Ctrl+S` | Vytvořit agenta v okně nového agenta |
+
 ## Recenze (v)
 
 | Klávesa | |

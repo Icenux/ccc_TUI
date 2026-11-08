@@ -13,6 +13,7 @@ A project's agent wins over a user's agent of the same name, and in nested
 `.claude/agents` folders the one closest to the working directory wins."""
 from __future__ import annotations
 
+import json
 import logging
 import os
 import re
@@ -20,7 +21,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from ccc import profiles
-from ccc.i18n import N_
+from ccc.i18n import N_, _
 
 logger = logging.getLogger(__name__)
 
@@ -77,11 +78,22 @@ def valid_name(name: str) -> str:
     return ""
 
 
+_DOUBLE = re.compile(r'"((?:[^"\\]|\\.)*)"\s*(?:#.*)?')
+_SINGLE = re.compile(r"'((?:[^']|'')*)'\s*(?:#.*)?")
+
+
 def _unquote(value: str) -> str:
+    """A scalar's text: quotes removed (a `#` inside them is text, not a comment), a trailing
+    ` # comment` of an unquoted value dropped."""
     value = value.strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-        return value[1:-1]
-    return value
+    if (m := _DOUBLE.fullmatch(value)):
+        try:
+            return json.loads(f'"{m.group(1)}"')  # JSON escapes: what write_agent writes
+        except ValueError:
+            return m.group(1)
+    if (m := _SINGLE.fullmatch(value)):
+        return m.group(1).replace("''", "'")
+    return value.split(" #")[0].strip()
 
 
 def split_frontmatter(text: str) -> tuple[list[str], str] | None:
@@ -121,7 +133,7 @@ def parse_fields(lines: list[str]) -> dict[str, str | list[str]]:
                 block = []
                 fields[key] = ""
             else:
-                fields[key] = _unquote(value.split(" #")[0]) if value else []
+                fields[key] = _unquote(value) if value else []
         elif key is not None and line.lstrip().startswith("- ") and isinstance(fields.get(key), list):
             fields[key].append(_unquote(line.lstrip()[2:]))  # type: ignore[union-attr]
     if block is not None and key is not None:
@@ -207,6 +219,79 @@ def as_dict(agent: Agent) -> dict:
 
 
 def display_path(agent: Agent) -> str:
+    return display_path_of(agent.path)
+
+
+# --- writing (#220) ---------------------------------------------------------------------
+
+NEW_NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")  # what ccc creates: also a safe file name
+MODELS = ("", "sonnet", "opus", "haiku", "fable", "inherit")
+_TOOL = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
+
+
+def valid_new_name(name: str) -> str:
+    """Empty when `name` may name a new agent, else why not (English, marked for translation)."""
+    if not NEW_NAME.fullmatch(name):
+        return N_("Use lowercase letters, digits and hyphens (at most 64), starting with a letter or digit.")
+    return ""
+
+
+def render(name: str, description: str, tools: tuple[str, ...] | None, model: str, prompt: str) -> str:
+    """The text of an agent file. The description is written as one quoted line so that any
+    text (colons, quotes, `#`) reads back the same."""
+    problem = valid_new_name(name)
+    if problem:
+        raise ValueError(_(problem))
+    description = " ".join(description.split())
+    if not description:
+        raise ValueError(_("An agent needs a description: Claude decides by it when to call the agent."))
+    if model not in MODELS:
+        raise ValueError(_("Unknown model: {model}").format(model=model))
+    if tools is not None and not (tools and all(_TOOL.fullmatch(t) for t in tools)):
+        raise ValueError(_("Unknown tool list."))
+    lines = ["---", f"name: {name}", f"description: {json.dumps(description, ensure_ascii=False)}"]
+    if tools is not None:
+        lines.append("tools: " + ", ".join(tools))
+    if model:
+        lines.append(f"model: {model}")
+    lines += ["---", "", prompt.strip(), ""]
+    return "\n".join(lines)
+
+
+def folder_exists(project_path: str) -> bool:
+    return bool(project_path) and Path(project_path).expanduser().is_dir()
+
+
+def folder_for(scope: str, project_path: str = "", profile: str = "") -> Path:
+    if scope == SCOPE_USER:
+        return user_dir(profile)
+    if scope == SCOPE_PROJECT and folder_exists(project_path):
+        return Path(project_path).expanduser() / ".claude" / "agents"
+    raise ValueError(_("Choose where the agent is kept."))
+
+
+def write_agent(name: str, description: str, tools: tuple[str, ...] | None, model: str, prompt: str,
+                scope: str, project_path: str = "", profile: str = "") -> tuple[Path, bool]:
+    """Create `<name>.md` in the scope's folder; (its path, whether the folder is new).
+    Never overwrites: an existing file is refused. Claude Code watches only the agent
+    folders that existed when it started, so a new folder needs a restart there."""
+    text = render(name, description, tools, model, prompt)
+    folder = folder_for(scope, project_path, profile)
+    new_folder = not folder.exists()
+    path = folder / f"{name}.md"
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o644)
+    except FileExistsError:
+        raise ValueError(_("{file} already exists.").format(file=display_path_of(path))) from None
+    except OSError as error:
+        raise ValueError(_("Could not write the agent: {error}").format(error=error.strerror or error)) from None
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        handle.write(text)
+    return path, new_folder
+
+
+def display_path_of(path: Path) -> str:
     home = str(Path.home())
-    text = os.fspath(agent.path)
+    text = os.fspath(path)
     return "~" + text[len(home):] if text.startswith(home + os.sep) else text

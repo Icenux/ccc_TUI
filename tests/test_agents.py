@@ -205,3 +205,86 @@ def test_api_starts_a_conversation_as_an_agent_only_when_it_exists(claude_dir, t
     with pytest.raises(api.ApiError) as two:
         endpoint.route("POST", "/api/v1/conversations", {}, {**body, "options": ["agent:reviewer", "agent:other"]})
     assert two.value.status == 400
+
+
+# --- creating agents (#220) -------------------------------------------------------------
+
+
+def test_written_file_reads_back_the_same(claude_dir):
+    desc = 'Reviews: "bugs" & # things — use after changes'
+    path, new_folder = agents.write_agent("my-reviewer", desc, ("Read", "Bash"), "sonnet", "You review.\n\nBe brief.",
+                                          agents.SCOPE_USER)
+    assert path == claude_dir / "agents" / "my-reviewer.md" and not new_folder  # the fixture made the folder
+    [a] = agents.list_agents()
+    assert (a.name, a.description, a.tools, a.model, a.problem) == ("my-reviewer", desc, ("Read", "Bash"), "sonnet", "")
+    assert a.prompt.strip() == "You review.\n\nBe brief."
+
+
+def test_no_tools_and_no_model_are_left_out(claude_dir):
+    path, _new = agents.write_agent("plain", "d", None, "", "x", agents.SCOPE_USER)
+    text = path.read_text()
+    assert "tools:" not in text and "model:" not in text
+    assert agents.list_agents()[0].tools is None  # inherits every tool
+
+
+def test_existing_file_is_never_overwritten(claude_dir):
+    agents.write_agent("a", "d", None, "", "first", agents.SCOPE_USER)
+    with pytest.raises(ValueError, match="already exists"):
+        agents.write_agent("a", "d", None, "", "second", agents.SCOPE_USER)
+    assert "first" in (claude_dir / "agents" / "a.md").read_text()
+
+
+def test_symlink_is_not_followed(claude_dir, tmp_path):
+    target = tmp_path / "victim.txt"
+    target.write_text("keep")
+    (claude_dir / "agents" / "a.md").symlink_to(target)
+    with pytest.raises(ValueError):
+        agents.write_agent("a", "d", None, "", "x", agents.SCOPE_USER)
+    assert target.read_text() == "keep"
+
+
+@pytest.mark.parametrize("name", ["", "Upper", "-x", "a b", "a/b", "../x", "a:b", "n" * 65])
+def test_bad_names_are_refused(claude_dir, name):
+    with pytest.raises(ValueError):
+        agents.write_agent(name, "d", None, "", "x", agents.SCOPE_USER)
+    assert list((claude_dir / "agents").iterdir()) == []
+
+
+@pytest.mark.parametrize("kwargs", [{"description": "  "}, {"model": "gpt"}, {"tools": ()}, {"tools": ("Bash;rm",)}])
+def test_bad_fields_are_refused(claude_dir, kwargs):
+    fields = {"description": "d", "tools": None, "model": "", **kwargs}
+    with pytest.raises(ValueError):
+        agents.write_agent("a", fields["description"], fields["tools"], fields["model"], "x", agents.SCOPE_USER)
+
+
+def test_project_scope_creates_the_folder_and_says_so(claude_dir, tmp_path):
+    project = tmp_path / "shop"
+    project.mkdir()
+    path, new_folder = agents.write_agent("a", "d", None, "", "x", agents.SCOPE_PROJECT, str(project))
+    assert path == project / ".claude" / "agents" / "a.md" and new_folder
+    with pytest.raises(ValueError):  # no folder to keep it in
+        agents.write_agent("b", "d", None, "", "x", agents.SCOPE_PROJECT, "")
+
+
+def test_every_template_is_a_loadable_agent_with_few_tools(claude_dir):
+    from ccc import agent_templates
+
+    for t in agent_templates.TEMPLATES:
+        description, tools, model, prompt = t.parts()
+        agents.write_agent(t.key, description, tools, model, prompt, agents.SCOPE_USER)
+    found = {a.name: a for a in agents.list_agents()}
+    assert set(found) == {t.key for t in agent_templates.TEMPLATES}
+    assert all(not a.problem and a.tools and "Agent" not in a.tools and a.model for a in found.values())
+    for name in ("code-reviewer", "code-explorer"):  # readers only
+        assert "Edit" not in found[name].tools and "Write" not in found[name].tools
+
+
+def test_czech_templates_are_written_in_czech(claude_dir):
+    from ccc import agent_templates, i18n
+
+    i18n.set_language("cs")
+    try:
+        description, _tools, _model, prompt = agent_templates.BY_KEY["test-runner"].parts()
+    finally:
+        i18n.set_language("en")
+    assert "Spustí testy" in description and "Spouštíš testy" in prompt

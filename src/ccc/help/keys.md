@@ -116,6 +116,13 @@ name the default keys.
 | `Del` | Delete it (tasks it queued stay) |
 | `Ctrl+S` | Save in the routine editor |
 
+## Agents (A)
+
+| Key | |
+|---|---|
+| `a` | Add an agent from a template (name, where it is kept, preview of the file) |
+| `Ctrl+S` | Create the agent in the new-agent window |
+
 ## Review (v)
 
 | Key | |

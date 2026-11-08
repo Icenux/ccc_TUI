@@ -12,7 +12,27 @@ najde pro vybranou konverzaci.
 | Klávesa | |
 |---|---|
 | `↑` / `↓` | vybere agenta; pod seznamem vidíš jeho soubor, nástroje a začátek promptu |
+| `a` | přidá agenta ze šablony |
 | `Esc` | zavře okno |
+
+## Přidání agenta
+
+`a` otevře **Nový agent**. Vyber šablonu, pojmenuj agenta a řekni, kam se
+uloží: do tohoto projektu, nebo do všech projektů. Pod poli vidíš soubor
+přesně tak, jak se zapíše; `Ctrl+S` ho vytvoří a nový agent se v seznamu
+vybere.
+
+- **Revizor kódu**, **Spouštěč testů**, **Průzkumník kódu**,
+  **Překladatel**: každý má jeden úkol, popis, který říká, kdy ho použít,
+  jen nástroje, které úkol potřebuje, a tam, kde to stačí, levnější model.
+- Existující soubor se nikdy nepřepíše.
+- Soubor je potom tvůj: otevři ho v libovolném editoru a změň, co chceš.
+  Claude Code změnu převezme během pár sekund.
+- Claude Code sleduje jen složky agentů, které existovaly při jeho startu.
+  První agent v nové složce potřebuje restart Claude Code tam, kde už běží
+  (ccc to řekne).
+- Aby celá konverzace běžela jako agent, viz
+  [Nová konverzace](new-conversation.md#agent).
 
 ## Kde agenti jsou
 

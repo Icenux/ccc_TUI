@@ -139,3 +139,92 @@ def test_interactive_session_starts_in_the_profile_environment(storage, work, tm
     start(queue, build_interactive_command(queue, False))
     shell_command = seen[0][-1]
     assert f"CLAUDE_CONFIG_DIR={work.config_dir}" in shell_command
+
+
+# --- Command profiles: other agents, no Claude Code (#226) ---
+
+@pytest.fixture
+def agent(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    return profiles.add_command(
+        "nim", run="myagent --model {model} --api {url} -p {prompt}", interactive="myagent --model {model}",
+        url="https://api.example/v1", model="big-1", key="sekret",
+        env={"OPENAI_API_KEY": "{key}", "OPENAI_BASE_URL": "{url}"},
+    )
+
+
+def test_command_profile_is_stored_and_the_old_format_still_reads(agent, tmp_path, monkeypatch):
+    got = profiles.get("nim")
+    assert got.is_command and got.model == "big-1" and got.key == "sekret"
+    path = tmp_path / "old.json"
+    path.write_text(json.dumps({"profiles": {"acc": "/some/dir"}}))
+    monkeypatch.setenv("CCC_PROFILES_FILE", str(path))
+    assert not profiles.get("acc").is_command
+
+
+def test_registry_with_a_key_is_private(agent):
+    assert (profiles._registry_path().stat().st_mode & 0o777) == 0o600
+
+
+def test_command_is_split_before_filling_and_has_no_key(agent):
+    from ccc import backends
+    argv = backends.run_command(agent, "sid", 'say "hi there"', False, "/p")
+    assert argv == ["myagent", "--model", "big-1", "--api", "https://api.example/v1", "-p", 'say "hi there"']
+    assert "sekret" not in " ".join(argv)
+
+
+def test_key_in_a_command_line_is_refused(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    with pytest.raises(profiles.ProfileError):
+        profiles.add_command("bad", run="x --key {key}")
+    with pytest.raises(profiles.ProfileError):
+        profiles.add_command("bad", run="")
+
+
+def test_command_env_gets_key_and_keeps_the_rest(agent, monkeypatch):
+    monkeypatch.setenv("KEEP", "1")
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    env = profiles.env_for("nim")
+    assert env["OPENAI_API_KEY"] == "sekret" and env["OPENAI_BASE_URL"] == "https://api.example/v1"
+    assert env["KEEP"] == "1" and "CLAUDE_CONFIG_DIR" not in env
+
+
+def test_tmux_never_sees_the_key_in_the_command_line(storage, agent, tmp_path, monkeypatch):
+    project = tmp_path / "p"
+    project.mkdir()
+    queue = start_conversation(storage, str(project), DEFAULT_SELECTION, profile="nim")
+    seen = []
+    monkeypatch.setattr("ccc.managed_sessions._tmux", lambda *a, **k: seen.append(a))
+    monkeypatch.setattr("ccc.managed_sessions.make_transparent", lambda: None)
+    start(queue, build_interactive_command(queue, False))
+    shell_command = seen[0][-1]
+    assert "myagent --model big-1" in shell_command and "claude" not in shell_command
+    assert "sekret" not in shell_command
+    env_file = profiles.env_assignments("nim")[-1]
+    assert "OPENAI_API_KEY=sekret" in open(env_file).read()
+    assert (__import__("os").stat(env_file).st_mode & 0o777) == 0o600
+
+
+def test_remove_deletes_the_env_file(agent):
+    env_file = profiles.env_assignments("nim")[-1]
+    profiles.remove("nim")
+    assert not __import__("os").path.exists(env_file)
+
+
+def test_classify_command_output():
+    from ccc import backends
+    ok = backends.classify("done\n", "", 0, "s")
+    assert ok.status == RunStatus.SUCCESS and ok.result_text == "done"
+    assert backends.classify("", "429 rate limit exceeded", 1, "s").status == RunStatus.RATE_LIMITED
+    assert backends.classify("", "boom", 2, "s").status == RunStatus.ERROR
+
+
+def test_execute_runs_the_command_profile(agent, tmp_path):
+    import asyncio
+    profiles.remove("nim")
+    profiles.add_command("echo", run="echo got {prompt} {session_id}")
+    result = asyncio.run(runner.execute(str(tmp_path), "sid1", "hello", False, profile="echo"))
+    assert result.status == RunStatus.SUCCESS and result.result_text == "got hello sid1"
+    missing = profiles.add_command("gone", run="no-such-agent-xyz {prompt}")
+    result = asyncio.run(runner.execute(str(tmp_path), "s", "x", False, profile="gone"))
+    assert result.status == RunStatus.ERROR

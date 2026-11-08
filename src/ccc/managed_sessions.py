@@ -49,6 +49,11 @@ def target(queue_id: int) -> str:
 
 
 def build_interactive_command(queue: Queue, has_transcript: bool, extra: list[str] | None = None) -> list[str]:
+    agent = profiles.get(queue.profile)
+    if agent is not None and agent.is_command:  # not Claude Code (#226): its flags do not apply
+        from ccc import backends
+
+        return backends.interactive_command(agent, queue.session_id, queue.project_path)
     first = list(queue.first_run_flags or [])
     if any(flag in first for flag in _SESSION_SELECTING_FLAGS):
         session = first  # fork / from-PR: they pick the session themselves

@@ -12,6 +12,7 @@ ccc-tui`); changed in Settings they work right away.
 | `ccc` | open ccc |
 | `ccc add <folder> "<prompt>"` | queue a prompt for that folder's conversation (it runs headless) |
 | `ccc backup` | back up the database now |
+| `ccc statusline [--then COMMAND]` | Claude Code's [status line](#status-line): tells ccc how full a conversation's context is |
 | `ccc archive-analytics` | write finished months into the [monthly analytics archive](analytics.md) now |
 | `ccc config analytics-folder [PATH\|off]` | show / set / turn off the monthly archive folder |
 | `ccc config continue-text ["…"]` | show / set the continue message sent after a usage limit |
@@ -53,3 +54,24 @@ ccc-tui`); changed in Settings they work right away.
 | `ccc api pair [--server URL] [--image [FILE]]` | show a QR code the app scans to sign in (good for 5 minutes, once); `--image` saves it as a picture instead, for when the terminal's drawing won't scan |
 | `ccc api devices` / `ccc api revoke ID` | list the devices signed in (`--all`: also the signed-out ones, history) / sign one out |
 | `ccc-daemon` | the daemon itself (normally run by `ccc.service`) |
+
+## Status line
+
+`ccc statusline` makes Claude Code tell ccc how full the context window of an
+interactive conversation is — the real figure, not an estimate. The
+[app](android-api.md) shows it on the conversation. Put it in
+`~/.claude/settings.json`:
+
+```json
+"statusLine": {"type": "command", "command": "ccc statusline"}
+```
+
+Already have a status line of your own? Hand it over, it gets the same input
+and what it prints is what Claude Code shows:
+
+```json
+"statusLine": {"type": "command", "command": "ccc statusline --then '~/.claude/my-line.sh'"}
+```
+
+Only interactive Claude Code runs the status line (not `claude -p`), and the
+figure is as fresh as Claude Code refreshes it.

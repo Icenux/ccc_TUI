@@ -182,6 +182,14 @@ def main(argv: list[str] | None = None) -> None:
 
     from ccc import api_cli, goals_cli, keys_cli, profiles_cli, revert_cli, reviews_cli, routines_cli, workflows_cli
 
+    statusline_parser = subparsers.add_parser(
+        "statusline",
+        help=_("Claude Code's status line: tells ccc how full the context is (reads JSON on stdin)"),
+    )
+    statusline_parser.add_argument(
+        "--then", metavar="COMMAND", default=None,
+        help=_("your own status line command: gets the same input, its output is shown"),
+    )
     keys_cli.add_parser(subparsers)
     routines_cli.add_parser(subparsers)
     reviews_cli.add_parser(subparsers)
@@ -260,6 +268,11 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "config":
         config_command(str(default_db_path()), args.setting, args.value)
         return
+
+    if args.command == "statusline":
+        from ccc import statusline
+
+        sys.exit(statusline.run(str(default_db_path()), sys.stdin.read(), args.then))
 
     if args.command == "keys":
         sys.exit(keys_cli.run(Storage(str(default_db_path())), args))

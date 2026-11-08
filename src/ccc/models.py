@@ -96,6 +96,11 @@ class Queue:
     # Claude Code of an interactive conversation is working right now
     # (anything, also what you typed into it), set by the daemon.
     live_busy: bool = False
+    # How full its context window is, from Claude Code's status line
+    # (ccc statusline); None until the status line reported it.
+    context_percent: float | None = None
+    context_tokens: int | None = None
+    context_window: int | None = None
 
 
 @dataclass

@@ -12,6 +12,7 @@ ccc-tui`); změněné v Nastavení platí hned.
 | `ccc` | otevře ccc |
 | `ccc add <složka> "<prompt>"` | zařadí prompt do konverzace té složky (běží na pozadí) |
 | `ccc backup` | hned zazálohuje databázi |
+| `ccc statusline [--then PŘÍKAZ]` | [stavový řádek](#stavovy-radek) Claude Code: řekne ccc, jak je zaplněný kontext konverzace |
 | `ccc archive-analytics` | hned zapíše skončené měsíce do [měsíčního archivu analytiky](analytics.md) |
 | `ccc config analytics-folder [CESTA\|off]` | ukáže / nastaví / vypne složku měsíčního archivu |
 | `ccc config continue-text ["…"]` | ukáže / nastaví zprávu pro pokračování posílanou po limitu využití |
@@ -53,3 +54,23 @@ ccc-tui`); změněné v Nastavení platí hned.
 | `ccc api pair [--server URL] [--image [SOUBOR]]` | ukáže QR kód, kterým se aplikace přihlásí (platí 5 minut, jednou); `--image` ho uloží jako obrázek, když se kód z terminálu nečte |
 | `ccc api devices` / `ccc api revoke ID` | vypíše přihlášená zařízení (`--all`: i odhlášená, historie) / jedno odhlásí |
 | `ccc-daemon` | samotný daemon (normálně ho spouští `ccc.service`) |
+
+## Stavový řádek
+
+`ccc statusline` způsobí, že Claude Code řekne ccc, jak je zaplněné kontextové
+okno interaktivní konverzace — skutečná hodnota, ne odhad. [Appka](android-api.md)
+ji ukáže u konverzace. Dej ho do `~/.claude/settings.json`:
+
+```json
+"statusLine": {"type": "command", "command": "ccc statusline"}
+```
+
+Máš už vlastní stavový řádek? Předej ho dál, dostane stejný vstup a Claude Code
+ukáže to, co vypíše:
+
+```json
+"statusLine": {"type": "command", "command": "ccc statusline --then '~/.claude/muj-radek.sh'"}
+```
+
+Stavový řádek spouští jen interaktivní Claude Code (ne `claude -p`) a hodnota je
+tak čerstvá, jak často ji Claude Code obnovuje.

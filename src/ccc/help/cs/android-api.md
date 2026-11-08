@@ -174,7 +174,7 @@ jen to, co platí pro obě strany.
 | | |
 |---|---|
 | `GET /status` | běží daemon?, kolik konverzací, kolik běží, kolik čeká na schválení |
-| `GET /conversations` | seznam v pořadí jako v TUI, se skupinami, stavy (`status` je stav fronty; `live_busy` je true, dokud v terminálu pracuje interaktivní Claude Code, takže ho TUI i appka ukážou jako běžící), zprávami ve frontě a značkami, a stavem gitu (`git`: větev, přidané, odebrané, před, za; `null`, kde Claude nesmí spouštět příkazy) a její poslední [smyčkou k cíli](goal.md) (`goal`: id, status, status_label, phase_label, round, max_rounds, finished_at; za běhu a den po skončení, jinak `null`); `?archived=1` archiv |
+| `GET /conversations` | seznam v pořadí jako v TUI, se skupinami, stavy (`status` je stav fronty; `live_busy` je true, dokud v terminálu pracuje interaktivní Claude Code, takže ho TUI i appka ukážou jako běžící; `context`: jak je zaplněné jeho kontextové okno — `percent`, `tokens`, `window` — podle stavového řádku Claude Code přes [`ccc statusline`](command-line.md#stavovy-radek), do té doby `null`), zprávami ve frontě a značkami, a stavem gitu (`git`: větev, přidané, odebrané, před, za; `null`, kde Claude nesmí spouštět příkazy) a její poslední [smyčkou k cíli](goal.md) (`goal`: id, status, status_label, phase_label, round, max_rounds, finished_at; za běhu a den po skončení, jinak `null`); `?archived=1` archiv |
 | `GET /conversations/{id}` | jedna konverzace s jejími zprávami ve frontě a čekajícími schváleními |
 | `GET /conversations/{id}/messages` | její přepis, každá zpráva s `index`; `?after=N` jen novější, `?before=N` starší, `?limit=` kolik (200) |
 | `POST /conversations/{id}/messages` | `{"text": "…"}` zařadí zprávu do fronty, jako pole pro zprávu |

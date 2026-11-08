@@ -280,6 +280,20 @@ def test_live_busy_is_in_the_list_and_detail_and_is_a_change(storage, tmp_path):
     assert endpoint.conversations()[0]["live_busy"] is False
 
 
+def test_context_is_in_the_list_and_detail_and_is_a_change(storage, tmp_path):
+    q = _queue(storage, tmp_path)
+    endpoint = api.Api(storage)
+    assert endpoint.conversations()[0]["context"] is None  # older status line / not reported
+    before = endpoint.snapshot()
+
+    storage.set_context(q.session_id, 42.5, 85000, 200000)
+
+    expected = {"percent": 42.5, "tokens": 85000, "window": 200000}
+    assert endpoint.conversations()[0]["context"] == expected
+    assert endpoint.conversation(q.id)["context"] == expected
+    assert endpoint.changes(before, endpoint.snapshot()) == {"conversations": [q.id], "removed": []}
+
+
 # --- over HTTP ------------------------------------------------------------------
 
 
@@ -653,7 +667,7 @@ def test_conversations_carry_git(storage, tmp_path, monkeypatch):
     server = api.Api(storage)
 
     listed = server.conversations()[0]
-    assert "context" not in listed
+    assert listed["context"] is None  # the status line has not reported yet
     assert listed["git"] == {"branch": "feature-x", "added": 12, "removed": 3, "ahead": 2, "behind": 0}
     server.conversations()
     server.conversation(q.id)

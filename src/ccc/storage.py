@@ -53,7 +53,10 @@ CREATE TABLE IF NOT EXISTS queues (
     remote_control_url TEXT,
     live_busy INTEGER NOT NULL DEFAULT 0,
     live_finished_at TEXT,
-    profile TEXT NOT NULL DEFAULT ''
+    profile TEXT NOT NULL DEFAULT '',
+    context_percent REAL,
+    context_tokens INTEGER,
+    context_window INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS queue_items (
@@ -430,6 +433,11 @@ class Storage:
         if "live_busy" not in columns:
             conn.execute("ALTER TABLE queues ADD COLUMN live_busy INTEGER NOT NULL DEFAULT 0")
             conn.execute("ALTER TABLE queues ADD COLUMN live_finished_at TEXT")
+            conn.commit()
+        if "context_percent" not in columns:
+            conn.execute("ALTER TABLE queues ADD COLUMN context_percent REAL")
+            conn.execute("ALTER TABLE queues ADD COLUMN context_tokens INTEGER")
+            conn.execute("ALTER TABLE queues ADD COLUMN context_window INTEGER")
             conn.commit()
 
     def _connect(self) -> sqlite3.Connection:
@@ -1213,6 +1221,18 @@ class Storage:
                              (datetime.now().isoformat(), queue_id))
             conn.commit()
 
+    def set_context(self, session_id: str, percent: float, tokens: int | None, window: int | None) -> bool:
+        """How full the context window of the conversation with this session
+        is (reported by Claude Code's status line). False when no conversation
+        has the session."""
+        with closing(self._connect()) as conn:
+            cursor = conn.execute(
+                "UPDATE queues SET context_percent = ?, context_tokens = ?, context_window = ? WHERE session_id = ?",
+                (percent, tokens, window, session_id),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
     def unseen_queue_ids(self) -> set[int]:
         """Queues with a run (or live work in their Claude Code) that
         finished after they were last viewed."""
@@ -1625,6 +1645,9 @@ class Storage:
             remote_control_url=row["remote_control_url"],
             routine_id=row["routine_id"],
             live_busy=bool(row["live_busy"]),
+            context_percent=row["context_percent"],
+            context_tokens=row["context_tokens"],
+            context_window=row["context_window"],
             profile=row["profile"] or "",
         )
 

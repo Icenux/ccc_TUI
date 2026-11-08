@@ -535,3 +535,23 @@ def test_live_work_in_claude_code_shows_busy_then_unseen(tmp_path):
     storage.mark_seen(q.id)
     assert storage.unseen_queue_ids() == set()
     assert datetime.now() + timedelta(seconds=1) > storage.get_queue(q.id).last_seen_at
+
+
+def test_turning_auto_continue_on_wakes_a_queue_stopped_at_the_limit(storage):
+    """#243: t → o on a conversation already paused at the limit must make it carry on."""
+    from datetime import datetime, timedelta
+
+    from ccc.models import QueueStatus
+
+    q = storage.create_queue("demo", "/tmp/demo", "session-abc", auto_continue=False)
+    until = datetime.now() + timedelta(hours=1)
+    storage.update_queue_status(q.id, QueueStatus.PAUSED_LIMIT, next_retry_at=until)
+
+    storage.set_queue_auto_continue(q.id, True)
+    after = storage.get_queue(q.id)
+    assert after.auto_continue is True
+    assert after.status == QueueStatus.WAITING_RETRY
+    assert after.next_retry_at == until
+
+    storage.set_queue_auto_continue(q.id, False)
+    assert storage.get_queue(q.id).status == QueueStatus.PAUSED_LIMIT

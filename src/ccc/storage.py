@@ -300,6 +300,7 @@ class Storage:
             self._migrate_add_always_resume_column(conn)
             self._migrate_api_token_to_device(conn)
             self._migrate_devices_history(conn)
+            self._migrate_devices_streams(conn)
         make_private(self.db_path)
 
 
@@ -311,6 +312,13 @@ class Storage:
         if "revoked_at" not in columns:
             conn.execute("ALTER TABLE devices ADD COLUMN revoked_at TEXT")
             conn.execute("ALTER TABLE devices ADD COLUMN revoked_by TEXT NOT NULL DEFAULT ''")
+            conn.commit()
+
+    def _migrate_devices_streams(self, conn: sqlite3.Connection) -> None:
+        """`streams`: the device holds the events connection (GET /events), which an uninstall breaks at once."""
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(devices)")}
+        if "streams" not in columns:
+            conn.execute("ALTER TABLE devices ADD COLUMN streams INTEGER NOT NULL DEFAULT 0")
             conn.commit()
 
     def _migrate_api_token_to_device(self, conn: sqlite3.Connection) -> None:
@@ -1384,6 +1392,26 @@ class Storage:
         with closing(self._connect()) as conn:
             ids = [row["id"] for row in conn.execute(
                 "SELECT id FROM devices WHERE revoked_at IS NULL AND COALESCE(last_seen_at, created_at) < ?", (cutoff,))]
+            for device_id in ids:
+                conn.execute("UPDATE devices SET revoked_at = ?, revoked_by = ?, token_sha256 = 'revoked-' || id "
+                             "WHERE id = ?", (datetime.now().isoformat(), by, device_id))
+            conn.commit()
+        return ids
+
+    def mark_streaming(self, device_id: int, ip: str) -> None:
+        """The device opened the events connection: from now on its dropping for good means the app is gone."""
+        with closing(self._connect()) as conn:
+            conn.execute("UPDATE devices SET streams = 1, last_seen_at = ?, last_ip = ? WHERE id = ?",
+                         (datetime.now().isoformat(), ip, device_id))
+            conn.commit()
+
+    def revoke_dropped_streams(self, minutes: float, by: str) -> list[int]:
+        """Sign out the devices that held the events connection and have not been back for `minutes`.
+        While the connection is open the API refreshes last_seen_at, so a live one is never caught here."""
+        cutoff = (datetime.now() - timedelta(minutes=minutes)).isoformat()
+        with closing(self._connect()) as conn:
+            ids = [row["id"] for row in conn.execute(
+                "SELECT id FROM devices WHERE revoked_at IS NULL AND streams = 1 AND last_seen_at < ?", (cutoff,))]
             for device_id in ids:
                 conn.execute("UPDATE devices SET revoked_at = ?, revoked_by = ?, token_sha256 = 'revoked-' || id "
                              "WHERE id = ?", (datetime.now().isoformat(), by, device_id))

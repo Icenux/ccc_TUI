@@ -100,6 +100,7 @@ MAX_BODY = 1024 * 1024
 MESSAGES_LIMIT = 200
 EVENTS_POLL_SECONDS = 1.0
 EVENTS_KEEPALIVE_SECONDS = 15.0
+EVENTS_TOUCH_SECONDS = 30.0  # while the connection is open the device is "seen" this often
 # A conversation without a transcript yet: look for it again after this.
 TRANSCRIPT_LOOKUP_SECONDS = 10.0
 DECISIONS = ("allow", "always", "deny")
@@ -130,12 +131,12 @@ def revoked_label(device: Device, short: bool = False) -> str:
     """How a signed-out device was signed out, for the TUI (short: a table cell) and `ccc api devices --all`."""
     if short:
         return {REVOKED_BY_APP: _("in the app"), REVOKED_BY_COMPUTER: _("on the computer"),
-                REVOKED_BY_TOKEN: _("new token"), REVOKED_BY_INACTIVE: _("inactive, probably uninstalled")}.get(device.revoked_by, "")
+                REVOKED_BY_TOKEN: _("new token"), REVOKED_BY_INACTIVE: _("no connection, probably uninstalled")}.get(device.revoked_by, "")
     return {
         REVOKED_BY_APP: _("signed out in the app"),
         REVOKED_BY_COMPUTER: _("signed out on the computer"),
         REVOKED_BY_TOKEN: _("token replaced (ccc api token --new)"),
-        REVOKED_BY_INACTIVE: _("not seen for a long time, probably uninstalled"),
+        REVOKED_BY_INACTIVE: _("connection lost for good, probably uninstalled"),
     }.get(device.revoked_by, _("signed out"))
 
 
@@ -1003,13 +1004,18 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache")
         self.end_headers()
         self.close_connection = True
+        self.api.storage.mark_streaming(self._device.id, self._client_ip())
         before = self.api.snapshot()
         quiet = 0.0
+        touched = time.monotonic()
         try:
             self.wfile.write(b": connected\n\n")
             self.wfile.flush()
             while True:
                 time.sleep(EVENTS_POLL_SECONDS)
+                if time.monotonic() - touched >= EVENTS_TOUCH_SECONDS:
+                    touched = time.monotonic()
+                    self.api.storage.touch_device(self._device.id, self._client_ip())  # alive: not "last seen" yet
                 if not token_valid(self.api.storage, self._token):
                     return  # the device was signed out
                 after = self.api.snapshot()

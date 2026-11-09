@@ -5,6 +5,7 @@ from textual.app import App
 from textual.screen import Screen
 from textual.widgets import DataTable
 
+from ccc import managed_sessions
 from ccc.models import DeliveryMode
 from ccc.storage import Storage
 from ccc.tui import cli_pane
@@ -18,6 +19,7 @@ class FakePane:
         self.bar = False  # the bar under it
         self.focused = 0
         self.closed = 0
+        self.session_running = True  # Claude Code's own session
 
     def find(self):
         return ("%1", self.shown) if self.shown is not None else None
@@ -48,6 +50,7 @@ def pane(monkeypatch, tmp_path):
     monkeypatch.setattr(cli_pane, "available", lambda: True)
     for name in ("find", "open", "close", "focus", "find_bar"):
         monkeypatch.setattr(cli_pane, name, getattr(fake, name))
+    monkeypatch.setattr(managed_sessions, "is_running", lambda queue_id: fake.session_running)
     return fake
 
 
@@ -106,6 +109,22 @@ async def test_enter_focuses_claude_and_closed_pane_stays_closed(storage, pane):
         await pilot.press("enter")
         await pilot.pause()
         assert pane.shown == ids["cli"] and pane.focused == focused + 1
+
+
+@pytest.mark.asyncio
+async def test_pane_lost_with_its_session_opens_again(storage, pane):
+    """#267: Claude's session ended or restarted (not Ctrl+]): the pane
+    comes back, the transcript doesn't stay on screen."""
+    ids = _ids(storage)
+    app = _host(ConversationsScreen(storage))
+    async with app.run_test(size=(140, 40)) as pilot:
+        await pilot.pause()
+        await app.screen._show_queue(ids["cli"])
+        pane.shown = None
+        pane.session_running = False
+        await app.screen._refresh_current()
+        await pilot.pause()
+        assert pane.shown == ids["cli"] and app.screen.has_class("-cli-open")
 
 
 @pytest.mark.asyncio

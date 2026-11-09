@@ -22,7 +22,6 @@ from test_api import _call, server, storage  # noqa: F401  (fixtures)
     ("POST", "/live-sessions/abc-1/prompt", ROLE_ADMIN),
     ("GET", "/routines", ROLE_ADMIN),
     ("POST", "/routines/2/run", ROLE_ADMIN),
-    ("POST", "/runs/5/revert", ROLE_ADMIN),
     ("GET", "/settings", ROLE_ADMIN),
     ("POST", "/settings", ROLE_ADMIN),
     ("POST", "/update", ROLE_ADMIN),

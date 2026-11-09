@@ -2,30 +2,10 @@
 
 V git repozitáři ccc commitne výsledek každého úspěšného úkolu **na
 pozadí**, takže každý úkol je jeden commit, který si můžeš prohlédnout
-nebo vrátit:
+přes `git log` nebo vrátit přes `git revert`:
 
 - zpráva `ccc: <první řádek úkolu>` s trailerem
-  `ccc-conversation: <název>`;
-- `ccc runs KONVERZACE` vypíše commit každého běhu (viz
-  [Příkazová řádka](command-line.md)).
-
-## Vrácení běhu
-
-`ccc revert BĚH` vrátí commit běhu **novým commitem** (`git revert`).
-Nic se nepřepisuje a i vrácení jde vrátit. Běh pak má v `ccc runs`
-u commitu `↺`. `--tell` k tomu zařadí Claudovi krátkou poznámku ve
-frontě konverzace; jinak může jeho další úkol se změnami pořád počítat.
-
-Funguje, když:
-
-- konverzace zrovna nic nedělá (žádný úkol neběží ani nečeká) — úkol,
-  který by soubory upravoval, by své změny přimíchal do vrácení;
-- ve složce nejsou necommitnuté změny a commit je v historii větve;
-- konverzace byla spuštěná s **Přeskočit všechny kontroly oprávnění**
-  (stejně jako samotné commity, viz níže).
-
-Vrácení, které se pohádá s pozdějšími změnami, se zruší: nic se nezmění
-a ccc to řekne. `ccc runs KONVERZACE` vypíše běhy s jejich id.
+  `ccc-conversation: <název>`.
 
 ## Více konverzací v jedné složce
 
@@ -36,8 +16,7 @@ v jednom git pracovním stromu:
 - **úkoly na pozadí se střídají**: úkol počká, dokud jiná konverzace ve
   stejné složce dokončí svůj (Konverzace ukážou kterou);
 - ccc **necommitne**, když ve složce pracuje jiná konverzace (i
-  interaktivní, která zrovna zpracovává, co jsi napsal) — `ccc runs`
-  to uvede;
+  interaktivní, která zrovna zpracovává, co jsi napsal);
 - Konverzace ukazují řádek ⚠ s ostatními, které složku sdílejí.
 
 Aby mohly opravdu pracovat **vedle sebe**, dej konverzaci při
@@ -74,7 +53,7 @@ symbolický odkaz, nikdy přes existující soubor, nejvýš 500 souborů po
 
 ## Kdy ccc necommitne
 
-`ccc runs` řekne proč:
+ccc změny nechá necommitnuté, když:
 
 - ve složce už před úkolem byly **necommitnuté změny** — to je tvoje
   práce, ccc ji nikdy do svého commitu nepřimíchá;

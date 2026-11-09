@@ -33,10 +33,6 @@ GET  /api/v1/conversations/{id}/tasks     its task queue; POST adds {"text", "wh
 POST /api/v1/tasks/{id}                   {"text"} / {"when"}; DELETE removes it; POST tasks/{id}/move {"delta"}
 POST /api/v1/conversations/{id}/switches  {"paused"} / {"auto_continue"}
 GET  /api/v1/conversations/{id}/overview  at a glance: now, changes, usage, errors
-GET  /api/v1/conversations/{id}/runs      its runs with their commits
-GET  /api/v1/runs/{id}/diff               the run's commit, line by line
-POST /api/v1/runs/{id}/comments           {"comments": [{"index", "text"}]} sent to Claude
-POST /api/v1/runs/{id}/revert             {"tell": bool}: undo the commit
 GET  /api/v1/groups                       grouping mode and own groups; POST groups/rename, groups/delete
 GET  /api/v1/search?q=                    search every conversation
 POST /api/v1/update/check                 look for a new ccc version now; POST /api/v1/update applies it
@@ -82,7 +78,7 @@ from ccc import agents, goals, groups, i18n, launch_options, mcp_servers, overvi
 from ccc.api_agents import AgentEndpoints
 from ccc.api_subagents import SubagentEndpoints
 from ccc import api_audit, api_roles, api_scope
-from ccc.api_common import ApiError, int_of, iso, route, task_line, text_of
+from ccc.api_common import ApiError, int_of, iso, route, text_of
 from ccc.api_views import ViewEndpoints
 from ccc.heartbeat import daemon_alive
 from ccc.i18n import _
@@ -216,13 +212,9 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             ok(r"/conversations/(\d+)/tasks", lambda ids, q, b: self.add_task(*ids, b), "POST", HTTPStatus.CREATED),
             ok(r"/conversations/(\d+)/switches", lambda ids, q, b: self.switches(*ids, b), "POST"),
             ok(r"/conversations/(\d+)/overview", lambda ids, q, b: self.overview(*ids)),
-            ok(r"/conversations/(\d+)/runs", lambda ids, q, b: self.runs(*ids)),
             ok(r"/tasks/(\d+)", lambda ids, q, b: self.edit_task(*ids, b), "POST"),
             ok(r"/tasks/(\d+)", lambda ids, q, b: self.remove_task(*ids), "DELETE"),
             ok(r"/tasks/(\d+)/move", lambda ids, q, b: self.move_task(*ids, b), "POST"),
-            ok(r"/runs/(\d+)/diff", lambda ids, q, b: self.diff(*ids)),
-            ok(r"/runs/(\d+)/comments", lambda ids, q, b: self.comment(*ids, b), "POST", HTTPStatus.CREATED),
-            ok(r"/runs/(\d+)/revert", lambda ids, q, b: self.revert(*ids, b), "POST"),
             ok(r"/groups", lambda ids, q, b: self.groups()),
             ok(r"/groups/rename", lambda ids, q, b: self.rename_group(b), "POST"),
             ok(r"/groups/delete", lambda ids, q, b: self.delete_group(b), "POST"),
@@ -586,98 +578,6 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
         q = self._queue(queue_id)
         events = self._events(q.session_id)
         return overview.build(self.storage, q, events[-1] if events else None).as_dict()
-
-    # --- runs, their commits and diffs ---------------------------------------------------
-
-    def runs(self, queue_id: int) -> list[dict]:
-        """The conversation's runs, newest first: status, tokens, its commit."""
-        self._queue(queue_id)
-        return [
-            {
-                "id": run.id,
-                "started_at": iso(run.started_at),
-                "finished_at": iso(run.finished_at),
-                "status": run.status.value,
-                "tokens": run.input_tokens + run.output_tokens + run.cache_read_tokens + run.cache_creation_tokens,
-                "cost_usd": run.cost_usd,
-                "duration_ms": run.duration_ms,
-                "task": run.prompt_text,
-                "result": i18n.retranslate(run.result_text),
-                "error": i18n.retranslate(run.error_text),
-                "commit": run.git_commit,
-                "git_note": i18n.retranslate(run.git_note),
-                "reverted_by": run.reverted_by,
-            }
-            for run in self.storage.runs_for_queue(queue_id)
-        ]
-
-    def _run(self, run_id: int):
-        run = self.storage.find_run(run_id)
-        if run is None:
-            raise ApiError(HTTPStatus.NOT_FOUND, _("No such run."))
-        return run
-
-    def _diff_lines(self, run) -> list:
-        from ccc import gitops
-        from ccc.diff_comments import parse
-
-        if not run.git_commit:
-            raise ApiError(HTTPStatus.CONFLICT, i18n.retranslate(run.git_note) or _("This run made no commit."))
-        queue = self._queue(run.queue_id)
-        # As everywhere in ccc: git only where Claude may run commands anyway (see gitops).
-        if not gitops.claude_can_run_commands(queue) or not gitops._COMMIT.match(run.git_commit):
-            raise ApiError(HTTPStatus.CONFLICT,
-                           _("ccc runs git only in conversations started with “Skip all permission checks”."))
-        return parse(gitops.show(queue.project_path, run.git_commit))
-
-    def diff(self, run_id: int) -> dict:
-        """The run's commit (git show), line by line: what each line is, its
-        file and numbers; the commentable ones can carry a comment."""
-        run = self._run(run_id)
-        return {
-            "commit": run.git_commit,
-            "task": task_line(run.prompt_text),
-            "lines": [
-                {"index": i, "text": line.text, "kind": line.kind, "path": line.path,
-                 "old_line": line.old_line, "new_line": line.new_line, "commentable": line.commentable}
-                for i, line in enumerate(self._diff_lines(run))
-            ],
-        }
-
-    def comment(self, run_id: int, body: dict) -> dict:
-        """{"comments": [{"index", "text"}]} on lines of the diff, sent to
-        Claude as one task (like inline comments on a pull request)."""
-        from ccc.diff_comments import Comment, prompt
-
-        run = self._run(run_id)
-        given = body.get("comments")
-        if not isinstance(given, list) or not given:
-            raise ApiError(HTTPStatus.BAD_REQUEST, _("No comments."))
-        lines = self._diff_lines(run)
-        comments = []
-        for entry in given:
-            index = entry.get("index") if isinstance(entry, dict) else None
-            text = entry.get("text") if isinstance(entry, dict) else None
-            if not isinstance(index, int) or not 0 <= index < len(lines) or not lines[index].commentable \
-                    or not isinstance(text, str) or not text.strip():
-                raise ApiError(HTTPStatus.BAD_REQUEST, _("Every comment needs a changed line and a text."))
-            comments.append((index, Comment(lines[index], text.strip())))
-        item = self.storage.add_queue_item(
-            run.queue_id, prompt(run.git_commit, task_line(run.prompt_text, 200), [c for _i, c in sorted(comments)]))
-        return {"id": item.id, "comments": len(comments)}
-
-    def revert(self, run_id: int, body: dict) -> dict:
-        """Undo the run's commit with a new commit; {"tell": true} also queues a note for Claude."""
-        from ccc import revert
-
-        run = self._run(run_id)
-        try:
-            commit = revert.revert(self.storage, run)
-        except revert.RevertError as exc:
-            raise ApiError(HTTPStatus.CONFLICT, str(exc)) from exc
-        if body.get("tell") is True:
-            revert.tell_claude(self.storage, run, commit)
-        return {"commit": commit}
 
     # --- groups -----------------------------------------------------------------
 

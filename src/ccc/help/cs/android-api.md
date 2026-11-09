@@ -60,7 +60,7 @@ port).
 ## V aplikaci
 
 Všechno, co umí okno ccc, upravené pro telefon: konverzace, fronta
-úkolů, běhy a diffy, recenze, cíle, workflow, rutiny, živé
+úkolů, recenze, cíle, workflow, rutiny, živé
 relace, analytika, nastavení — a Claude Code interaktivní konverzace
 živě, s klávesami pro jeho nabídky.
 
@@ -86,9 +86,9 @@ celého počítače:
 
 | Role | Smí |
 |---|---|
-| `read` | dívat se: každé `GET` (seznamy, konverzace, diffy, proud událostí); bez odkazů, které konverzaci ovládají (`remote_control_url`) |
+| `read` | dívat se: každé `GET` (seznamy, konverzace, proud událostí); bez odkazů, které konverzaci ovládají (`remote_control_url`) |
 | `operate` | i řídit existující konverzace: zprávy, schvalování, fronta, úkoly, revize, cíle, workflow |
-| `admin` | i zakládat konverzace (v jakékoli složce), psát do terminálu, posílat prompty živým relacím, rutiny, vrátit běh, nastavení a presety, vytvářet, měnit a odstraňovat [agenty](agents.md), záloha, aktualizace ccc a sestavení appky, správa ostatních zařízení |
+| `admin` | i zakládat konverzace (v jakékoli složce), psát do terminálu, posílat prompty živým relacím, rutiny, nastavení a presety, vytvářet, měnit a odstraňovat [agenty](agents.md), záloha, aktualizace ccc a sestavení appky, správa ostatních zařízení |
 
 Nově spárovaný telefon je `operate`; `ccc api pair --role admin` (nebo
 *Změnit roli* v seznamu Zařízení, nebo `ccc api role ID admin`) dá víc, `read`
@@ -190,10 +190,6 @@ jen to, co platí pro obě strany.
 | `POST /tasks/{id}` | `{"text"}` / `{"when"}` úkolu, který ještě nezačal; `DELETE` ho odebere; `POST /tasks/{id}/move` `{"delta": -1 \| 1}` |
 | `POST /conversations/{id}/switches` | `{"paused": bool}` nespouštět další úkoly, `{"auto_continue": bool}` po limitu využití |
 | `GET /conversations/{id}/overview` | konverzace na první pohled: `now` (`state`, `state_label`, `pending`, `last_event`, `context`), `changes` (větev, `added`, `removed`, `ahead`, `behind`, `files` se `status` a řádky; `null`, kde ccc nesmí spouštět git), `usage` (`today`, `total`, 14 `days`, `models`) a `errors` (`current`, `count`, `recent` běhy) |
-| `GET /conversations/{id}/runs` | její běhy, nejnovější první: stav, tokeny, [commit](git.md) |
-| `GET /runs/{id}/diff` | commit běhu po řádcích (druh, soubor, čísla řádků, jde komentovat) |
-| `POST /runs/{id}/comments` | `{"comments": [{"index", "text"}]}` k řádkům diffu, poslané Claudovi jako jeden úkol |
-| `POST /runs/{id}/revert` | vrátí commit běhu novým commitem; `{"tell": true}` k tomu zařadí poznámku pro Clauda |
 | `GET /conversations/{id}/reviews` | její [recenze](review.md), nejnovější první; `POST` o jednu požádá `{"instructions", "until_pass", "rounds"}`; `POST …/reviews/stop`; `POST /reviews/{id}/apply` pošle nálezy recenze FAIL / PARTIAL zpět jako úkol |
 | `GET /conversations/{id}/goals` | její [smyčky k cíli](goal.md); `POST` jednu spustí `{"goal", "check", "rounds"}`; `POST …/goals/stop` |
 | `GET /workflow-templates` | šablony [workflow](workflows.md) s jejich kroky |

@@ -41,8 +41,6 @@ ccc-tui`); změněné v Nastavení platí hned.
 | `ccc goal start KONVERZACE "CÍL"` | spustí [smyčku k cíli](goal.md); `--check "pytest -q"` = spustit po každém kole, `--rounds N` = nejvýš N kol, `--wait` = počkat do konce, návratový kód 0, když je cíl splněný |
 | `ccc goal list [KONVERZACE]` | cíle od nejnovějšího: id, začátek, kolo, stav |
 | `ccc goal stop KONVERZACE` | zastaví její smyčku k cíli |
-| `ccc runs KONVERZACE` | běhy konverzace: id, čas, stav, commit (`↺` = vrácený), úkol |
-| `ccc revert BĚH [--tell]` | [vrátí běh](git.md#vrácení-běhu): jeho commit vrátí novým commitem; `--tell` = zařadí i poznámku pro Clauda |
 | `ccc workflow templates` | šablony [workflow](workflows.md) a jejich kroky |
 | `ccc workflow start KONVERZACE ŠABLONA "ÚKOL"` | spustí workflow; `--check "pytest -q"`, `--rounds N`, `--wait` = počkat do konce (návratový kód 0, když prošlo) |
 | `ccc workflow list [KONVERZACE]` / `show BĚH` | běhy od nejnovějšího / kroky běhu a co který agent řekl |

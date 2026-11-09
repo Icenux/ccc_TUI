@@ -555,3 +555,23 @@ def test_turning_auto_continue_on_wakes_a_queue_stopped_at_the_limit(storage):
 
     storage.set_queue_auto_continue(q.id, False)
     assert storage.get_queue(q.id).status == QueueStatus.PAUSED_LIMIT
+
+
+def test_migration_drops_the_reverted_by_column_and_keeps_the_runs(tmp_path):
+    db = tmp_path / "old.db"
+    first = Storage(db)
+    queue = first.create_queue("a", "/tmp/a", "s1")
+    now = datetime.now()
+    first.insert_prompt_run(PromptRun(id=0, queue_id=queue.id, queue_item_id=None, prompt_text="p", started_at=now,
+                                      finished_at=now, status=RunStatus.SUCCESS, input_tokens=5))
+    conn = sqlite3.connect(db)  # the schema of a ccc from before the revert feature was removed
+    conn.execute("ALTER TABLE prompt_runs ADD COLUMN reverted_by TEXT")
+    conn.execute("UPDATE prompt_runs SET reverted_by = 'abc1234'")
+    conn.commit()
+    conn.close()
+
+    storage = Storage(db)
+
+    columns = {row[1] for row in sqlite3.connect(db).execute("PRAGMA table_info(prompt_runs)")}
+    assert "reverted_by" not in columns
+    assert [(r.prompt_text, r.input_tokens) for r in storage.runs_for_queue(queue.id)] == [("p", 5)]

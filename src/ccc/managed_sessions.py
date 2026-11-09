@@ -45,7 +45,15 @@ def _tmux(*args: str, input_text: str | None = None) -> subprocess.CompletedProc
 
 
 def target(queue_id: int) -> str:
+    """The tmux session's name (for creating it)."""
     return f"q{queue_id}"
+
+
+def exact(queue_id: int) -> str:
+    """The session as a `-t` target. A plain name is a prefix match in tmux
+    (`q1` would also hit `q12` while q1 is not running), so one conversation's
+    keys could land in another; `=name:` is an exact match (#259)."""
+    return f"={target(queue_id)}:"
 
 
 def build_interactive_command(queue: Queue, has_transcript: bool, extra: list[str] | None = None) -> list[str]:
@@ -67,7 +75,7 @@ def build_interactive_command(queue: Queue, has_transcript: bool, extra: list[st
 
 
 def is_running(queue_id: int) -> bool:
-    return _tmux("has-session", "-t", target(queue_id)).returncode == 0
+    return _tmux("has-session", "-t", exact(queue_id)).returncode == 0
 
 
 # The server is shown inside ccc's own tmux window (tui.cli_pane) through a
@@ -161,7 +169,7 @@ def stop(queue_id: int) -> None:
     """End the conversation's interactive process — and make sure it's
     really gone, not left running without its tmux pane."""
     pid = pane_pid(queue_id)
-    _tmux("kill-session", "-t", target(queue_id))
+    _tmux("kill-session", "-t", exact(queue_id))
     if pid is None or _wait_gone(pid, STOP_GRACE_SECONDS):
         return
     _signal(pid, signal.SIGTERM)
@@ -170,7 +178,7 @@ def stop(queue_id: int) -> None:
 
 
 def capture(queue_id: int) -> str:
-    result = _tmux("capture-pane", "-p", "-t", target(queue_id))
+    result = _tmux("capture-pane", "-p", "-t", exact(queue_id))
     return result.stdout if result.returncode == 0 else ""
 
 
@@ -193,8 +201,8 @@ class Screen:
 def screen(queue_id: int) -> Screen | None:
     """What the conversation's Claude Code shows now, colours included
     (None: it isn't running)."""
-    shown = _tmux("capture-pane", "-p", "-e", "-t", target(queue_id))
-    size = _tmux("display-message", "-p", "-t", target(queue_id),
+    shown = _tmux("capture-pane", "-p", "-e", "-t", exact(queue_id))
+    size = _tmux("display-message", "-p", "-t", exact(queue_id),
                  "#{pane_width} #{pane_height} #{cursor_x} #{cursor_y}")
     if shown.returncode != 0 or size.returncode != 0:
         return None
@@ -210,7 +218,7 @@ def press(queue_id: int, keys: list[str]) -> DeliveryResult:
     unknown = [k for k in keys if k not in KEYS]
     if unknown or not keys:
         return DeliveryResult(delivered=False, error=f"not an allowed key: {', '.join(unknown) or '(none)'}")
-    result = _tmux("send-keys", "-t", target(queue_id), *keys)
+    result = _tmux("send-keys", "-t", exact(queue_id), *keys)
     if result.returncode != 0:
         return DeliveryResult(delivered=False, error=result.stderr.strip() or "tmux send-keys failed")
     return DeliveryResult(delivered=True)
@@ -221,14 +229,14 @@ def type_text(queue_id: int, text: str) -> DeliveryResult:
     no control characters; longer text goes through paste_and_submit."""
     if not text or len(text) > TYPE_MAX_CHARS or any(ord(c) < 32 or ord(c) == 127 for c in text):
         return DeliveryResult(delivered=False, error="text to type must be short, without control characters")
-    result = _tmux("send-keys", "-t", target(queue_id), "-l", text)
+    result = _tmux("send-keys", "-t", exact(queue_id), "-l", text)
     if result.returncode != 0:
         return DeliveryResult(delivered=False, error=result.stderr.strip() or "tmux send-keys failed")
     return DeliveryResult(delivered=True)
 
 
 def pane_pid(queue_id: int) -> int | None:
-    result = _tmux("display-message", "-p", "-t", target(queue_id), "#{pane_pid}")
+    result = _tmux("display-message", "-p", "-t", exact(queue_id), "#{pane_pid}")
     try:
         return int(result.stdout.strip())
     except ValueError:
@@ -291,9 +299,9 @@ def confirm(queue_id: int, sleep=time.sleep) -> bool:
         if selected is None:
             return False
         if selected:
-            _tmux("send-keys", "-t", target(queue_id), "Enter")
+            _tmux("send-keys", "-t", exact(queue_id), "Enter")
             return True
-        _tmux("send-keys", "-t", target(queue_id), "Down")
+        _tmux("send-keys", "-t", exact(queue_id), "Down")
         sleep(TRUST_SELECT_PAUSE_SECONDS)
     return False
 
@@ -306,10 +314,10 @@ def paste_and_submit(queue_id: int, text: str, submit: bool = True) -> DeliveryR
     buffer = f"ccc-{queue_id}"
     steps = [
         (("load-buffer", "-b", buffer, "-"), text),
-        (("paste-buffer", "-p", "-d", "-b", buffer, "-t", target(queue_id)), None),
+        (("paste-buffer", "-p", "-d", "-b", buffer, "-t", exact(queue_id)), None),
     ]
     if submit:
-        steps.append((("send-keys", "-t", target(queue_id), "Enter"), None))
+        steps.append((("send-keys", "-t", exact(queue_id), "Enter"), None))
     for args, input_text in steps:
         result = _tmux(*args, input_text=input_text)
         if result.returncode != 0:

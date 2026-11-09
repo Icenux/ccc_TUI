@@ -32,7 +32,7 @@ def test_forward_loads_into_ccc_with_clipboard(monkeypatch):
 
 def test_control_client_is_read_only():
     assert clipboard_bridge.control_command(7) == [
-        "tmux", "-L", "ccc-sessions", "-C", "attach-session", "-r", "-t", "q7",
+        "tmux", "-L", "ccc-sessions", "-C", "attach-session", "-r", "-t", "=q7:",
     ]
 
 

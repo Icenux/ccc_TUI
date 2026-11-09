@@ -7,7 +7,7 @@ from ccc import attach_cli, managed_sessions
 
 def test_attach_command_targets_the_session_server():
     assert attach_cli.attach_command(7) == [
-        "tmux", "-L", "ccc-sessions", "-f", "/dev/null", "attach-session", "-t", "q7",
+        "tmux", "-L", "ccc-sessions", "-f", "/dev/null", "attach-session", "-t", "=q7:",
     ]
 
 

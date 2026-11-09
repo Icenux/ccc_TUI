@@ -114,7 +114,7 @@ def test_tmux_calls_use_own_socket_and_target(calls):
     start_args = calls[1][0]
     assert "new-session" in start_args and "-c" in start_args and "/tmp/p" in start_args
     assert start_args[-1] == "claude --session-id sid-1 --remote-control 'my conv'"
-    assert ["kill-session", "-t", "q7"] in [args[5:] for args, _ in calls]
+    assert ["kill-session", "-t", "=q7:"] in [args[5:] for args, _ in calls]
 
 
 def test_paste_and_submit_uses_bracketed_paste(calls):
@@ -223,13 +223,13 @@ def test_screen_has_the_colours_and_the_cursor(monkeypatch):
     calls = _fake_tmux(monkeypatch, {"capture-pane": "\x1b[32m> hi\x1b[0m\n", "display-message": "120 40 3 7\n"})
     shown = ms.screen(7)
     assert shown == ms.Screen("\x1b[32m> hi\x1b[0m\n", 120, 40, 3, 7)
-    assert calls[0] == ("capture-pane", "-p", "-e", "-t", "q7")
+    assert calls[0] == ("capture-pane", "-p", "-e", "-t", "=q7:")
 
 
 def test_only_allowed_keys_are_pressed(monkeypatch):
     calls = _fake_tmux(monkeypatch)
     assert ms.press(7, ["Escape", "C-c"]).delivered
-    assert calls == [("send-keys", "-t", "q7", "Escape", "C-c")]
+    assert calls == [("send-keys", "-t", "=q7:", "Escape", "C-c")]
     assert not ms.press(7, ["Enter", "C-x"]).delivered
     assert not ms.press(7, []).delivered
     assert len(calls) == 1
@@ -238,7 +238,7 @@ def test_only_allowed_keys_are_pressed(monkeypatch):
 def test_typed_text_is_literal_short_and_plain(monkeypatch):
     calls = _fake_tmux(monkeypatch)
     assert ms.type_text(7, "y").delivered
-    assert calls == [("send-keys", "-t", "q7", "-l", "y")]
+    assert calls == [("send-keys", "-t", "=q7:", "-l", "y")]
     for bad in ("", "a\nb", "\x1b[A", "x" * 201):
         assert not ms.type_text(7, bad).delivered
     assert len(calls) == 1
@@ -250,3 +250,9 @@ def test_command_resolves_the_mcp_marker(tmp_path, monkeypatch):
     assert ms.build_interactive_command(q, False, ["--mcp-config", "{}"]) == [
         "claude", "--session-id", "sid-1", "--strict-mcp-config", "--mcp-config", "{}",
     ]
+
+
+def test_target_is_an_exact_match_not_a_prefix():
+    """tmux treats a plain `-t q1` as a prefix: q12 would get q1's keys (#259)."""
+    assert ms.target(1) == "q1"
+    assert ms.exact(1) == "=q1:"

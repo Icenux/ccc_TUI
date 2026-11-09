@@ -72,7 +72,7 @@ def forward(buffer_name: str) -> bool:
 def control_command(queue_id: int) -> list[str]:
     # -r: read-only, the bridge never types into the session.
     return ["tmux", "-L", managed_sessions.TMUX_SOCKET, "-C", "attach-session", "-r",
-            "-t", managed_sessions.target(queue_id)]
+            "-t", managed_sessions.exact(queue_id)]
 
 
 def listen(queue_id: int, stop: threading.Event, on_copy=None) -> None:

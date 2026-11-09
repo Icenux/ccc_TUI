@@ -131,10 +131,6 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("analytics.next", N_("Next calendar month")),
     ]),
     (N_("Queue detail"), [
-        ("enter", N_("Show the run's commit diff")),
-        ("diff.comment", N_("In the diff: comment on the line under the cursor")),
-        ("diff.send", N_("In the diff: send the comments to Claude as one prompt")),
-        ("queue_detail.revert", N_("Revert the selected run's commit (a new commit; asks first)")),
         ("screen.add_prompt", N_("Add a prompt (this queue's path prefilled)")),
         ("screen.review", N_("Review its changes with a fresh reviewer (once or until it passes)")),
         ("screen.goal", N_("Goal loop: rounds of work, check and review until the goal is met")),

@@ -1,32 +1,20 @@
-# Git: auto-commit & diffs
+# Git: auto-commit
 
 In a git repository, ccc commits the result of every successful
 **headless** task, so each task is one commit you can look at or undo:
 
 - message `ccc: <first line of the task>` with a
   `ccc-conversation: <name>` trailer;
-- the queue detail (`Enter` on the [Dashboard](dashboard.md)) shows the
-  commit of each run; `Enter` on a run shows its changed files and the
-  coloured diff.
-
-## Commenting on a diff
-
-Review Claude's work like a pull request: in a run's diff move to a line
-(`↑` `↓`, `PgUp` `PgDn`, a click), press `c` and write what should change
-— `Enter` keeps the comment, an empty one removes it. Commented lines get
-a `●` and the comments are listed under the diff. `s` sends them all to
-the conversation as **one prompt** in its queue: each comment with its
-file and line number and the quoted line, and a request to address each
-one. Closing the diff with unsent comments asks first.
+- `ccc runs CONVERSATION` lists the commit of each run (see
+  [Command line](command-line.md)).
 
 ## Undoing a run
 
-In the queue detail, pick a run with a commit and press `u`: ccc
-reverts it with a **new commit** (`git revert`) — nothing is rewritten,
-and the revert can be undone in turn. The run then shows `↺` by its
-commit. ccc asks whether to **tell Claude** with a short note in the
-conversation's queue; otherwise its next task may still assume the
-changes are there.
+`ccc revert RUN` reverts a run's commit with a **new commit**
+(`git revert`) — nothing is rewritten, and the revert can be undone in
+turn. The run then shows `↺` by its commit in `ccc runs`. `--tell` also
+queues a short note for Claude in the conversation; otherwise its next
+task may still assume the changes are there.
 
 It works when:
 
@@ -39,8 +27,8 @@ It works when:
   for the commits themselves, see below).
 
 A revert that conflicts with later changes is abandoned: nothing
-changes and ccc says so. From the shell: `ccc runs CONVERSATION` lists
-the runs with their ids, `ccc revert RUN [--tell]` undoes one.
+changes and ccc says so. `ccc runs CONVERSATION` lists the runs with
+their ids.
 
 ## Several conversations in one folder
 
@@ -51,7 +39,7 @@ changes. So in one git work tree:
 - **headless tasks take turns**: a task waits while another
   conversation in the same folder runs one (Conversations says which);
 - ccc **doesn't commit** while another conversation works in the folder
-  (also an interactive one busy with what you typed) — the run history
+  (also an interactive one busy with what you typed) — `ccc runs`
   says so;
 - Conversations shows a ⚠ line with the others that share the folder.
 
@@ -88,7 +76,7 @@ never over an existing file, at most 500 files of up to 20 MB each.
 
 ## When ccc doesn't commit
 
-The run history says why:
+`ccc runs` says why:
 
 - the folder already had **uncommitted changes** before the task — that's
   your work, ccc never sweeps it into its commit;

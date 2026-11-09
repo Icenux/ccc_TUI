@@ -1506,6 +1506,23 @@ class Storage:
             ).fetchall()
             return [self._row_to_run(r) for r in rows]
 
+    def failed_runs_for_queue(self, queue_id: int, limit: int = 5) -> list[PromptRun]:
+        """The latest runs that did not succeed (error or rate limit), newest first."""
+        with closing(self._connect()) as conn:
+            rows = conn.execute(
+                "SELECT * FROM prompt_runs WHERE queue_id = ? AND status != ? ORDER BY started_at DESC LIMIT ?",
+                (queue_id, RunStatus.SUCCESS.value, limit),
+            ).fetchall()
+            return [self._row_to_run(r) for r in rows]
+
+    def failed_run_count(self, queue_id: int, since: str) -> int:
+        """How many runs since `since` (ISO time) did not succeed."""
+        with closing(self._connect()) as conn:
+            return conn.execute(
+                "SELECT COUNT(*) FROM prompt_runs WHERE queue_id = ? AND status != ? AND started_at >= ?",
+                (queue_id, RunStatus.SUCCESS.value, since),
+            ).fetchone()[0]
+
     def daily_cost_totals(self, days: int = 30) -> list[tuple[str, float]]:
         with closing(self._connect()) as conn:
             rows = conn.execute(

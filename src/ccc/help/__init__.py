@@ -29,7 +29,7 @@ TOPICS: list[tuple[str, str]] = [
     ("live-sessions", N_("Live sessions")),
     ("analytics", N_("Analytics")),
     ("settings", N_("Settings & notifications")),
-    ("git", N_("Git: auto-commit & diffs")),
+    ("git", N_("Git: auto-commit")),
     ("command-line", N_("Command line")),
     ("troubleshooting", N_("Troubleshooting & how it works")),
     ("keys", N_("Keyboard shortcuts")),

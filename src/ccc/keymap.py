@@ -36,7 +36,7 @@ FORMAT = "ccc-keys"
 # pane beside ccc (only the keys ccc binds in tmux reach ccc from there).
 VIEWS = ("dashboard", "conversations", "archive", "sessions", "analytics", "queue_detail")
 WINDOWS = ("help", "confirm", "approval", "tasks", "task_edit", "preset_edit", "settings", "keys",
-           "new_conversation", "preset_name", "add_prompt", "diff", "diff_comment", "search", "attach", "routines", "routine_edit", "agents", "agent_new", "agent_edit",
+           "new_conversation", "preset_name", "add_prompt", "search", "attach", "routines", "routine_edit", "agents", "agent_new", "agent_edit",
            "review", "goal", "workflow", "group", "rename", "update")
 CLAUDE = "claude"
 EVERYWHERE = (*VIEWS, *WINDOWS, CLAUDE)
@@ -79,9 +79,6 @@ ACTIONS: tuple[KeyAction, ...] = (
               (*_CONVERSATIONS, "queue_detail")),
     KeyAction("screen.add_prompt", "plus", N_("Add prompt"), ("sessions", "queue_detail")),
     KeyAction("sessions.refresh", "r", N_("Reload the session list"), ("sessions",)),
-    KeyAction("diff.comment", "c", N_("Comment on the line (diff of a run)"), ("diff",)),
-    KeyAction("diff.send", "s", N_("Send the comments to Claude (diff of a run)"), ("diff",)),
-    KeyAction("queue_detail.revert", "u", N_("Revert the selected run's commit"), ("queue_detail",)),
     KeyAction("screen.review", "v", N_("Review the conversation's changes"), (*_CONVERSATIONS, "queue_detail")),
     KeyAction("screen.goal", "g", N_("Goal loop: work in rounds until a reviewer says it's met"),
               (*_CONVERSATIONS, "queue_detail")),

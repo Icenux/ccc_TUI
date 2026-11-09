@@ -23,7 +23,7 @@ na obrazovce, kde právě jsi.
 16. [Živé relace](live-sessions.md)
 17. [Analytika](analytics.md)
 18. [Nastavení a notifikace](settings.md)
-19. [Git: automatické commity a diffy](git.md)
+19. [Git: automatické commity](git.md)
 20. [Příkazová řádka](command-line.md)
 21. [Řešení potíží a jak to funguje](troubleshooting.md)
 22. [Klávesové zkratky](keys.md)

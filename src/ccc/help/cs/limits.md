@@ -51,7 +51,7 @@ Jak se to dozvíš:
 - zpráva na Telegram / Discord, pokud je máš nastavené
   ([Nastavení](settings.md)).
 
-Co dělat: podívej se na chybu (Konverzace, nebo historie běhů v detailu
+Co dělat: podívej se na chybu (Konverzace, nebo poslední chyba v detailu
 fronty — `Enter` na Přehledu), odstraň příčinu a stiskni `r`.
 **`r` znovu spustí úkol, který selhal**, ještě před zbytkem fronty.
 

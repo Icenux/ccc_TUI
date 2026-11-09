@@ -173,10 +173,6 @@ name the default keys.
 
 | Key | |
 |---|---|
-| `Enter` | Show the run's commit diff |
-| `c` | In the diff: comment on the line under the cursor |
-| `s` | In the diff: send the comments to Claude as one prompt |
-| `u` | Revert the selected run's commit (a new commit; asks first) |
 | `+` | Add a prompt (this queue's path prefilled) |
 | `v` | Review its changes with a fresh reviewer (once or until it passes) |
 | `g` | Goal loop: rounds of work, check and review until the goal is met |

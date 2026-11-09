@@ -990,3 +990,15 @@ def test_status_says_when_a_restart_is_needed_and_restart_does_it(storage, monke
     with pytest.raises(api.ApiError) as error:
         api.Api(storage).restart()
     assert error.value.status == 409
+
+
+def test_overview_endpoint_has_the_four_parts(storage, repo_run):
+    queue, _run_id, repo = repo_run
+    (repo / "calc.py").write_text("changed\n")
+    data = api.Api(storage).overview(queue.id)
+    assert set(data) == {"now", "changes", "usage", "errors"}
+    assert data["now"]["state"] == "idle"
+    assert [f["path"] for f in data["changes"]["files"]] == ["calc.py"]
+    assert data["usage"]["total"] == 15
+    status, body = api.Api(storage).route("GET", f"/api/v1/conversations/{queue.id}/overview", {}, None)[:2]
+    assert status == 200 and body["errors"]["recent"] == []

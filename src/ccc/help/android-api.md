@@ -196,6 +196,7 @@ settings it shows are the ones that apply to both sides.
 | `GET /conversations/{id}/tasks` | its [task queue](tasks.md) and the two switches; `POST` adds `{"text", "when"}` — when is empty (as soon as possible), `HH:MM`, `YYYY-MM-DD HH:MM` or `reset` |
 | `POST /tasks/{id}` | `{"text"}` / `{"when"}` of a task that hasn't started; `DELETE` removes it; `POST /tasks/{id}/move` `{"delta": -1 \| 1}` |
 | `POST /conversations/{id}/switches` | `{"paused": bool}` start no further tasks, `{"auto_continue": bool}` after a usage limit |
+| `GET /conversations/{id}/overview` | the conversation at a glance: `now` (`state`, `state_label`, `pending`, `last_event`, `context`), `changes` (branch, `added`, `removed`, `ahead`, `behind`, `files` with `status` and lines; `null` where ccc may not run git), `usage` (`today`, `total`, 14 `days`, `models`) and `errors` (`current`, `count`, `recent` runs) |
 | `GET /conversations/{id}/runs` | its runs, newest first: state, tokens, the [commit](git.md) |
 | `GET /runs/{id}/diff` | the run's commit line by line (kind, file, line numbers, commentable) |
 | `POST /runs/{id}/comments` | `{"comments": [{"index", "text"}]}` on lines of the diff, sent to Claude as one task |

@@ -51,7 +51,7 @@ How you find out:
 - a message on Telegram / Discord, if you set them up
   ([Settings](settings.md)).
 
-What to do: look at the error (Conversations, or the run history in the
+What to do: look at the error (Conversations, or the last error in the
 queue detail — `Enter` on the Dashboard), fix the cause, then press `r`.
 **`r` runs the task that failed again**, before the rest of the queue.
 

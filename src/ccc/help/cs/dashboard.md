@@ -64,10 +64,15 @@ Co s posledními dvěma: [Limity využití a zablokované fronty](limits.md).
 - její nastavení (složka, volby Claude Code, automatické pokračování)
   a u konverzace se [vzdáleným ovládáním](remote-control.md) odkaz, jak
   ji otevřít v telefonu;
-- **historii běhů**: každý úkol s výsledkem, tokeny a — v git
-  repozitáři — commitem. `Enter` na běhu ukáže diff commitu (viz
-  [Git](git.md));
-- `u` [vrátí běh](git.md#vrácení-běhu): vrátí jeho commit;
+- **Teď**: jestli Claude pracuje, čeká na tvé schválení nebo na limit,
+  kolik zpráv je ve frontě a co se v konverzaci stalo naposledy;
+- **Změny**: větev složky a soubory s necommitnutými změnami, s počtem
+  přidaných a odebraných řádků (jen ve složce s gitem a v konverzacích
+  spuštěných s *Přeskočit všechny kontroly oprávnění*, protože git ccc
+  spouští jen tam);
+- **Spotřeba**: tokeny za posledních 14 dní a použité modely;
+- **Chyby**: poslední selhané běhy a co konverzaci teď blokuje.
+  Stránka se obnovuje sama;
 - `+` přidá konverzaci úkol, `r` ji znovu rozběhne, když je zablokovaná
   nebo pozastavená na limitu. `Esc` vrací zpět.
 

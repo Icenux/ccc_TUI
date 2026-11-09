@@ -7,7 +7,6 @@ import pytest
 
 from ccc import api, api_doctor, api_scope
 from ccc.api_doctor import FAIL, OK, WARN, listeners, run_checks
-from ccc.models import ROLE_ADMIN, ROLE_OPERATE
 from ccc.storage import Storage, make_private
 
 SS_LOOPBACK = "LISTEN 0 5 127.0.0.1:8737 0.0.0.0:*\nLISTEN 0 5 [::1]:8737 [::]:*\nLISTEN 0 5 0.0.0.0:22 0.0.0.0:*\n"
@@ -63,13 +62,10 @@ def test_a_new_storage_makes_its_file_private(tmp_path):
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
 
 
-def test_devices_that_may_do_everything_or_sleep_are_warned_about(storage, tmp_path):
-    api.add_device(storage, "Phone", ROLE_ADMIN)
-    api.add_device(storage, "Tablet", ROLE_ADMIN)
-    api.add_device(storage, "Old", ROLE_OPERATE)
+def test_devices_that_sleep_are_warned_about(storage, tmp_path):
+    api.add_device(storage, "Old")
     later = datetime.now() + timedelta(days=api_doctor.STALE_DAYS + 1)
     checks = run_checks(storage, tmp_path / "ccc.db", ss_output=SS_LOOPBACK, tailscale_json="{}", now=later)
-    assert "Phone, Tablet" in _texts(checks, WARN)
     assert "Old" in _texts(checks, WARN) and "ccc api revoke" in _texts(checks, WARN)
 
 

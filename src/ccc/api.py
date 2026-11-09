@@ -77,12 +77,12 @@ from urllib.parse import parse_qs, urlsplit
 from ccc import agents, goals, groups, i18n, launch_options, mcp_servers, overview, plugins, updates
 from ccc.api_agents import AgentEndpoints
 from ccc.api_subagents import SubagentEndpoints
-from ccc import api_audit, api_roles, api_scope
+from ccc import api_audit, api_scope
 from ccc.api_common import ApiError, int_of, iso, route, text_of
 from ccc.api_views import ViewEndpoints
 from ccc.heartbeat import daemon_alive
 from ccc.i18n import _
-from ccc.models import ROLE_ADMIN, REVOKED_BY_APP, REVOKED_BY_COMPUTER, REVOKED_BY_TOKEN, Device, ItemStatus, QueueStatus
+from ccc.models import REVOKED_BY_APP, REVOKED_BY_COMPUTER, REVOKED_BY_TOKEN, Device, ItemStatus, QueueStatus
 from ccc.orchestrator import send_message, start_conversation
 from ccc.storage import Storage
 from ccc.transcript import TranscriptEvent, find_transcript_path, parse_transcript_events
@@ -109,11 +109,11 @@ def _digest(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
 
 
-def add_device(storage: Storage, name: str, role: str = ROLE_ADMIN) -> tuple[Device, str]:
-    """A device with a token of its own and a role (models.ROLES). Only the
+def add_device(storage: Storage, name: str) -> tuple[Device, str]:
+    """A device with a token of its own. Only the
     token's SHA-256 is kept, so this is the one time it can be shown."""
     value = secrets.token_urlsafe(32)
-    return storage.add_device(name.strip() or ORIGINAL_NAME, _digest(value), role), value
+    return storage.add_device(name.strip() or ORIGINAL_NAME, _digest(value)), value
 
 
 def new_token(storage: Storage, name: str = ORIGINAL_NAME) -> str:
@@ -268,7 +268,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
         "token") say when and how; both are null for a device still signed in."""
         return {"devices": [
             {"id": d.id, "name": d.name, "created_at": iso(d.created_at), "last_seen_at": iso(d.last_seen_at),
-             "last_ip": d.last_ip, "current": d.id == caller, "role": d.role,
+             "last_ip": d.last_ip, "current": d.id == caller,
              "revoked_at": iso(d.revoked_at), "revoked_by": d.revoked_by or None}
             for d in self.storage.list_devices(include_revoked=history)]}
 
@@ -921,11 +921,9 @@ class _Handler(BaseHTTPRequestHandler):
             if method == "GET" and url.path == PREFIX + "/events":
                 self._events()
                 return
-            self._check_role(method, url.path)
             query[CALLER] = str(self._device.id)
             body = self._body() if method == "POST" else {}
             status, result = self.api.route(method, url.path, query, body)
-            result = api_roles.strip_for(self._device.role, result)
         except api_scope.FolderNotAllowed as exc:
             status, result = exc.status, {"error": exc.message}
             denied_folder = exc.folder
@@ -949,20 +947,12 @@ class _Handler(BaseHTTPRequestHandler):
         """Log the request (api_audit) and raise the alarm for what is out of the ordinary."""
         device = device or self._device
         ip = self._client_ip()
-        if denied_folder:  # the role was fine, the folder is not allowed: say so, and once per folder
+        if denied_folder:  # the folder is not allowed: say so, and once per folder
             api_audit.record_folder_denied(self.api.storage, device, ip, method, path, denied_folder)
             api_audit.alarm_folder_denied(self.api.storage, device, denied_folder)
             return
         api_audit.record(self.api.storage, device, ip, method, path, status, detail)
         api_audit.alarm_for(self.api.storage, status, method, path, ip, device)
-
-    def _check_role(self, method: str, path: str) -> None:
-        """403 when the device's role is too weak for the request (api_roles)."""
-        needed = api_roles.required_role(method, path.removeprefix(PREFIX), self._device.id)
-        if not api_roles.allows(self._device.role, needed):
-            logger.warning("device %s (%s) refused %s %s: needs %s", self._device.id, self._device.role, method, path, needed)
-            raise ApiError(HTTPStatus.FORBIDDEN, _("This device may not do that: it is {role}, this needs {needed}.").format(
-                role=self._device.role, needed=needed))
 
     def _client_ip(self) -> str:
         return client_ip(self.client_address[0], self.headers.get("X-Forwarded-For", ""))

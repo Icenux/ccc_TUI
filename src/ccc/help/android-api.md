@@ -85,24 +85,12 @@ The app is updated by version, not through ccc, and from its own repository: a t
 **What the list shows** (Connection → *Conversation list*): the git state, the queued tasks and the folder, each on or off —
 kept on the phone, so a small screen can show less.
 
-## What a device may do (roles)
+## What a device may do
 
-Every device has a role, so a stolen phone or token is not a way into the
-whole computer:
-
-| Role | May |
-|---|---|
-| `read` | look: every `GET` (lists, conversations, the events stream); without the links that control a conversation (`remote_control_url`) |
-| `operate` | also steer the conversations that exist: messages, approvals, queue, tasks, reviews, goals, workflows |
-| `admin` | also start conversations (any folder), type into a terminal, prompt live sessions, routines, settings and presets, create, change and remove [agents](agents.md), backup, update ccc and build the app, manage other devices |
-
-A newly paired phone is `operate`; `ccc api pair --role admin` (or
-*Change role* in the Devices list, or `ccc api role ID admin`) gives it
-more, `read` less. Devices from before roles stay `admin`. A request beyond
-the role gets `403`; a path the rules don't know needs `admin`. Whatever its
-role, a device may rename and sign out itself. Note that `operate` still
-lets the phone approve tool use in a conversation that exists — that is
-what steering it means.
+Every paired device may do everything — there are no roles. A stolen phone
+or token is therefore a way into the computer: sign the device out at once
+(*Settings → Devices → Sign out*, or `ccc api revoke ID`), and see what it did
+in `ccc api log`.
 
 ## Folders and permission checks
 
@@ -125,13 +113,12 @@ If a token is ever misused you should be able to see it and hear of it.
 The API logs everything that changes something, every refusal (`401` /
 `403`) and every pairing — never the query, the body or typed keys, only
 the path and the folder of a new conversation. Read it with
-`ccc api log` (`-n` how many), in *Devices → Activity*, or `GET /audit`
-(admin). The newest 5000 entries are kept.
+`ccc api log` (`-n` how many), in *Devices → Activity*, or `GET /audit`. The newest 5000 entries are kept.
 
 Through your Telegram / Discord notifications ([Settings](settings.md))
 ccc also tells you at once about what is out of the ordinary: a new
 device paired, a wrong pairing code, a request with a wrong token, a
-device trying more than its role allows — each kind at most once in
+device asking for what is not allowed — each kind at most once in
 5 minutes.
 
 ## Securing the connection
@@ -214,15 +201,15 @@ settings it shows are the ones that apply to both sides.
 | `GET /plugins` | `{installed, enabled}`: ids of installed Claude Code plugins and those on by default (tick them as `plugin:<id>` in `options`, together with `plugins_select`) |
 | `GET /agents?path=` | the Claude Code [agents](agents.md) of a folder (its project's and the user's) without their prompts: `name`, `description`, `scope` (`project` / `user`), `tools` (`null` = every tool), `model`, `problem` (why Claude Code would skip the file, else empty), `overridden`, `file`. A folder outside the allowed ones gets `403` |
 | `GET /agents/{scope}/{name}?path=` | one agent with its `prompt` and a `version`; `POST` on the same path changes it `{"path", "description", "tools", "model", "prompt", "version"}` (`409` when the file changed since that `version`; the name and the file's other fields stay), `DELETE` removes it (the file moves to ccc's own folder). Admin; an agent of a parent folder or behind a link that leads out of the folder is not changed (`403`) |
-| `POST /agents` | admin: creates `{"scope", "path", "name", "description", "tools", "model", "prompt"}`; `name` is lowercase letters, digits and hyphens, an existing file is never overwritten (`400`). Answers `201` with the agent, `version` and `new_folder` (Claude Code needs a restart to see the first agent of a new folder) |
+| `POST /agents` | creates `{"scope", "path", "name", "description", "tools", "model", "prompt"}`; `name` is lowercase letters, digits and hyphens, an existing file is never overwritten (`400`). Answers `201` with the agent, `version` and `new_folder` (Claude Code needs a restart to see the first agent of a new folder) |
 | `GET /agent-options` | the templates (key, title, description, tools, model, prompt — in the request's language) and the wizard's choices: `access` (what the agent may do → tools), `effort` (→ model), the allowed `models` |
-| `POST /agents/prompt` | admin: `{"description", "access", "claude"}` → `{"prompt", "by"}`: a short outline, or with `"claude": true` instructions written by Claude (one call without tools, one at a time: `429` when another is running, `502` with the reason when Claude could not) |
+| `POST /agents/prompt` | `{"description", "access", "claude"}` → `{"prompt", "by"}`: a short outline, or with `"claude": true` instructions written by Claude (one call without tools, one at a time: `429` when another is running, `502` with the reason when Claude could not) |
 | `GET /mcp-servers?path=` | names of the MCP servers configured for a folder (tick them as `mcp:<name>` in `options`, together with `mcp_select`) |
 | `GET /sessions?path=` | Claude Code sessions recorded in a folder, newest first (to resume one: `session_id` in `POST /conversations` with `session_resume`) |
 | `GET /launch-presets` | the New conversation presets and the last choice |
 | `GET /prompt-presets` | the preset prompts (Alt+1 … 9 in ccc) |
 | `POST /pair` | `{"code", "name"}` — no token needed: trades a pairing code from the QR for a new device; answers `{"token", "device_id", "name", "version"}`, 401 when the code is wrong, used or run out |
-| `GET /devices` | the devices signed in: name, `role`, made, last seen, address; `current` marks the caller. `POST /devices/{id}` `{"name"}` renames one, `DELETE /devices/{id}` signs it out at once (open connections too; the row stays as history). `GET /devices?all=1` adds the signed-out ones with `revoked_at` and `revoked_by` (`app`, `computer`, `token`) |
+| `GET /devices` | the devices signed in: name, made, last seen, address; `current` marks the caller. `POST /devices/{id}` `{"name"}` renames one, `DELETE /devices/{id}` signs it out at once (open connections too; the row stays as history). `GET /devices?all=1` adds the signed-out ones with `revoked_at` and `revoked_by` (`app`, `computer`, `token`) |
 | `GET /groups` | the grouping and your own groups; `POST /groups/rename` `{"old", "new"}`, `POST /groups/delete` `{"name"}` |
 | `GET /search?q=` | search every conversation (archived too), newest first |
 | `GET /waiting` | conversations that need you, most urgent first (Alt+N in ccc) |

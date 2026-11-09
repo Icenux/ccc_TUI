@@ -4,7 +4,7 @@ it while it happens. So the API keeps a log (`ccc api log`, the Devices
 window, GET /audit for an admin) and tells the notification channels
 (Telegram / Discord, as ccc does for approvals) about what is out of the
 ordinary: a new device paired, a wrong pairing code, requests with a wrong
-token, a device trying more than its role allows.
+token, a device asking for what is not allowed.
 
 Logged: everything that changes something (not GET), every refusal (401 /
 403) and every pairing — never the query, the body or typed keys (they can
@@ -71,8 +71,8 @@ def record_folder_denied(storage, device, ip: str, method: str, path: str, folde
 
 def alarm_folder_denied(storage, device, folder: str) -> None:
     if device is not None:
-        alarm(storage, f"folder-{device.id}", _("ccc API: {name} ({role}) asked for the folder {folder}, which is not allowed. If it is yours, review it in `ccc api log` and allow it on the computer.").format(
-            name=clean(device.name, 60), role=device.role, folder=clean(folder)))
+        alarm(storage, f"folder-{device.id}", _("ccc API: {name} asked for the folder {folder}, which is not allowed. If it is yours, review it in `ccc api log` and allow it on the computer.").format(
+            name=clean(device.name, 60), folder=clean(folder)))
 
 
 def alarm(storage, kind: str, text: str, now: float | None = None, category: str = CAT_SECURITY) -> bool:
@@ -99,8 +99,8 @@ def alarm_for(storage, status: int, method: str, path: str, ip: str, device) -> 
     elif status == HTTPStatus.UNAUTHORIZED:
         alarm(storage, "bad-token", _("ccc API: a request with a wrong token from {ip}.").format(ip=ip))
     elif status == HTTPStatus.FORBIDDEN and device is not None:
-        alarm(storage, f"forbidden-{device.id}", _("ccc API: {name} ({role}) tried {method} {path}, which its role does not allow.").format(
-            name=device.name, role=device.role, method=method, path=path))
+        alarm(storage, f"forbidden-{device.id}", _("ccc API: {name} tried {method} {path}, which is not allowed.").format(
+            name=device.name, method=method, path=path))
     elif status == HTTPStatus.CREATED and path.endswith("/pair") and device is not None:
-        alarm(storage, f"paired-{device.id}", _("ccc API: a new device was paired: {name} ({role}) from {ip}.").format(
-            name=device.name, role=device.role, ip=ip), category=CAT_DEVICES)
+        alarm(storage, f"paired-{device.id}", _("ccc API: a new device was paired: {name} from {ip}.").format(
+            name=device.name, ip=ip), category=CAT_DEVICES)

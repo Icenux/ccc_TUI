@@ -325,14 +325,6 @@ class Device:
     # Signed out: when, and how (REVOKED_BY_*). The row stays as history; its token no longer works.
     revoked_at: datetime | None = None
     revoked_by: str = ""
-    # What the device may do (ROLES, ccc.api_roles); devices from before roles are "admin", as they were.
-    role: str = "admin"
-
-
-ROLE_READ = "read"  # only looks: lists, conversations, diffs
-ROLE_OPERATE = "operate"  # also steers the conversations that exist: messages, approvals, queue
-ROLE_ADMIN = "admin"  # also starts conversations, types into terminals, updates ccc, changes settings and devices
-ROLES = (ROLE_READ, ROLE_OPERATE, ROLE_ADMIN)  # weakest first
 
 
 REVOKED_BY_APP = "app"  # signed out from an app (this phone's own, or another one's)

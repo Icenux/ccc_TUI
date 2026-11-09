@@ -17,11 +17,10 @@ from urllib.parse import quote
 import segno
 
 from ccc import api
-from ccc.models import ROLES, ROLE_OPERATE, Device
+from ccc.models import Device
 from ccc.storage import Storage
 
-CODE_KEY = "api_pair_code"  # "<sha256 of the code>|<expires, ISO>|<role>": one code at a time
-DEFAULT_ROLE = ROLE_OPERATE  # a newly paired phone may steer conversations, not start them (#160)
+CODE_KEY = "api_pair_code"  # "<sha256 of the code>|<expires, ISO>": one code at a time
 SERVER_KEY = "api_public_url"
 TTL = timedelta(minutes=5)
 QUIET_ZONE = 4  # light modules around the code, as the spec says (2 made some scanners miss it, #131)
@@ -31,14 +30,12 @@ def _digest(code: str) -> str:
     return hashlib.sha256(code.encode()).hexdigest()
 
 
-def new_code(storage: Storage, now: datetime | None = None, role: str = DEFAULT_ROLE) -> tuple[str, datetime]:
+def new_code(storage: Storage, now: datetime | None = None) -> tuple[str, datetime]:
     """A new code (the one before it stops working) and when it runs out; the
-    phone that redeems it gets `role` (models.ROLES). Only its SHA-256 is kept, like the tokens."""
-    if role not in ROLES:
-        raise ValueError(f"unknown role {role!r}")
+    phone that redeems it becomes a device. Only its SHA-256 is kept, like the tokens."""
     code = secrets.token_urlsafe(16)
     expires = (now or datetime.now()) + TTL
-    storage.set_setting(CODE_KEY, f"{_digest(code)}|{expires.isoformat()}|{role}")
+    storage.set_setting(CODE_KEY, f"{_digest(code)}|{expires.isoformat()}")
     return code, expires
 
 
@@ -47,9 +44,7 @@ def redeem(storage: Storage, code: str, name: str, now: datetime | None = None) 
     is wrong, used or run out. A wrong guess leaves the good code alone."""
     stored = storage.get_setting(CODE_KEY) or ""
     digest, _sep, rest = stored.partition("|")
-    expires, _sep, role = rest.partition("|")
-    if role not in ROLES:
-        role = DEFAULT_ROLE  # a code made before roles existed
+    expires = rest.partition("|")[0]  # a code made while roles existed has "|<role>" after it: ignored
     if not code or not digest or digest != _digest(code):
         return None
     # The delete is the one-time part: of two phones scanning at once, one wins.
@@ -57,7 +52,7 @@ def redeem(storage: Storage, code: str, name: str, now: datetime | None = None) 
         return None
     if datetime.fromisoformat(expires) < (now or datetime.now()):
         return None
-    return api.add_device(storage, name, role)
+    return api.add_device(storage, name)
 
 
 def server_url(storage: Storage) -> str | None:

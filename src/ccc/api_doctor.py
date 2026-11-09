@@ -19,7 +19,6 @@ from pathlib import Path
 
 from ccc import api, api_scope
 from ccc.i18n import _
-from ccc.models import ROLE_ADMIN
 from ccc.notify import Notifier
 
 OK, WARN, FAIL = "ok", "warn", "fail"
@@ -92,11 +91,6 @@ def _files(db_path: str | Path) -> list[Check]:
 def _devices(storage, now: datetime) -> list[Check]:
     checks = []
     devices = storage.list_devices()
-    admins = [d for d in devices if d.role == ROLE_ADMIN]
-    if admins:
-        checks.append(Check(WARN if len(admins) > 1 else OK, _("Devices that may do everything (admin): {names}. "
-                                                               "Give the others less: ccc api role ID operate").format(
-            names=", ".join(d.name for d in admins))))
     stale = [d.name for d in devices if (d.last_seen_at or d.created_at) < now - timedelta(days=STALE_DAYS)]
     if stale:
         checks.append(Check(WARN, _("Not used for {days} days, still signed in: {names}. Sign out: ccc api revoke ID").format(

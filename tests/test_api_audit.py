@@ -1,7 +1,6 @@
 import pytest
 
 from ccc import api, api_audit, api_scope, pairing
-from ccc.models import ROLE_ADMIN, ROLE_READ
 
 from test_api import _call, server, storage  # noqa: F401  (fixtures)
 
@@ -44,8 +43,10 @@ def test_a_new_conversation_keeps_its_folder_and_never_the_body(server, storage,
 
 def test_a_refusal_is_logged_with_the_device(server, storage):  # noqa: F811
     base, _ = server
-    reader, token = api.add_device(storage, "Reader", ROLE_READ)
-    assert _call(f"{base}/api/v1/update", token, "POST")[0] == 403
+    token = api.add_device(storage, "Reader")[1]
+    reader = storage.list_devices()[-1]
+    api_scope.remove_root(storage, "/")  # the fixture opens everything
+    assert _call(f"{base}/api/v1/conversations", token, "POST", {"path": "/nowhere/z"})[0] == 403
     entry = storage.list_audit(1)[0]
     assert (entry["device_id"], entry["device_name"], entry["status"]) == (reader.id, "Reader", 403)
 
@@ -76,12 +77,11 @@ def test_the_log_keeps_only_the_newest(storage, monkeypatch):  # noqa: F811
     assert [e["path"] for e in storage.list_audit(100)] == [f"/x{n}" for n in range(8, 3, -1)]
 
 
-def test_audit_endpoint_is_for_admins(server, storage):  # noqa: F811
+def test_audit_endpoint_lists_the_entries(server, storage):  # noqa: F811
     base, token = server
-    _call(f"{base}/api/v1/update", api.add_device(storage, "R", ROLE_READ)[1], "POST")
+    _call(f"{base}/api/v1/conversations/999/messages", token, "POST", {"text": "x"})
     status, result = _call(f"{base}/api/v1/audit", token)
-    assert status == 200 and result["entries"][0]["status"] == 403
-    assert _call(f"{base}/api/v1/audit", api.add_device(storage, "R2", ROLE_READ)[1])[0] == 403
+    assert status == 200 and result["entries"][0]["status"] == 404
 
 
 def test_cli_log(storage, capsys):  # noqa: F811
@@ -123,8 +123,8 @@ def test_a_wrong_pairing_code_is_logged_once(server, storage):  # noqa: F811
     assert len(storage.list_audit()) == 1
 
 
-def test_a_refused_folder_is_not_reported_as_a_role_problem_and_once(server, storage, sent):  # noqa: F811
-    base, token = server  # an admin device
+def test_a_refused_folder_is_reported_once_as_a_folder_problem(server, storage, sent):  # noqa: F811
+    base, token = server
     api_scope.remove_root(storage, "/")  # the fixture opens everything
     for typed in ("/nowhere/a", "/nowhere/ab", "/nowhere/abc"):
         status, result = _call(f"{base}/api/v1/mcp-servers?path={typed}", token)
@@ -133,10 +133,11 @@ def test_a_refused_folder_is_not_reported_as_a_role_problem_and_once(server, sto
     assert len(entries) == 1 and entries[0]["detail"] == "folder not allowed: /nowhere/a"
     assert _call(f"{base}/api/v1/conversations", token, "POST", {"path": "/nowhere/z"})[0] == 403
     assert len(storage.list_audit()) == 2  # a refused change is never collapsed
-    assert len(sent) == 1 and "folder /nowhere/a" in sent[0] and "role does not allow" not in sent[0]
+    assert len(sent) == 1 and "folder /nowhere/a" in sent[0] and "tried" not in sent[0]
 
 
-def test_a_role_refusal_is_still_reported_as_one(server, storage, sent):  # noqa: F811
-    base, _ = server
-    _call(f"{base}/api/v1/update", api.add_device(storage, "R", ROLE_READ)[1], "POST")
-    assert any("role does not allow" in t for t in sent)
+def test_another_refusal_is_reported_as_a_forbidden_request(server, storage, sent):  # noqa: F811
+    base, token = server
+    api_scope.set_skip_allowed(storage, False)
+    status, _result = _call(f"{base}/api/v1/conversations", token, "POST", {"path": "/tmp", "options": ["perm_skip"]})
+    assert status == 403 and any("which is not allowed" in t and "tried" in t for t in sent)

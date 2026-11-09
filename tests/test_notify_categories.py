@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from ccc import api, api_doctor, routines, watch
-from ccc.models import ROLE_READ, Routine
+from ccc.models import Routine
 from ccc.notify import (
     CAT_DEVICES, CAT_DIGEST, CAT_HEALTH, CAT_QUEUE, CAT_STARTED, CATEGORIES, DISCORD_WEBHOOK_KEY, TELEGRAM_CHAT_KEY,
     TELEGRAM_TOKEN_KEY, Notifier, category_enabled, category_states, set_category_states,
@@ -84,17 +84,14 @@ def test_an_older_app_may_still_send_the_retired_context_category(storage):
     assert "context" not in after["notify_telegram"]
 
 
-def test_a_device_signed_out_or_given_another_role_is_told(storage, both):
+def test_a_device_signed_out_is_told(storage, both):
     notifier, telegram, _discord = both
     first, _ = api.add_device(storage, "Phone")
     assert watch.devices_tick(storage, notifier) == []  # only remembers
-    storage.set_device_role(first.id, ROLE_READ)
-    assert "Phone" in watch.devices_tick(storage, notifier)[0]
-    assert watch.devices_tick(storage, notifier) == []
     storage.revoke_device(first.id, "computer")
     told = watch.devices_tick(storage, notifier)
     assert len(told) == 1 and "signed out" in told[0]
-    assert len(telegram) == 2
+    assert len(telegram) == 1
     new, _ = api.add_device(storage, "Tablet")  # a new device is the pairing alarm's business
     assert watch.devices_tick(storage, notifier) == []
 

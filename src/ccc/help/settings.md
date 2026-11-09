@@ -38,7 +38,7 @@ The Android app's *ccc settings* has the same kinds of tabs (plus
 | Monthly analytics archive | see [Analytics](analytics.md) |
 | Updates | look for new versions of ccc, on or off — see below |
 | Pair a new device | a QR code for the Android app — see [Android app & API](android-api.md) |
-| Devices | the list of phones signed in to the Android app's API, right in the tab: change role, sign one out, history, activity — see [Android app & API](android-api.md) |
+| Devices | the list of phones signed in to the Android app's API, right in the tab: sign one out, history, activity — see [Android app & API](android-api.md) |
 | Data | where the database and its daily backups are, *Back up now* |
 
 The same values can be set from the shell, see
@@ -153,7 +153,7 @@ and the other only what needs you. Saved with *Save* in the app, at once
 | Updates | a new ccc version is available | on |
 | Conversation started | a conversation starts working after 10+ quiet minutes | off |
 | Routines | a routine started, or was skipped | off |
-| Devices | a new device paired, signed out, or its role changed | on |
+| Devices | a new device paired or signed out | on |
 | Security | a wrong pairing code or token, a forbidden request | on |
 | Health | a failed backup, a new warning in `ccc api doctor` | off |
 | Daily summary | after 8:00, what ran in the last 24 hours | off |

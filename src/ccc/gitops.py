@@ -423,6 +423,48 @@ def work_status(cwd: str) -> WorkStatus | None:
         return None
 
 
+CHANGED_FILES_MAX = 200
+
+
+@dataclass(frozen=True)
+class FileChange:
+    """One changed file of the work tree: uncommitted lines added / removed
+    (None for a binary file or a new, untracked one)."""
+    path: str
+    status: str  # "modified" | "new"
+    added: int | None = None
+    removed: int | None = None
+
+
+def changed_files(cwd: str) -> list[FileChange] | None:
+    """The files with uncommitted changes (against HEAD, plus new untracked
+    ones), at most CHANGED_FILES_MAX. None outside git or where the repo's
+    config isn't safe to run git in. Only call it for conversations that may
+    run commands (see the module docstring)."""
+    try:
+        if _git(cwd, "rev-parse", "--is-inside-work-tree").stdout.strip() != "true":
+            return None
+        if _config_problem(_local_config(cwd)):
+            return None
+        numstat = _git(cwd, "diff", "HEAD", "--numstat", "-z", "--no-renames", "--no-ext-diff", "--no-textconv")
+        new = _git(cwd, "ls-files", "-z", "--others", "--exclude-standard")
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    files: list[FileChange] = []
+    if numstat.returncode == 0:
+        for entry in numstat.stdout.split("\x00"):
+            parts = entry.split("\t", 2)
+            if len(parts) != 3:
+                continue
+            added, removed, path = parts
+            files.append(FileChange(
+                path, "modified",
+                int(added) if added.isdigit() else None, int(removed) if removed.isdigit() else None))
+    if new.returncode == 0:
+        files.extend(FileChange(path, "new") for path in new.stdout.split("\x00") if path)
+    return sorted(files, key=lambda f: f.path)[:CHANGED_FILES_MAX]
+
+
 def listed_files(cwd: str) -> list[str] | None:
     """Tracked and untracked, not ignored files under cwd, relative to it
     (the @-mention picker, ccc.file_mentions). None outside git or where

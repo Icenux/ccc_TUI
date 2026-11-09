@@ -189,6 +189,7 @@ jen to, co platí pro obě strany.
 | `GET /conversations/{id}/tasks` | její [fronta úkolů](tasks.md) a oba přepínače; `POST` přidá `{"text", "when"}` — when je prázdné (co nejdřív), `HH:MM`, `RRRR-MM-DD HH:MM` nebo `reset` |
 | `POST /tasks/{id}` | `{"text"}` / `{"when"}` úkolu, který ještě nezačal; `DELETE` ho odebere; `POST /tasks/{id}/move` `{"delta": -1 \| 1}` |
 | `POST /conversations/{id}/switches` | `{"paused": bool}` nespouštět další úkoly, `{"auto_continue": bool}` po limitu využití |
+| `GET /conversations/{id}/overview` | konverzace na první pohled: `now` (`state`, `state_label`, `pending`, `last_event`, `context`), `changes` (větev, `added`, `removed`, `ahead`, `behind`, `files` se `status` a řádky; `null`, kde ccc nesmí spouštět git), `usage` (`today`, `total`, 14 `days`, `models`) a `errors` (`current`, `count`, `recent` běhy) |
 | `GET /conversations/{id}/runs` | její běhy, nejnovější první: stav, tokeny, [commit](git.md) |
 | `GET /runs/{id}/diff` | commit běhu po řádcích (druh, soubor, čísla řádků, jde komentovat) |
 | `POST /runs/{id}/comments` | `{"comments": [{"index", "text"}]}` k řádkům diffu, poslané Claudovi jako jeden úkol |

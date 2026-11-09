@@ -51,7 +51,7 @@ ním čekají taky. Seznam úkolů má sloupec *Kdy* a řádek pod konverzací
   až bude Claude nečinný, a úkol do něj vloží, jako bys ho napsal(a).
   Odpověď je přímo v Claude Code.
 - **Konverzace na pozadí:** každý úkol je jeden běh `claude -p`; odpověď
-  se objeví v přepisu v ccc a v historii běhů (`Enter` na Přehledu).
+  se objeví v přepisu v ccc.
   V git repozitáři se výsledek může commitnout — viz [Git](git.md).
 
 Pole pro zprávu pod konverzací na pozadí přidává na konec stejné fronty.

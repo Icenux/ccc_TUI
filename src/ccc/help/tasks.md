@@ -52,8 +52,7 @@ under the conversation says when the next task starts (*Next task at
   until Claude is idle and pastes the task in, as if you typed it. The
   reply is right there in Claude Code.
 - **Headless conversations:** each task is one `claude -p` run; the reply
-  appears in ccc's transcript and the run history (`Enter` on the
-  Dashboard). In a git repository the result can be committed — see
+  appears in ccc's transcript. In a git repository the result can be committed — see
   [Git](git.md).
 
 The message box under a headless conversation adds to the end of the same

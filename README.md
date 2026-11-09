@@ -42,7 +42,7 @@ phone via Remote Control.
 </tr>
 <tr>
 <td align="center">Live sessions: every Claude Code session on the machine</td>
-<td align="center">Queue detail: run history with commits</td>
+<td align="center">Queue detail: status, delivery and last error</td>
 </tr>
 <tr>
 <td><img src="docs/screenshots/add_prompt.png" alt="Add prompt"></td>
@@ -115,7 +115,7 @@ phone via Remote Control.
   (`claude`), installed and logged in (`claude` once, then `/login`) —
   ccc uses your normal Claude subscription login, no API key
 - `tmux` (the always-on TUI and Remote Control conversations use it)
-- `git` (optional — for auto-commit and diffs)
+- `git` (optional — for auto-commit)
 
 ## Installation
 
@@ -208,7 +208,7 @@ Language):
 - [Live sessions](src/ccc/help/live-sessions.md)
 - [Analytics](src/ccc/help/analytics.md)
 - [Settings & notifications](src/ccc/help/settings.md)
-- [Git: auto-commit & diffs](src/ccc/help/git.md)
+- [Git: auto-commit](src/ccc/help/git.md)
 - [Command line](src/ccc/help/command-line.md)
 - [Troubleshooting & how it works](src/ccc/help/troubleshooting.md)
 - [Keyboard shortcuts](src/ccc/help/keys.md)

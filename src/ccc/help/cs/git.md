@@ -1,4 +1,4 @@
-# Git: automatické commity a diffy
+# Git: automatické commity
 
 V git repozitáři ccc commitne výsledek každého úspěšného úkolu **na
 pozadí**, takže každý úkol je jeden commit, který si můžeš prohlédnout
@@ -6,26 +6,15 @@ nebo vrátit:
 
 - zpráva `ccc: <první řádek úkolu>` s trailerem
   `ccc-conversation: <název>`;
-- detail fronty (`Enter` na [Přehledu](dashboard.md)) ukazuje commit
-  každého běhu; `Enter` na běhu ukáže změněné soubory a barevný diff.
-
-## Komentáře k diffu
-
-Projdi práci Clauda jako pull request: v diffu běhu přejdi na řádek
-(`↑` `↓`, `PgUp` `PgDn`, kliknutí), stiskni `c` a napiš, co se má změnit
-— `Enter` komentář uloží, prázdný ho smaže. Okomentované řádky mají `●`
-a komentáře jsou vypsané pod diffem. `s` je všechny pošle konverzaci
-jako **jeden prompt** do fronty: každý komentář se souborem, číslem
-řádku a citovaným řádkem a s žádostí, ať každý vyřeší. Zavření diffu
-s neodeslanými komentáři se nejdřív zeptá.
+- `ccc runs KONVERZACE` vypíše commit každého běhu (viz
+  [Příkazová řádka](command-line.md)).
 
 ## Vrácení běhu
 
-V detailu fronty vyber běh s commitem a stiskni `u`: ccc ho vrátí
-**novým commitem** (`git revert`). Nic se nepřepisuje a i vrácení jde
-vrátit. Běh pak má u commitu `↺`. ccc se zeptá, jestli to má **říct
-Claudovi** krátkou poznámkou ve frontě konverzace; jinak může jeho další
-úkol se změnami pořád počítat.
+`ccc revert BĚH` vrátí commit běhu **novým commitem** (`git revert`).
+Nic se nepřepisuje a i vrácení jde vrátit. Běh pak má v `ccc runs`
+u commitu `↺`. `--tell` k tomu zařadí Claudovi krátkou poznámku ve
+frontě konverzace; jinak může jeho další úkol se změnami pořád počítat.
 
 Funguje, když:
 
@@ -36,8 +25,7 @@ Funguje, když:
   (stejně jako samotné commity, viz níže).
 
 Vrácení, které se pohádá s pozdějšími změnami, se zruší: nic se nezmění
-a ccc to řekne. Z příkazové řádky: `ccc runs KONVERZACE` vypíše běhy
-s jejich id, `ccc revert BĚH [--tell]` jeden vrátí.
+a ccc to řekne. `ccc runs KONVERZACE` vypíše běhy s jejich id.
 
 ## Více konverzací v jedné složce
 
@@ -48,7 +36,7 @@ v jednom git pracovním stromu:
 - **úkoly na pozadí se střídají**: úkol počká, dokud jiná konverzace ve
   stejné složce dokončí svůj (Konverzace ukážou kterou);
 - ccc **necommitne**, když ve složce pracuje jiná konverzace (i
-  interaktivní, která zrovna zpracovává, co jsi napsal) — historie běhů
+  interaktivní, která zrovna zpracovává, co jsi napsal) — `ccc runs`
   to uvede;
 - Konverzace ukazují řádek ⚠ s ostatními, které složku sdílejí.
 
@@ -86,7 +74,7 @@ symbolický odkaz, nikdy přes existující soubor, nejvýš 500 souborů po
 
 ## Kdy ccc necommitne
 
-Historie běhů řekne proč:
+`ccc runs` řekne proč:
 
 - ve složce už před úkolem byly **necommitnuté změny** — to je tvoje
   práce, ccc ji nikdy do svého commitu nepřimíchá;

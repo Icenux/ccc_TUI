@@ -32,6 +32,7 @@ POST /api/v1/conversations                start one (as the New conversation win
 GET  /api/v1/conversations/{id}/tasks     its task queue; POST adds {"text", "when"}
 POST /api/v1/tasks/{id}                   {"text"} / {"when"}; DELETE removes it; POST tasks/{id}/move {"delta"}
 POST /api/v1/conversations/{id}/switches  {"paused"} / {"auto_continue"}
+GET  /api/v1/conversations/{id}/overview  at a glance: now, changes, usage, errors
 GET  /api/v1/conversations/{id}/runs      its runs with their commits
 GET  /api/v1/runs/{id}/diff               the run's commit, line by line
 POST /api/v1/runs/{id}/comments           {"comments": [{"index", "text"}]} sent to Claude
@@ -77,7 +78,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
-from ccc import agents, goals, groups, i18n, launch_options, mcp_servers, plugins, updates
+from ccc import agents, goals, groups, i18n, launch_options, mcp_servers, overview, plugins, updates
 from ccc.api_agents import AgentEndpoints
 from ccc.api_subagents import SubagentEndpoints
 from ccc import api_audit, api_roles, api_scope
@@ -214,6 +215,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             ok(r"/conversations/(\d+)/tasks", lambda ids, q, b: self.tasks(*ids)),
             ok(r"/conversations/(\d+)/tasks", lambda ids, q, b: self.add_task(*ids, b), "POST", HTTPStatus.CREATED),
             ok(r"/conversations/(\d+)/switches", lambda ids, q, b: self.switches(*ids, b), "POST"),
+            ok(r"/conversations/(\d+)/overview", lambda ids, q, b: self.overview(*ids)),
             ok(r"/conversations/(\d+)/runs", lambda ids, q, b: self.runs(*ids)),
             ok(r"/tasks/(\d+)", lambda ids, q, b: self.edit_task(*ids, b), "POST"),
             ok(r"/tasks/(\d+)", lambda ids, q, b: self.remove_task(*ids), "DELETE"),
@@ -577,7 +579,15 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
         except ValueError as exc:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc
 
-    # --- runs, their commits and diffs (the queue detail in the TUI) -----------------
+    # --- the overview (the queue detail in the TUI shows the same) ---------------------
+
+    def overview(self, queue_id: int) -> dict:
+        """What Claude does now, what changed in the folder, the tokens of the last days, the latest failures."""
+        q = self._queue(queue_id)
+        events = self._events(q.session_id)
+        return overview.build(self.storage, q, events[-1] if events else None).as_dict()
+
+    # --- runs, their commits and diffs ---------------------------------------------------
 
     def runs(self, queue_id: int) -> list[dict]:
         """The conversation's runs, newest first: status, tokens, its commit."""

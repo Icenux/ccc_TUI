@@ -65,10 +65,16 @@ What to do with the last two: [Usage limits & blocked queues](limits.md).
 - its settings (folder, Claude Code options, auto-continue) and, for a
   [remote-control](remote-control.md) conversation, the link to open it
   on your phone;
-- the **run history**: every task with its result, tokens and — in a git
-  repository — its commit. `Enter` on a run shows the commit's diff (see
-  [Git](git.md));
-- `u` [undoes a run](git.md#undoing-a-run): reverts its commit;
+- **Now**: whether Claude works, waits for your approval or for a usage
+  limit, how many messages are queued and the last thing that happened
+  in the conversation;
+- **Changes**: the folder's branch and the files with uncommitted
+  changes, with the lines added and removed (only in a git folder and in
+  conversations started with *Skip all permission checks*, as ccc runs
+  git only there);
+- **Usage**: the tokens of the last 14 days and the models used;
+- **Errors**: the latest runs that failed, and what blocks the
+  conversation now. The page refreshes by itself;
 - `+` adds a task to this conversation, `r` gets it going again when it's
   blocked or paused at a limit. `Esc` goes back.
 

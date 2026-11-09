@@ -61,7 +61,7 @@ async def test_add_prompt_modal_shows_error_for_missing_directory(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_queue_detail_shows_history(tmp_path):
+async def test_queue_detail_shows_the_queue(tmp_path):
     db_path = str(tmp_path / "history.db")
     storage = Storage(db_path)
     queue = storage.create_queue("proj-c", "/tmp/proj-c", "sess-1")
@@ -80,93 +80,35 @@ async def test_queue_detail_shows_history(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_run_with_commit_shows_column_and_opens_diff(tmp_path, monkeypatch):
+async def test_queue_detail_shows_now_changes_usage_and_errors(tmp_path):
     from datetime import datetime
 
     from textual.app import App as _App
-    from textual.widgets import DataTable
+    from textual.widgets import Static
 
     from ccc.models import PromptRun, RunStatus
-    from ccc.tui.queue_detail import DiffModal
 
-    monkeypatch.setattr("ccc.gitops.show", lambda cwd, commit: f"commit {commit}\n+added [line]\n")
-    storage = Storage(tmp_path / "history.db")
-    queue = storage.create_queue("proj", "/tmp/proj", "s1")
+    storage = Storage(str(tmp_path / "history.db"))
+    folder = tmp_path / "plain"
+    folder.mkdir()
+    queue = storage.create_queue("proj-d", str(folder), "sess-d", launch_flags=["--permission-mode", "acceptEdits"])
     now = datetime.now()
     storage.insert_prompt_run(PromptRun(id=0, queue_id=queue.id, queue_item_id=None, prompt_text="p", started_at=now,
-                                        finished_at=now, status=RunStatus.SUCCESS, git_commit="abcdef1234567",
-                                        git_note="committed"))
+                                        finished_at=now, status=RunStatus.ERROR, error_text="boom", input_tokens=7))
 
-    class Host(_App):
+    class _HostApp(_App):
         async def on_mount(self):
             await self.push_screen(QueueDetailScreen(storage, queue.id))
 
-    app = Host()
-    async with app.run_test(size=(140, 40)) as pilot:
-        await pilot.pause()
-        table = app.screen.query_one("#queue-history-table", DataTable)
-        assert "abcdef1" in [str(c) for c in table.get_row_at(0)]
-        table.focus()
-        await pilot.press("enter")
-        await pilot.pause()
-        assert isinstance(app.screen, DiffModal)
-        assert "+added [line]" in app.screen.diff_text
-        assert app.screen.query_one("#diff-text") is not None
-        await pilot.press("escape")
-        await pilot.pause()
-        assert isinstance(app.screen, QueueDetailScreen)
-
-
-@pytest.mark.asyncio
-async def test_diff_comments_are_queued_for_claude(tmp_path, monkeypatch):
-    from datetime import datetime
-
-    from textual.app import App as _App
-
-    from ccc.models import PromptRun, RunStatus
-    from ccc.tui.layout import ConfirmModal
-    from ccc.tui.queue_detail import CommentModal, DiffModal, DiffView
-
-    diff = "commit abc\n\ndiff --git a/x.py b/x.py\n--- a/x.py\n+++ b/x.py\n@@ -1,1 +1,2 @@\n keep\n+added\n"
-    monkeypatch.setattr("ccc.gitops.show", lambda cwd, commit: diff)
-    storage = Storage(tmp_path / "history.db")
-    queue = storage.create_queue("proj", "/tmp/proj", "s1")
-    now = datetime.now()
-    storage.insert_prompt_run(PromptRun(id=0, queue_id=queue.id, queue_item_id=None, prompt_text="Add a line\nmore",
-                                        started_at=now, finished_at=now, status=RunStatus.SUCCESS,
-                                        git_commit="abcdef1234567", git_note="committed"))
-
-    class Host(_App):
-        async def on_mount(self):
-            await self.push_screen(QueueDetailScreen(storage, queue.id))
-
-    app = Host()
-    async with app.run_test(size=(140, 40)) as pilot:
-        await pilot.pause()
-        app.screen.query_one("#queue-history-table").focus()
-        await pilot.press("enter")
-        await pilot.pause()
-        assert isinstance(app.screen, DiffModal)
-        view = app.screen.query_one(DiffView)
-        assert view.current.text == "@@ -1,1 +1,2 @@"  # starts on the first changed part
-        await pilot.press("s")  # nothing to send yet
-        await pilot.pause()
-        assert isinstance(app.screen, DiffModal)
-        await pilot.press("down", "down", "c")
-        await pilot.pause()
-        assert isinstance(app.screen, CommentModal)
-        await pilot.press(*"use a constant", "enter")
-        await pilot.pause()
-        modal = app.screen
-        assert isinstance(modal, DiffModal) and list(modal.comments) == [view.cursor]
-        await pilot.press("escape")  # unsent comments: asks first
-        await pilot.pause()
-        assert isinstance(app.screen, ConfirmModal)
-        await pilot.press("n")
-        await pilot.pause()
-        await pilot.press("s")
-        await pilot.pause()
-        assert isinstance(app.screen, QueueDetailScreen)
-        item = storage.next_pending_item(queue.id)
-        assert "abcdef1" in item.prompt_text and "“Add a line”" in item.prompt_text
-        assert "1. x.py:2\n   > +added\n   use a constant" in item.prompt_text
+    app = _HostApp()
+    async with app.run_test(size=(140, 50)) as pilot:
+        for _ in range(40):
+            await pilot.pause(0.1)
+            if "boom" in app.screen.query_one("#overview-errors", Static).render().plain:
+                break
+        text = {name: app.screen.query_one(f"#overview-{name}", Static).render().plain
+                for name in ("now", "changes", "usage", "errors")}
+        assert "Idle" in text["now"] and "Queued messages: 0" in text["now"]
+        assert "Skip all permission checks" in text["changes"]
+        assert "Today: 7 tokens" in text["usage"]
+        assert "boom" in text["errors"]

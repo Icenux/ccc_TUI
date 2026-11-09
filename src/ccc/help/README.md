@@ -23,7 +23,7 @@ the screen you're on.
 16. [Live sessions](live-sessions.md)
 17. [Analytics](analytics.md)
 18. [Settings & notifications](settings.md)
-19. [Git: auto-commit & diffs](git.md)
+19. [Git: auto-commit](git.md)
 20. [Command line](command-line.md)
 21. [Troubleshooting & how it works](troubleshooting.md)
 22. [Keyboard shortcuts](keys.md)

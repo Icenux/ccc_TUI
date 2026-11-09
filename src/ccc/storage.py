@@ -4,7 +4,7 @@ import json
 import os
 import sqlite3
 from contextlib import closing
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 
@@ -1376,6 +1376,19 @@ class Storage:
                 "WHERE id = ? AND revoked_at IS NULL", (datetime.now().isoformat(), by, device_id)).rowcount
             conn.commit()
         return bool(changed)
+
+    def revoke_inactive_devices(self, days: int, by: str) -> list[int]:
+        """Sign out the devices not seen for `days` (a never-seen one counts from its pairing): an uninstalled
+        app cannot tell the server, so silence is the only sign. Returns their ids; the rows stay as history."""
+        cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+        with closing(self._connect()) as conn:
+            ids = [row["id"] for row in conn.execute(
+                "SELECT id FROM devices WHERE revoked_at IS NULL AND COALESCE(last_seen_at, created_at) < ?", (cutoff,))]
+            for device_id in ids:
+                conn.execute("UPDATE devices SET revoked_at = ?, revoked_by = ?, token_sha256 = 'revoked-' || id "
+                             "WHERE id = ?", (datetime.now().isoformat(), by, device_id))
+            conn.commit()
+        return ids
 
     def revoke_all_devices(self, by: str) -> None:
         with closing(self._connect()) as conn:

@@ -82,7 +82,7 @@ from ccc.api_common import ApiError, int_of, iso, route, text_of
 from ccc.api_views import ViewEndpoints
 from ccc.heartbeat import daemon_alive
 from ccc.i18n import _
-from ccc.models import REVOKED_BY_APP, REVOKED_BY_COMPUTER, REVOKED_BY_TOKEN, Device, ItemStatus, QueueStatus
+from ccc.models import REVOKED_BY_APP, REVOKED_BY_COMPUTER, REVOKED_BY_INACTIVE, REVOKED_BY_TOKEN, Device, ItemStatus, QueueStatus
 from ccc.orchestrator import send_message, start_conversation
 from ccc.storage import Storage
 from ccc.transcript import TranscriptEvent, find_transcript_path, parse_transcript_events
@@ -130,11 +130,12 @@ def revoked_label(device: Device, short: bool = False) -> str:
     """How a signed-out device was signed out, for the TUI (short: a table cell) and `ccc api devices --all`."""
     if short:
         return {REVOKED_BY_APP: _("in the app"), REVOKED_BY_COMPUTER: _("on the computer"),
-                REVOKED_BY_TOKEN: _("new token")}.get(device.revoked_by, "")
+                REVOKED_BY_TOKEN: _("new token"), REVOKED_BY_INACTIVE: _("inactive, probably uninstalled")}.get(device.revoked_by, "")
     return {
         REVOKED_BY_APP: _("signed out in the app"),
         REVOKED_BY_COMPUTER: _("signed out on the computer"),
         REVOKED_BY_TOKEN: _("token replaced (ccc api token --new)"),
+        REVOKED_BY_INACTIVE: _("not seen for a long time, probably uninstalled"),
     }.get(device.revoked_by, _("signed out"))
 
 
@@ -264,7 +265,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
     def devices(self, caller: int | None, history: bool = False) -> dict:
         """Who is signed in: each device's name, when it was made and last
         seen, from which address. With history also the devices signed out
-        (read only): "revoked_at" and "revoked_by" ("app", "computer" or
+        (read only): "revoked_at" and "revoked_by" ("app", "computer", "inactive" or
         "token") say when and how; both are null for a device still signed in."""
         return {"devices": [
             {"id": d.id, "name": d.name, "created_at": iso(d.created_at), "last_seen_at": iso(d.last_seen_at),

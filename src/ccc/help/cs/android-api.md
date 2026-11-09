@@ -29,7 +29,8 @@ požadavek potřebuje token.
    se odhlásit samo: `ccc api devices` je vypíše, `ccc api revoke ID`
    odhlásí jedno. Odhlášení řádek nemaže: zůstane jako historie jen ke
    čtení (`ccc api devices --all`) s údajem, kdy a jak bylo zařízení
-   odhlášeno — v aplikaci, na počítači, nebo novým tokenem — a jeho token
+   odhlášeno — v aplikaci, na počítači, novým tokenem, nebo proto, že ho 30 dní nikdo neviděl (odinstalovaná
+   aplikace to serveru neřekne, poznat se dá jen podle ticha) — a jeho token
    přestane platit. Připojí-li se přihlášená aplikace jiným tokenem (nový QR kód nebo
    ručně), nejdřív odhlásí své staré zařízení, aby se tentýž telefon
    v seznamu nehromadil. Aplikace ukazuje stejnou historii v *Připojení →
@@ -201,7 +202,7 @@ jen to, co platí pro obě strany.
 | `GET /launch-presets` | předvolby okna Nová konverzace a poslední volba |
 | `GET /prompt-presets` | přednastavené prompty (Alt+1 … 9 v ccc) |
 | `POST /pair` | `{"code", "name"}` — bez tokenu: vymění párovací kód z QR za nové zařízení; vrátí `{"token", "device_id", "name", "version"}`, 401 při špatném, použitém nebo prošlém kódu |
-| `GET /devices` | přihlášená zařízení: jméno, vytvoření, naposledy vidět, adresa; `current` označí volajícího. `POST /devices/{id}` `{"name"}` jedno přejmenuje, `DELETE /devices/{id}` ho hned odhlásí (i otevřená spojení; řádek zůstane jako historie). `GET /devices?all=1` přidá odhlášená s `revoked_at` a `revoked_by` (`app`, `computer`, `token`) |
+| `GET /devices` | přihlášená zařízení: jméno, vytvoření, naposledy vidět, adresa; `current` označí volajícího. `POST /devices/{id}` `{"name"}` jedno přejmenuje, `DELETE /devices/{id}` ho hned odhlásí (i otevřená spojení; řádek zůstane jako historie). `GET /devices?all=1` přidá odhlášená s `revoked_at` a `revoked_by` (`app`, `computer`, `inactive`, `token`) |
 | `GET /groups` | seskupení a tvé vlastní skupiny; `POST /groups/rename` `{"old", "new"}`, `POST /groups/delete` `{"name"}` |
 | `GET /search?q=` | hledání ve všech konverzacích (i archivovaných), nejnovější první |
 | `GET /waiting` | konverzace, které tě potřebují, nejnaléhavější první (Alt+N v ccc) |

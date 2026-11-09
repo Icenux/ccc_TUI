@@ -329,4 +329,6 @@ class Device:
 
 REVOKED_BY_APP = "app"  # signed out from an app (this phone's own, or another one's)
 REVOKED_BY_COMPUTER = "computer"  # `ccc api revoke` or the Devices list
+REVOKED_BY_INACTIVE = "inactive"  # not seen for INACTIVE_DAYS: the app was most likely uninstalled (nothing tells the server)
+INACTIVE_DAYS = 30
 REVOKED_BY_TOKEN = "token"  # `ccc api token --new`: every token before it stopped working

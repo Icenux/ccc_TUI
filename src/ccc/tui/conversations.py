@@ -13,7 +13,7 @@ from textual.content import Content
 from textual.screen import ModalScreen
 from textual.widgets import Collapsible, DataTable, Input, Markdown, Static
 
-from ccc import groups, keymap, list_filter
+from ccc import groups, keymap, list_filter, managed_sessions
 from ccc.i18n import _
 from ccc.launch_options import describe_flags
 from ccc.models import DeliveryMode, Queue, QueueStatus
@@ -562,9 +562,15 @@ class ConversationsScreen(SidebarScreen):
         want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for
         shown = cli_pane.find()
         if want and shown is None and self._cli_open_for == queue.id:
-            # It was open and is gone: you closed it (Ctrl+]).
-            self._cli_closed_for = queue.id
-            want = False
+            if managed_sessions.is_running(queue.id):
+                # It was open and is gone, Claude still runs: you closed it (Ctrl+]).
+                self._cli_closed_for = queue.id
+                want = False
+            else:
+                # Its session ended or restarted (#267): that is not you closing it —
+                # open the pane again (it waits for the session) instead of leaving
+                # the transcript on screen.
+                self._cli_open_for = None
         if want:
             if not self.has_class("-cli-open"):
                 # Hide the transcript at once and repaint: opening the pane

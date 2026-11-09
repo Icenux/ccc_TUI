@@ -1,34 +1,11 @@
 # Git: auto-commit
 
 In a git repository, ccc commits the result of every successful
-**headless** task, so each task is one commit you can look at or undo:
+**headless** task, so each task is one commit you can look at with `git log` or undo with
+`git revert`:
 
 - message `ccc: <first line of the task>` with a
-  `ccc-conversation: <name>` trailer;
-- `ccc runs CONVERSATION` lists the commit of each run (see
-  [Command line](command-line.md)).
-
-## Undoing a run
-
-`ccc revert RUN` reverts a run's commit with a **new commit**
-(`git revert`) — nothing is rewritten, and the revert can be undone in
-turn. The run then shows `↺` by its commit in `ccc runs`. `--tell` also
-queues a short note for Claude in the conversation; otherwise its next
-task may still assume the changes are there.
-
-It works when:
-
-- the conversation does nothing at the moment (no task running or
-  queued) — a task editing the files would mix its edits into the
-  revert;
-- the folder has no uncommitted changes, and the commit is in the
-  branch's history;
-- the conversation was started with **Skip all permission checks** (as
-  for the commits themselves, see below).
-
-A revert that conflicts with later changes is abandoned: nothing
-changes and ccc says so. `ccc runs CONVERSATION` lists the runs with
-their ids.
+  `ccc-conversation: <name>` trailer.
 
 ## Several conversations in one folder
 
@@ -39,8 +16,7 @@ changes. So in one git work tree:
 - **headless tasks take turns**: a task waits while another
   conversation in the same folder runs one (Conversations says which);
 - ccc **doesn't commit** while another conversation works in the folder
-  (also an interactive one busy with what you typed) — `ccc runs`
-  says so;
+  (also an interactive one busy with what you typed);
 - Conversations shows a ⚠ line with the others that share the folder.
 
 To let them really work **side by side**, give a conversation its **own
@@ -76,7 +52,7 @@ never over an existing file, at most 500 files of up to 20 MB each.
 
 ## When ccc doesn't commit
 
-`ccc runs` says why:
+ccc leaves the changes uncommitted when:
 
 - the folder already had **uncommitted changes** before the task — that's
   your work, ccc never sweeps it into its commit;

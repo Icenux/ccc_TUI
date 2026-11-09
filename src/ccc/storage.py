@@ -402,8 +402,9 @@ class Storage:
         if "review_id" not in run_columns:
             conn.execute("ALTER TABLE prompt_runs ADD COLUMN review_id INTEGER")
             conn.commit()
-        if "reverted_by" not in run_columns:
-            conn.execute("ALTER TABLE prompt_runs ADD COLUMN reverted_by TEXT")
+        # The revert feature is gone: drop its column (SQLite 3.35+; an older one keeps the unused column).
+        if "reverted_by" in run_columns and sqlite3.sqlite_version_info >= (3, 35, 0):
+            conn.execute("ALTER TABLE prompt_runs DROP COLUMN reverted_by")
             conn.commit()
         if "workflow_run_id" not in run_columns:
             conn.execute("ALTER TABLE prompt_runs ADD COLUMN workflow_run_id INTEGER")
@@ -909,16 +910,6 @@ class Storage:
         columns = ", ".join(f"{name} = ?" for name in fields)
         with closing(self._connect()) as conn:
             conn.execute(f"UPDATE reviews SET {columns} WHERE id = ?", (*values, review_id))
-            conn.commit()
-
-    def find_run(self, run_id: int) -> PromptRun | None:
-        with closing(self._connect()) as conn:
-            row = conn.execute("SELECT * FROM prompt_runs WHERE id = ?", (run_id,)).fetchone()
-            return self._row_to_run(row) if row else None
-
-    def set_run_reverted(self, run_id: int, commit: str) -> None:
-        with closing(self._connect()) as conn:
-            conn.execute("UPDATE prompt_runs SET reverted_by = ? WHERE id = ?", (commit, run_id))
             conn.commit()
 
     def task_runs_after(self, queue_id: int, run_id: int) -> list[PromptRun]:
@@ -1705,6 +1696,5 @@ class Storage:
             git_commit=row["git_commit"],
             git_note=row["git_note"],
             review_id=row["review_id"],
-            reverted_by=row["reverted_by"],
             workflow_run_id=row["workflow_run_id"],
         )

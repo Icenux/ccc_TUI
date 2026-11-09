@@ -41,8 +41,6 @@ ccc-tui`); changed in Settings they work right away.
 | `ccc goal start CONVERSATION "GOAL"` | start a [goal loop](goal.md); `--check "pytest -q"` = run after each round, `--rounds N` = at most N rounds, `--wait` = wait until it ends, exit code 0 when the goal is met |
 | `ccc goal list [CONVERSATION]` | goals, newest first: id, start, round, state |
 | `ccc goal stop CONVERSATION` | stop its goal loop |
-| `ccc runs CONVERSATION` | the conversation's runs: id, time, status, commit (`↺` = reverted), task |
-| `ccc revert RUN [--tell]` | [undo a run](git.md#undoing-a-run): revert its commit with a new commit; `--tell` = also queue a note for Claude |
 | `ccc workflow templates` | the [workflow](workflows.md) templates and their steps |
 | `ccc workflow start CONVERSATION TEMPLATE "TASK"` | run a workflow; `--check "pytest -q"`, `--rounds N`, `--wait` = wait until it ends (exit code 0 when it passed) |
 | `ccc workflow list [CONVERSATION]` / `show RUN` | runs, newest first / a run's steps and what each agent said |

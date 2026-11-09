@@ -2,11 +2,11 @@
 stolen phone or token should not be a way into the whole computer, so only
 what a device needs is open to it. Weakest first:
 
-read     only looks: every GET (lists, conversations, diffs, the events stream)
+read     only looks: every GET (lists, conversations, the events stream)
 operate  also steers the conversations that exist: messages, approvals, queue,
          tasks, reviews, goals, workflows
 admin    also what reaches beyond them: new conversations (any folder), keys
-         typed into a terminal, prompts to live sessions, routines, reverting,
+         typed into a terminal, prompts to live sessions, routines,
          settings, backup, updating ccc and building the app, other devices
 
 The rules are in one table, checked before any handler runs; a path the table
@@ -27,12 +27,11 @@ RULES: tuple[tuple[str, str, str], ...] = (
     ("POST", r"/live-sessions/[^/]+/prompt", ROLE_ADMIN),
     ("*", r"/routines(/.*)?", ROLE_ADMIN),
     ("POST", r"/(prompt-presets|launch-presets(/delete)?)", ROLE_ADMIN),  # global configuration, not steering
-    ("POST", r"/runs/\d+/revert", ROLE_ADMIN),
     ("*", r"/devices/\d+", ROLE_ADMIN),  # a device's own rename and sign-out are let through in required_role()
     ("GET", r"/.*", ROLE_READ),
     ("*", r"/(conversations/\d+/(messages|retry|seen|archive|group|tasks|reviews|reviews/stop|goals|goals/stop|"
           r"workflows|workflows/answer|workflows/stop)|tasks/\d+(/move)?|reviews/\d+/apply|"
-          r"runs/\d+/comments|groups(/rename|/delete)?|permissions/\d+|analytics/archive)", ROLE_OPERATE),
+          r"groups(/rename|/delete)?|permissions/\d+|analytics/archive)", ROLE_OPERATE),
 )
 _COMPILED = tuple((method, re.compile(pattern), role) for method, pattern, role in RULES)
 _OWN_DEVICE = re.compile(r"/devices/(\d+)")

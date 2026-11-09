@@ -590,54 +590,6 @@ def repo_run(storage, tmp_path):
     return queue, run_id, repo
 
 
-def test_runs_diff_and_comments_to_claude(storage, repo_run):
-    queue, run_id, _repo = repo_run
-    endpoint = api.Api(storage)
-
-    runs = endpoint.runs(queue.id)
-    assert [(r["id"], r["status"], r["tokens"]) for r in runs] == [(run_id, "success", 15)]
-
-    diff = endpoint.diff(run_id)
-    assert diff["task"] == "Make add subtract"
-    added = next(line for line in diff["lines"] if line["kind"] == "added")
-    assert added["text"] == "+    return a - b" and added["path"] == "calc.py" and added["new_line"] == 2
-
-    status, sent = endpoint.route("POST", f"/api/v1/runs/{run_id}/comments", {},
-                                  {"comments": [{"index": added["index"], "text": "keep adding"}]})
-    assert status == 201 and sent["comments"] == 1
-    prompt = storage.list_pending_items(queue.id)[0].prompt_text
-    assert "calc.py:2" in prompt and "keep adding" in prompt
-    header = next(line for line in diff["lines"] if not line["commentable"])
-    with pytest.raises(api.ApiError):
-        endpoint.comment(run_id, {"comments": [{"index": header["index"], "text": "no"}]})
-
-
-def test_revert_a_run_and_tell_claude(storage, repo_run):
-    queue, run_id, repo = repo_run
-    endpoint = api.Api(storage)
-
-    commit = endpoint.revert(run_id, {"tell": True})["commit"]
-
-    assert (repo / "calc.py").read_text() == "def add(a, b):\n    return a + b\n"
-    assert storage.find_run(run_id).reverted_by == commit
-    assert "reverted" in storage.list_pending_items(queue.id)[0].prompt_text
-    with pytest.raises(api.ApiError) as error:
-        endpoint.revert(run_id, {})
-    assert error.value.status == 409
-
-
-def test_no_diff_where_claude_may_not_run_commands(storage, repo_run):
-    queue, run_id, _repo = repo_run
-    with storage._connect() as conn:
-        conn.execute("UPDATE queues SET launch_flags = ? WHERE id = ?", ('["--permission-mode", "plan"]', queue.id))
-    endpoint = api.Api(storage)
-    with pytest.raises(api.ApiError) as error:
-        endpoint.diff(run_id)
-    assert error.value.status == 409
-    with pytest.raises(api.ApiError):
-        endpoint.comment(run_id, {"comments": [{"index": 0, "text": "x"}]})
-
-
 def test_mcp_servers_lists_names_only(storage, tmp_path, monkeypatch):
     monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path))
     (tmp_path / ".claude.json").write_text('{"mcpServers": {"db": {"command": "x", "env": {"TOKEN": "secret"}}}}')

@@ -39,8 +39,3 @@ def int_of(query: dict[str, str], key: str) -> int | None:
     if not re.fullmatch(r"-?\d+", raw):
         raise ApiError(HTTPStatus.BAD_REQUEST, _("{name} must be a number.").format(name=key))
     return int(raw)
-
-
-def task_line(text: str, limit: int = 80) -> str:
-    """A task's first line, for titles."""
-    return (text.strip().splitlines() or [""])[0][:limit]

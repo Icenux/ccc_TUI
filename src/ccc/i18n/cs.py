@@ -606,8 +606,6 @@ CS: dict[str, str] = {
     "no changes": "žádné změny",
     "not committed: git commit failed": "necommitnuto: git commit selhal",
     "committed": "commitnuto",
-    "Not shown: {reason}.": "Nezobrazeno: {reason}.",
-    "… (truncated, {n} chars)": "… (zkráceno, celkem znaků: {n})",
     "… (truncated, {n} chars total)": "… (zkráceno, celkem znaků: {n})",
     # task times (schedule.py)
     "Usage data isn't available, so the next reset time is unknown.":
@@ -1141,31 +1139,6 @@ CS: dict[str, str] = {
     "{icon} {name}: goal {status} after {n} round(s) — {reason}": "{icon} {name}: cíl — {status} po {n} kolech — {reason}",
 
     # Reverting a run (ccc.revert, queue detail u, ccc runs / revert)
-    "A conversation's runs: id, time, status, commit, task": "Běhy konverzace: id, čas, stav, commit, úkol",
-    "Claude gets a note in its queue.": "Claude dostane poznámku do fronty.",
-    "No run {id} — see `ccc runs CONVERSATION`.": "Běh {id} neexistuje — viz `ccc runs KONVERZACE`.",
-    "Note: the changes of your task “{task}” were reverted (commit {commit} undoes {original}). The files are back as they were before it. Take them as they are now and don't redo that work unless I ask. Just acknowledge in one line.":
-        "Poznámka: změny tvého úkolu „{task}“ byly vráceny (commit {commit} vrací {original}). Soubory jsou zpět, jak byly před ním. Ber je tak, jak jsou teď, a tu práci nedělej znovu, dokud o to nepožádám. Jen to jedním řádkem potvrď.",
-    "Revert the commit of a run (a new commit; see `ccc runs`)": "Vrátit commit běhu (novým commitem; viz `ccc runs`)",
-    "Reverted — commit {commit}.": "Vráceno — commit {commit}.",
-    "The conversation is working — revert once it's idle.": "Konverzace pracuje — vrať to, až nic nedělá.",
-    "This run made no commit — there's nothing to revert.": "Tento běh neudělal commit — není co vracet.",
-    "This run was already reverted ({commit}).": "Tento běh už je vrácený ({commit}).",
-    "also queue a note so Claude knows": "zařadit i poznámku, ať to Claude ví",
-    "ccc runs git only in conversations started with “Skip all permission checks”.":
-        "ccc spouští git jen v konverzacích spuštěných s „Přeskočit všechny kontroly oprávnění“.",
-    "not reverted: detached HEAD": "nevráceno: odpojený HEAD",
-    "not reverted: git commit failed": "nevráceno: git commit selhal",
-    "not reverted: it conflicts with later changes — nothing was changed": "nevráceno: koliduje s pozdějšími změnami — nic se nezměnilo",
-    "not reverted: its changes are already gone": "nevráceno: jeho změny už tam nejsou",
-    "not reverted: not a git repository": "nevráceno: není to git repozitář",
-    "not reverted: that isn't a commit": "nevráceno: tohle není commit",
-    "not reverted: the commit isn't in this branch's history": "nevráceno: commit není v historii této větve",
-    "not reverted: there are uncommitted changes — commit or stash them first":
-        "nevráceno: jsou tu necommitnuté změny — nejdřív je commitni nebo odlož",
-    "not reverted: {reason}": "nevráceno: {reason}",
-    "reverted": "vráceno",
-    "the run's id": "id běhu",
 
     # Several conversations in one folder (ccc.folders, worktrees)
     "A worktree needs a git repository — {path} isn't in one.": "Worktree potřebuje git repozitář — {path} v žádném není.",
@@ -1294,11 +1267,6 @@ CS: dict[str, str] = {
     "Step {n}: a command is one line of plain ASCII characters.": "Krok {n}: příkaz je jeden řádek prostých znaků ASCII.",
 
     # Comments on a run's diff (ccc.diff_comments)
-    "I reviewed the changes of your commit {commit} (task “{task}”) and left comments on lines of the diff. Address "
-    "each one — change the code, or say why you'd keep it — then sum up what you did.":
-        "Prošel jsem změny tvého commitu {commit} (úkol „{task}“) a nechal komentáře k řádkům diffu. Vyřeš každý "
-        "z nich — uprav kód, nebo napiš, proč bys ho nechal — a pak shrň, co jsi udělal.",
-    "{path}, removed line {n}": "{path}, odebraný řádek {n}",
     "git: ": "git: ",
     "(↑↓ against {base})": "(↑↓ vůči {base})",
     # Conversations that need you, in the Claude Code pane's title (ccc.attention)
@@ -1397,10 +1365,6 @@ CS: dict[str, str] = {
     "delta must be -1 or 1.": "delta musí být -1 nebo 1.",
     "No such task.": "Takový úkol neexistuje.",
     "This task has already started.": "Tento úkol už začal.",
-    "No such run.": "Takový běh neexistuje.",
-    "No comments.": "Žádné komentáře.",
-    "This run made no commit.": "Tento běh neudělal commit.",
-    "Every comment needs a changed line and a text.": "Každý komentář potřebuje změněný řádek a text.",
     "{name} must be true or false.": "{name} musí být true nebo false.",
     "archived must be true or false.": "archived musí být true nebo false.",
     "name must be text or null.": "name musí být text nebo null.",

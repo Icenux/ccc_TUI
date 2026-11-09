@@ -65,7 +65,7 @@ Without the service, `ccc api serve` runs it in the terminal
 ## In the app
 
 Everything ccc's window does, made for the phone: the conversations,
-the task queue, runs and diffs, reviews, goals, workflows,
+the task queue, reviews, goals, workflows,
 routines, live sessions, analytics, settings — and an interactive
 conversation's Claude Code, live, with keys for its menus.
 
@@ -92,9 +92,9 @@ whole computer:
 
 | Role | May |
 |---|---|
-| `read` | look: every `GET` (lists, conversations, diffs, the events stream); without the links that control a conversation (`remote_control_url`) |
+| `read` | look: every `GET` (lists, conversations, the events stream); without the links that control a conversation (`remote_control_url`) |
 | `operate` | also steer the conversations that exist: messages, approvals, queue, tasks, reviews, goals, workflows |
-| `admin` | also start conversations (any folder), type into a terminal, prompt live sessions, routines, revert a run, settings and presets, create, change and remove [agents](agents.md), backup, update ccc and build the app, manage other devices |
+| `admin` | also start conversations (any folder), type into a terminal, prompt live sessions, routines, settings and presets, create, change and remove [agents](agents.md), backup, update ccc and build the app, manage other devices |
 
 A newly paired phone is `operate`; `ccc api pair --role admin` (or
 *Change role* in the Devices list, or `ccc api role ID admin`) gives it
@@ -197,10 +197,6 @@ settings it shows are the ones that apply to both sides.
 | `POST /tasks/{id}` | `{"text"}` / `{"when"}` of a task that hasn't started; `DELETE` removes it; `POST /tasks/{id}/move` `{"delta": -1 \| 1}` |
 | `POST /conversations/{id}/switches` | `{"paused": bool}` start no further tasks, `{"auto_continue": bool}` after a usage limit |
 | `GET /conversations/{id}/overview` | the conversation at a glance: `now` (`state`, `state_label`, `pending`, `last_event`, `context`), `changes` (branch, `added`, `removed`, `ahead`, `behind`, `files` with `status` and lines; `null` where ccc may not run git), `usage` (`today`, `total`, 14 `days`, `models`) and `errors` (`current`, `count`, `recent` runs) |
-| `GET /conversations/{id}/runs` | its runs, newest first: state, tokens, the [commit](git.md) |
-| `GET /runs/{id}/diff` | the run's commit line by line (kind, file, line numbers, commentable) |
-| `POST /runs/{id}/comments` | `{"comments": [{"index", "text"}]}` on lines of the diff, sent to Claude as one task |
-| `POST /runs/{id}/revert` | undo the run's commit with a new one; `{"tell": true}` also queues a note for Claude |
 | `GET /conversations/{id}/reviews` | its [reviews](review.md), newest first; `POST` asks for one `{"instructions", "until_pass", "rounds"}`; `POST …/reviews/stop`; `POST /reviews/{id}/apply` sends a FAIL / PARTIAL review's findings back as a task |
 | `GET /conversations/{id}/goals` | its [goal loops](goal.md); `POST` starts one `{"goal", "check", "rounds"}`; `POST …/goals/stop` |
 | `GET /workflow-templates` | the [workflow](workflows.md) templates with their steps |

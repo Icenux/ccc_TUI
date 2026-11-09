@@ -36,7 +36,7 @@ def test_clean_snapshot_then_commit(repo):
     log = _git(repo, "log", "-1", "--format=%s%n%b")
     assert log.startswith("ccc: Fix things") and "ccc-conversation: my conv" in log
     assert _git(repo, "status", "--porcelain") == ""
-    shown = gitops.show(str(repo), outcome.commit)
+    shown = _git(repo, "show", outcome.commit)
     assert "b.txt" in shown and "+two" in shown
 
 
@@ -82,7 +82,7 @@ def test_repo_hooks_and_fsmonitor_never_run(repo, tmp_path):
     assert not marker.exists()
 
 
-def test_external_diff_driver_is_not_used_by_show(repo, tmp_path):
+def test_external_diff_driver_is_not_used_by_review_diff(repo, tmp_path):
     marker = tmp_path / "pwned"
     tool = tmp_path / "extdiff.sh"
     tool.write_text(f"#!/bin/sh\ntouch {marker}\n")
@@ -92,7 +92,7 @@ def test_external_diff_driver_is_not_used_by_show(repo, tmp_path):
     (repo / "a.txt").write_text("changed\n")
     outcome = gitops.commit_task(str(repo), before, "task", "c")
     assert outcome.commit is None and before.blocked
-    assert gitops.show(str(repo), "HEAD").startswith("Not shown")
+    assert gitops.review_diff(str(repo), []) is None
     assert not marker.exists()
 
 
@@ -148,7 +148,7 @@ def test_config_changed_during_task_skips_commit(repo):
 def test_show_refuses_risky_repo(repo):
     head = _git(repo, "rev-parse", "HEAD").strip()
     _git(repo, "config", "include.path", "/tmp/elsewhere")
-    assert gitops.show(str(repo), head).startswith("Not shown")
+    assert gitops.review_diff(str(repo), [head]) is None
 
 
 def test_unknown_config_key_blocks_fail_closed(repo):

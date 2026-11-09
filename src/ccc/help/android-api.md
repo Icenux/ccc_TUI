@@ -31,8 +31,10 @@ token.
    of its own and can be signed out alone: `ccc api devices` lists
    them, `ccc api revoke ID` signs one out. Signing out never deletes the
    row: it stays as read-only history (`ccc api devices --all`) with when
-   and how the device was signed out — in the app, on the computer, or
-   by a new token — and its token stops working. When an app that is signed in connects with another token
+   and how the device was signed out — in the app, on the computer, by a new token,
+   or because it is gone: an app that held the events connection and has not
+   come back for 5 minutes is taken for uninstalled (an uninstall cannot tell ccc, but it breaks
+   the connection), and any device not seen for 30 days likewise — and its token stops working. When an app that is signed in connects with another token
    (a new QR code, or a typed one), it signs its old device out first, so
    the same phone doesn't pile up in the list. The app shows the same
    history under *Connection → Devices → History*. An app whose token was
@@ -209,7 +211,7 @@ settings it shows are the ones that apply to both sides.
 | `GET /launch-presets` | the New conversation presets and the last choice |
 | `GET /prompt-presets` | the preset prompts (Alt+1 … 9 in ccc) |
 | `POST /pair` | `{"code", "name"}` — no token needed: trades a pairing code from the QR for a new device; answers `{"token", "device_id", "name", "version"}`, 401 when the code is wrong, used or run out |
-| `GET /devices` | the devices signed in: name, made, last seen, address; `current` marks the caller. `POST /devices/{id}` `{"name"}` renames one, `DELETE /devices/{id}` signs it out at once (open connections too; the row stays as history). `GET /devices?all=1` adds the signed-out ones with `revoked_at` and `revoked_by` (`app`, `computer`, `token`) |
+| `GET /devices` | the devices signed in: name, made, last seen, address; `current` marks the caller. `POST /devices/{id}` `{"name"}` renames one, `DELETE /devices/{id}` signs it out at once (open connections too; the row stays as history). `GET /devices?all=1` adds the signed-out ones with `revoked_at` and `revoked_by` (`app`, `computer`, `inactive`, `token`) |
 | `GET /groups` | the grouping and your own groups; `POST /groups/rename` `{"old", "new"}`, `POST /groups/delete` `{"name"}` |
 | `GET /search?q=` | search every conversation (archived too), newest first |
 | `GET /waiting` | conversations that need you, most urgent first (Alt+N in ccc) |

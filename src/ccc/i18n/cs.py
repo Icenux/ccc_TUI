@@ -1413,6 +1413,8 @@ CS: dict[str, str] = {
     "in the app": "v aplikaci",
     "on the computer": "na počítači",
     "new token": "novým tokenem",
+    "no connection, probably uninstalled": "bez spojení, nejspíš odinstalováno",
+    "connection lost for good, probably uninstalled": "spojení se trvale přerušilo, nejspíš odinstalováno",
     "Active": "Aktivní",
     "Signed out": "Odhlášeno",
     "No device has been signed out yet.": "Zatím nebylo odhlášeno žádné zařízení.",

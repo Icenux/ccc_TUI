@@ -24,7 +24,10 @@ def devices_tick(storage, notifier: Notifier) -> list[str]:
     """Tell which devices were signed out since the last look.
     The first look only remembers; a new device is the pairing alarm's business."""
     from ccc import api
+    from ccc.models import INACTIVE_DAYS, REVOKED_BY_INACTIVE, STREAM_DROPPED_MINUTES
 
+    storage.revoke_inactive_devices(INACTIVE_DAYS, REVOKED_BY_INACTIVE)
+    storage.revoke_dropped_streams(STREAM_DROPPED_MINUTES, REVOKED_BY_INACTIVE)
     current = {str(d.id): d.revoked_by or ("?" if d.revoked_at else "")
                for d in storage.list_devices(include_revoked=True)}
     raw = storage.get_setting(DEVICES_KEY)

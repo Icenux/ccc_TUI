@@ -79,24 +79,11 @@ Aplikace se aktualizuje podle verze, ne přes ccc, a z vlastního repozitáře: 
 **Co seznam ukazuje** (Připojení → *Seznam konverzací*): stav gitu, úkoly ve frontě a složku, každé zapnuté nebo vypnuté — pamatuje
 si to telefon, takže malá obrazovka může ukazovat méně.
 
-## Co smí zařízení (role)
+## Co smí zařízení
 
-Každé zařízení má roli, aby ukradený telefon nebo token nebyl cestou do
-celého počítače:
-
-| Role | Smí |
-|---|---|
-| `read` | dívat se: každé `GET` (seznamy, konverzace, proud událostí); bez odkazů, které konverzaci ovládají (`remote_control_url`) |
-| `operate` | i řídit existující konverzace: zprávy, schvalování, fronta, úkoly, revize, cíle, workflow |
-| `admin` | i zakládat konverzace (v jakékoli složce), psát do terminálu, posílat prompty živým relacím, rutiny, nastavení a presety, vytvářet, měnit a odstraňovat [agenty](agents.md), záloha, aktualizace ccc a sestavení appky, správa ostatních zařízení |
-
-Nově spárovaný telefon je `operate`; `ccc api pair --role admin` (nebo
-*Změnit roli* v seznamu Zařízení, nebo `ccc api role ID admin`) dá víc, `read`
-míň. Zařízení z doby před rolemi zůstávají `admin`. Požadavek nad rámec role
-dostane `403`; cesta, kterou pravidla neznají, vyžaduje `admin`. Ať má
-zařízení jakoukoli roli, smí se samo přejmenovat a odhlásit. `operate` stále
-dovolí telefonu schvalovat použití nástrojů v existující konverzaci — to je
-smysl jejího řízení.
+Každé spárované zařízení smí všechno — žádné role neexistují. Ukradený telefon
+nebo token je proto cestou do počítače: zařízení hned odhlas (*Nastavení →
+Zařízení → Odhlásit*, nebo `ccc api revoke ID`) a co dělalo, najdeš v `ccc api log`.
 
 ## Složky a kontroly oprávnění
 
@@ -118,13 +105,12 @@ Kdyby se token někdy zneužil, musíš to vidět a dozvědět se o tom. API
 zaznamenává všechno, co něco mění, každé odmítnutí (`401` / `403`)
 a každé párování — nikdy dotaz, tělo požadavku ani napsané klávesy, jen
 cestu a složku nové konverzace. Přečteš to přes `ccc api log` (`-n`
-kolik), v *Zařízení → Aktivita* nebo `GET /audit` (admin). Uchovává se
+kolik), v *Zařízení → Aktivita* nebo `GET /audit`. Uchovává se
 posledních 5000 záznamů.
 
 Přes oznámení do Telegramu / Discordu ([Nastavení](settings.md)) ti ccc
 hned řekne i o neobvyklém: spárovalo se nové zařízení, špatný párovací
-kód, požadavek se špatným tokenem, zařízení zkouší víc, než jeho role
-dovoluje — každý druh nejvýš jednou za 5 minut.
+kód, požadavek se špatným tokenem, zařízení chce, co není povolené — každý druh nejvýš jednou za 5 minut.
 
 ## Zabezpečení spojení
 
@@ -207,15 +193,15 @@ jen to, co platí pro obě strany.
 | `GET /plugins` | `{installed, enabled}`: id nainstalovaných pluginů Claude Code a těch zapnutých ve výchozím stavu (zaškrtnou se jako `plugin:<id>` v `options`, spolu s `plugins_select`) |
 | `GET /agents?path=` | [agenti](agents.md) Claude Code pro složku (z projektu i uživatelovi) bez promptů: `name`, `description`, `scope` (`project` / `user`), `tools` (`null` = všechny nástroje), `model`, `problem` (proč by Claude Code soubor přeskočil, jinak prázdné), `overridden`, `file`. Složka mimo povolené dostane `403` |
 | `GET /agents/{scope}/{name}?path=` | jeden agent s `prompt` a `version`; `POST` na stejné cestě ho změní `{"path", "description", "tools", "model", "prompt", "version"}` (`409`, když se soubor od té `version` změnil; jméno a ostatní pole souboru zůstanou), `DELETE` ho odstraní (soubor se přesune do složky ccc). Admin; agent z nadřazené složky nebo za odkazem vedoucím ven ze složky se nemění (`403`) |
-| `POST /agents` | admin: vytvoří `{"scope", "path", "name", "description", "tools", "model", "prompt"}`; `name` jsou malá písmena, číslice a pomlčky, existující soubor se nikdy nepřepíše (`400`). Odpoví `201` s agentem, `version` a `new_folder` (Claude Code potřebuje restart, aby viděl prvního agenta v nové složce) |
+| `POST /agents` | vytvoří `{"scope", "path", "name", "description", "tools", "model", "prompt"}`; `name` jsou malá písmena, číslice a pomlčky, existující soubor se nikdy nepřepíše (`400`). Odpoví `201` s agentem, `version` a `new_folder` (Claude Code potřebuje restart, aby viděl prvního agenta v nové složce) |
 | `GET /agent-options` | šablony (key, title, description, tools, model, prompt — v jazyce požadavku) a volby průvodce: `access` (co smí → nástroje), `effort` (→ model), povolené `models` |
-| `POST /agents/prompt` | admin: `{"description", "access", "claude"}` → `{"prompt", "by"}`: stručná osnova, nebo s `"claude": true` instrukce napsané Claudem (jedno volání bez nástrojů, vždy jen jedno: `429`, když už jiné běží, `502` s důvodem, když Claude nemohl) |
+| `POST /agents/prompt` | `{"description", "access", "claude"}` → `{"prompt", "by"}`: stručná osnova, nebo s `"claude": true` instrukce napsané Claudem (jedno volání bez nástrojů, vždy jen jedno: `429`, když už jiné běží, `502` s důvodem, když Claude nemohl) |
 | `GET /mcp-servers?path=` | názvy MCP serverů nastavených pro složku (zaškrtnou se jako `mcp:<název>` v `options`, spolu s `mcp_select`) |
 | `GET /sessions?path=` | relace Claude Code ve složce, nejnovější první (k pokračování: `session_id` v `POST /conversations` se `session_resume`) |
 | `GET /launch-presets` | předvolby okna Nová konverzace a poslední volba |
 | `GET /prompt-presets` | přednastavené prompty (Alt+1 … 9 v ccc) |
 | `POST /pair` | `{"code", "name"}` — bez tokenu: vymění párovací kód z QR za nové zařízení; vrátí `{"token", "device_id", "name", "version"}`, 401 při špatném, použitém nebo prošlém kódu |
-| `GET /devices` | přihlášená zařízení: `role`, jméno, vytvoření, naposledy vidět, adresa; `current` označí volajícího. `POST /devices/{id}` `{"name"}` jedno přejmenuje, `DELETE /devices/{id}` ho hned odhlásí (i otevřená spojení; řádek zůstane jako historie). `GET /devices?all=1` přidá odhlášená s `revoked_at` a `revoked_by` (`app`, `computer`, `token`) |
+| `GET /devices` | přihlášená zařízení: jméno, vytvoření, naposledy vidět, adresa; `current` označí volajícího. `POST /devices/{id}` `{"name"}` jedno přejmenuje, `DELETE /devices/{id}` ho hned odhlásí (i otevřená spojení; řádek zůstane jako historie). `GET /devices?all=1` přidá odhlášená s `revoked_at` a `revoked_by` (`app`, `computer`, `token`) |
 | `GET /groups` | seskupení a tvé vlastní skupiny; `POST /groups/rename` `{"old", "new"}`, `POST /groups/delete` `{"name"}` |
 | `GET /search?q=` | hledání ve všech konverzacích (i archivovaných), nejnovější první |
 | `GET /waiting` | konverzace, které tě potřebují, nejnaléhavější první (Alt+N v ccc) |

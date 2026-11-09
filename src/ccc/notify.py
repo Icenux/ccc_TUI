@@ -53,7 +53,7 @@ CATEGORIES = (
     (CAT_UPDATES, N_("Updates"), N_("a new ccc version is available"), True),
     (CAT_STARTED, N_("Conversation started"), N_("a conversation starts working after a quiet time"), False),
     (CAT_ROUTINES, N_("Routines"), N_("a routine started, or was skipped"), False),
-    (CAT_DEVICES, N_("Devices"), N_("a new device paired, signed out, or its role changed"), True),
+    (CAT_DEVICES, N_("Devices"), N_("a new device paired or signed out"), True),
     (CAT_SECURITY, N_("Security"), N_("a wrong pairing code or token, a forbidden request"), True),
     (CAT_HEALTH, N_("Health"), N_("a failed backup, a new warning in `ccc api doctor`"), False),
     (CAT_DIGEST, N_("Daily summary"), N_("one message a day with what happened"), False),

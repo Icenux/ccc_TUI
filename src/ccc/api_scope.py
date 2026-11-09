@@ -69,7 +69,7 @@ def allowed_folders(storage) -> list[Path]:
 
 
 class FolderNotAllowed(ApiError):
-    """403 because the folder is outside the allowed roots (not because of the device's role)."""
+    """403 because the folder is outside the allowed roots."""
 
     def __init__(self, folder: str):
         super().__init__(HTTPStatus.FORBIDDEN, _("The API may not use this folder. Allow it on the computer: ccc api roots --add {path}").format(path=shlex.quote(folder)))

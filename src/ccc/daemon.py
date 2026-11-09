@@ -152,7 +152,7 @@ HEALTH_CHECK_SECONDS = 6 * 3600.0
 
 async def watch_loop(storage: Storage, notifier: Notifier, db_path: str, interval: float = WATCH_CHECK_SECONDS,
                      health_interval: float = HEALTH_CHECK_SECONDS) -> None:
-    """Devices signed out / given another role, the doctor's new warnings and the daily
+    """Devices signed out, the doctor's new warnings and the daily
     summary (ccc.watch)."""
     next_health = 0.0
     while True:

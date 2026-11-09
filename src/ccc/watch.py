@@ -1,5 +1,5 @@
 """What the daemon notices by itself and tells Telegram / Discord (#146): a
-device signed out or given another role (from the app, the command line
+device signed out (from the app, the command line
 or a new token), a failed backup, a new warning of `ccc api doctor`, the
 routines that fired, and a daily summary. Each is a category the user can
 switch per service (ccc.notify.CATEGORIES); every tick returns the
@@ -13,7 +13,7 @@ from pathlib import Path
 from ccc.i18n import _
 from ccc.notify import CAT_DEVICES, CAT_DIGEST, CAT_HEALTH, CAT_ROUTINES, Notifier
 
-DEVICES_KEY = "notify_devices_seen"  # {id: [role, revoked_by]} as of the last look
+DEVICES_KEY = "notify_devices_revoked"  # {id: revoked_by} as of the last look
 HEALTH_KEY = "notify_health_seen"  # warnings already told, one per line
 DIGEST_KEY = "notify_digest_day"  # the day the last summary was made
 DIGEST_HOUR = 8  # the summary comes in the first look after this hour
@@ -21,11 +21,11 @@ HEALTH_LISTED = 5
 
 
 def devices_tick(storage, notifier: Notifier) -> list[str]:
-    """Tell which devices were signed out or got another role since the last look.
+    """Tell which devices were signed out since the last look.
     The first look only remembers; a new device is the pairing alarm's business."""
     from ccc import api
 
-    current = {str(d.id): [d.role, d.revoked_by or ("?" if d.revoked_at else "")]
+    current = {str(d.id): d.revoked_by or ("?" if d.revoked_at else "")
                for d in storage.list_devices(include_revoked=True)}
     raw = storage.get_setting(DEVICES_KEY)
     try:
@@ -39,17 +39,14 @@ def devices_tick(storage, notifier: Notifier) -> list[str]:
         return []
     devices = {str(d.id): d for d in storage.list_devices(include_revoked=True)}
     sent = []
-    for key, (role, revoked) in current.items():
-        old = before.get(key)
-        if not old:
+    for key, revoked in current.items():
+        if key not in before:
             continue
+        old = before[key]
         device = devices[key]
-        if revoked and not old[1]:
+        if revoked and not old:
             sent.append(_("ccc API: {name} was signed out ({how}).").format(
                 name=device.name, how=api.revoked_label(device, short=True) or _("signed out")))
-        elif not revoked and old[0] != role:
-            sent.append(_("ccc API: the role of {name} changed from {old} to {new}.").format(
-                name=device.name, old=old[0], new=role))
     for text in sent:
         notifier.send_now(text, CAT_DEVICES)
     return sent

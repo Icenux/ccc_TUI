@@ -117,8 +117,7 @@ def test_a_huge_file_is_not_an_agent(claude_dir):
 
 
 def test_api_lists_the_agents_of_a_folder(claude_dir, tmp_path):
-    from ccc import api, api_roles
-    from ccc.models import ROLE_READ
+    from ccc import api
     from ccc.storage import Storage
 
     storage = Storage(str(tmp_path / "ccc.db"))
@@ -131,7 +130,6 @@ def test_api_lists_the_agents_of_a_folder(claude_dir, tmp_path):
     assert status == 200
     assert [(a["name"], a["scope"]) for a in listed] == [("proj", "project"), ("mine", "user")]
     assert all("prompt" not in a for a in listed)
-    assert api_roles.required_role("GET", "/agents") == ROLE_READ
 
 
 def test_api_refuses_a_folder_outside_the_allowed_ones(claude_dir, tmp_path):

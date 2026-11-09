@@ -11,8 +11,7 @@ GET    /api/v1/agent-options                   templates and the wizard's choice
 POST   /api/v1/agents/prompt                   {"description", "access", "claude"}: the instructions for a new agent,
                                                an outline or (claude: true) written by Claude
 
-Everything that writes needs an admin device: an agent with Bash or Edit steers what Claude does in a project
-(api_roles closes every path it does not list). `tools` is a list of tool names, null = every tool; `model` is
+An agent with Bash or Edit steers what Claude does in a project. `tools` is a list of tool names, null = every tool; `model` is
 "" (the session's), sonnet, opus, haiku, fable or inherit. An agent's file is only ever found through the folder
 lists (never built from a name in the request), and what is changed or removed must lie inside the folder asked
 for — a project's agents of a parent folder are shown but not touched from here."""

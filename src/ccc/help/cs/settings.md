@@ -39,7 +39,7 @@ zařízeními).
 | Měsíční archiv analytiky | viz [Analytika](analytics.md) |
 | Aktualizace | hledání nových verzí ccc, zapnuto / vypnuto — viz níže |
 | Spárovat nové zařízení | QR kód pro aplikaci pro Android — viz [Aplikace pro Android a API](android-api.md) |
-| Zařízení | seznam telefonů přihlášených k API pro aplikaci pro Android přímo na záložce: změna role, odhlášení jednoho, historie, aktivita — viz [Aplikace pro Android a API](android-api.md) |
+| Zařízení | seznam telefonů přihlášených k API pro aplikaci pro Android přímo na záložce: odhlášení jednoho, historie, aktivita — viz [Aplikace pro Android a API](android-api.md) |
 | Data | kde je databáze a její denní zálohy, *Zálohovat hned* |
 
 Stejné hodnoty se dají nastavit i z příkazové řádky, viz
@@ -158,7 +158,7 @@ tlačítkem *Uložit*, v terminálu hned (`Ctrl+S`).
 | Aktualizace | je dostupná nová verze ccc | zapnuto |
 | Konverzace začala | konverzace začne pracovat po 10 a více minutách klidu | vypnuto |
 | Rutiny | rutina se spustila nebo se přeskočila | vypnuto |
-| Zařízení | spárovalo se nové zařízení, odhlásilo se, nebo se změnila jeho role | zapnuto |
+| Zařízení | spárovalo se nové zařízení, nebo se odhlásilo | zapnuto |
 | Zabezpečení | špatný párovací kód nebo token, zakázaný požadavek | zapnuto |
 | Zdraví | selhalá záloha, nové varování v `ccc api doctor` | vypnuto |
 | Denní souhrn | po 8:00, co za posledních 24 hodin běželo | vypnuto |

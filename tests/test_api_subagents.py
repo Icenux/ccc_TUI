@@ -3,8 +3,7 @@ the templates and the wizard's prompt — and what an admin device may and may n
 
 import pytest
 
-from ccc import agent_wizard, agents, api, api_roles
-from ccc.models import ROLE_ADMIN, ROLE_READ
+from ccc import agent_wizard, agents, api
 from ccc.storage import Storage
 
 GOOD = "---\nname: reviewer\ndescription: Reviews diffs\ntools: Read, Grep\nmodel: haiku\nmemory: project\n---\n\nYou review.\n"
@@ -213,18 +212,6 @@ def test_only_one_prompt_is_written_at_a_time(world, monkeypatch):
         assert error_of(world, "POST", "/agents/prompt", body={"description": "Checks", "claude": True}).status == 429
     finally:
         api_subagents._generating.release()
-
-
-# --- who may do what ----------------------------------------------------------------------
-
-
-@pytest.mark.parametrize("method, path, role", [
-    ("GET", "/agents", ROLE_READ), ("GET", "/agents/project/x", ROLE_READ), ("GET", "/agent-options", ROLE_READ),
-    ("POST", "/agents", ROLE_ADMIN), ("POST", "/agents/project/x", ROLE_ADMIN),
-    ("DELETE", "/agents/user/x", ROLE_ADMIN), ("POST", "/agents/prompt", ROLE_ADMIN),
-])
-def test_reading_is_open_to_every_device_writing_needs_an_admin(method, path, role):
-    assert api_roles.required_role(method, path) == role
 
 
 def test_the_audit_keeps_the_folder_of_a_new_agent_not_its_text():

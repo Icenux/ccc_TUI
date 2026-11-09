@@ -300,15 +300,8 @@ class Storage:
             self._migrate_add_always_resume_column(conn)
             self._migrate_api_token_to_device(conn)
             self._migrate_devices_history(conn)
-            self._migrate_devices_role(conn)
         make_private(self.db_path)
 
-    def _migrate_devices_role(self, conn: sqlite3.Connection) -> None:
-        """A device's role (models.ROLES). The devices there already are keep the full rights they had: "admin"."""
-        columns = {row["name"] for row in conn.execute("PRAGMA table_info(devices)")}
-        if "role" not in columns:
-            conn.execute("ALTER TABLE devices ADD COLUMN role TEXT NOT NULL DEFAULT 'admin'")
-            conn.commit()
 
     def _migrate_devices_history(self, conn: sqlite3.Connection) -> None:
         """Signing a device out keeps its row (history) instead of deleting it.
@@ -1309,14 +1302,13 @@ class Storage:
             last_ip=row["last_ip"],
             revoked_at=datetime.fromisoformat(row["revoked_at"]) if row["revoked_at"] else None,
             revoked_by=row["revoked_by"] or "",
-            role=row["role"] or "admin",
         )
 
-    def add_device(self, name: str, token_sha256: str, role: str = "admin") -> Device:
+    def add_device(self, name: str, token_sha256: str) -> Device:
         with closing(self._connect()) as conn:
             cursor = conn.execute(
-                "INSERT INTO devices (name, token_sha256, created_at, role) VALUES (?, ?, ?, ?)",
-                (name, token_sha256, datetime.now().isoformat(), role),
+                "INSERT INTO devices (name, token_sha256, created_at) VALUES (?, ?, ?)",
+                (name, token_sha256, datetime.now().isoformat()),
             )
             conn.commit()
             row = conn.execute("SELECT * FROM devices WHERE id = ?", (cursor.lastrowid,)).fetchone()
@@ -1374,12 +1366,6 @@ class Storage:
         with closing(self._connect()) as conn:
             rows = conn.execute("SELECT * FROM api_audit ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
         return [dict(row) for row in rows]
-
-    def set_device_role(self, device_id: int, role: str) -> bool:
-        with closing(self._connect()) as conn:
-            changed = conn.execute("UPDATE devices SET role = ? WHERE id = ? AND revoked_at IS NULL", (role, device_id)).rowcount
-            conn.commit()
-        return bool(changed)
 
     def revoke_device(self, device_id: int, by: str) -> bool:
         """Sign an active device out: the row stays (when and how: `by`), the

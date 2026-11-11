@@ -232,6 +232,15 @@ def test_screen_has_the_colours_and_the_cursor(monkeypatch):
     assert calls[0] == ("capture-pane", "-p", "-e", "-t", "=q7:")
 
 
+def test_history_is_what_scrolled_off_above_the_screen(monkeypatch):
+    calls = _fake_tmux(monkeypatch, {"capture-pane": "old line\n"})
+    assert ms.history(7, 300) == "old line\n"
+    assert calls[0] == ("capture-pane", "-p", "-e", "-t", "=q7:", "-S", "-300", "-E", "-1")
+    assert ms.history(7, 0) == ""
+    ms.history(7, 10**6)
+    assert f"-{ms.HISTORY_MAX_LINES}" in calls[-1]
+
+
 def test_only_allowed_keys_are_pressed(monkeypatch):
     calls = _fake_tmux(monkeypatch)
     assert ms.press(7, ["Escape", "C-c"]).delivered

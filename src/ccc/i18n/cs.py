@@ -361,6 +361,7 @@ CS: dict[str, str] = {
     "Rate-limited": "Limit",
     "Total time blocked on rate limits: [b]{minutes} min[/b]": "Celkový čas zablokovaný limity: [b]{minutes} min[/b]",
     "resets {time}": "obnoví se {time}",
+    "in {span}": "za {span}",
     "Your reserve: queued tasks wait while a window is at or above {reserve}%  (change in Settings, Ctrl+P)":
         "Tvoje rezerva: úkoly ve frontě čekají, dokud je okno na {reserve} % a výš  (změníš v Nastavení, Ctrl+P)",
     "No usage reserve — queued tasks may use the whole limit  (set one in Settings, Ctrl+P)":

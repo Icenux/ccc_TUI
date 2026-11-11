@@ -244,6 +244,19 @@ def screen(queue_id: int) -> Screen | None:
     return Screen(shown.stdout, width, height, x, y)
 
 
+HISTORY_MAX_LINES = 5000
+
+
+def history(queue_id: int, lines: int) -> str:
+    """The last LINES lines that scrolled off the top of the conversation's screen (colours included).
+    Empty when Claude Code runs on the alternate screen (fullscreen): it keeps its scrollback itself."""
+    lines = max(0, min(lines, HISTORY_MAX_LINES))
+    if not lines:
+        return ""
+    result = _tmux("capture-pane", "-p", "-e", "-t", exact(queue_id), "-S", f"-{lines}", "-E", "-1")
+    return result.stdout if result.returncode == 0 else ""
+
+
 def press(queue_id: int, keys: list[str]) -> DeliveryResult:
     """Press KEYS (tmux names) in the conversation's Claude Code."""
     unknown = [k for k in keys if k not in KEYS]

@@ -28,11 +28,16 @@ class UsageGauge:
 
 
 def _format_reset(dt: datetime) -> str:
+    """When a limit window resets: the clock time (with the weekday when it's
+    not today) and how long that is from now, e.g. "20:00, in 1 h 12 min"."""
     local_reset = dt.astimezone()
     now = datetime.now().astimezone()
-    if local_reset.date() == now.date():
-        return f"{local_reset:%H:%M}"
-    return f"{i18n.weekday_short(local_reset)} {local_reset:%H:%M}"
+    clock = f"{local_reset:%H:%M}" if local_reset.date() == now.date() else f"{i18n.weekday_short(local_reset)} {local_reset:%H:%M}"
+    minutes = max(0, int((local_reset - now).total_seconds() // 60))
+    days, rest = divmod(minutes, 24 * 60)
+    hours, mins = divmod(rest, 60)
+    span = f"{days} d {hours} h" if days else f"{hours} h {mins} min" if hours else f"{mins} min"
+    return f"{clock}, " + _("in {span}").format(span=span)
 
 
 def build_usage_gauges(usage: ProUsage | None) -> list[UsageGauge]:
@@ -127,7 +132,7 @@ class AnalyticsScreen(SidebarScreen):
         margin-bottom: 0;
     }
     AnalyticsScreen .usage-gauge-label {
-        width: 48;
+        width: 60;
     }
     AnalyticsScreen .usage-gauge-row ProgressBar {
         width: 1fr;

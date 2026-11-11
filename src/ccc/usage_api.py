@@ -4,7 +4,7 @@ import json
 import subprocess
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 CREDENTIALS_PATH = Path.home() / ".claude" / ".credentials.json"
@@ -168,6 +168,24 @@ def _cache_to_usage(data: dict) -> ProUsage:
     )
 
 
+def _stale_cached_usage() -> ProUsage | None:
+    """The last known usage when the live query fails (offline, rate-limited,
+    expired login): the reset times in it stay true until they pass, so it's
+    better than showing nothing. Windows that already reset are dropped."""
+    try:
+        with open(CACHE_PATH) as f:
+            usage = _cache_to_usage(json.load(f)["data"])
+    except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError):
+        return None
+    now = datetime.now(timezone.utc)
+    alive = lambda w: w if w is not None and w.resets_at > now else None  # noqa: E731
+    five, seven = alive(usage.five_hour), alive(usage.seven_day)
+    per_model = [m for m in usage.per_model if m.resets_at > now]
+    if five is None and seven is None and not per_model:
+        return None
+    return ProUsage(five_hour=five, seven_day=seven, per_model=per_model)
+
+
 def get_pro_usage(force_refresh: bool = False) -> ProUsage | None:
     """Current Claude Pro/Max usage-limit status (5-hour and 7-day
     windows). Cached on disk for CACHE_TTL_SECONDS to avoid hammering the
@@ -184,11 +202,9 @@ def get_pro_usage(force_refresh: bool = False) -> ProUsage | None:
             pass
 
     token = _read_oauth_token()
-    if not token:
-        return None
-    usage = fetch_live_usage(token)
+    usage = fetch_live_usage(token) if token else None
     if usage is None:
-        return None
+        return _stale_cached_usage()
 
     try:
         CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)

@@ -98,10 +98,13 @@ def styled_status(status: QueueStatus) -> str:
     return f"[{style}]{status_text(status)}[/]" if style else status_text(status)
 
 
-# The "working" dot turns clockwise: a gold dot with a dark wedge going round.
-WORKING_FRAMES = ("◐", "◓", "◑", "◒")
+# The "working" dot turns clockwise: a gold dot with a dark wedge going round. A terminal has no glyph
+# with a narrow wedge (◐◓◑◒ are half circles, 180°): a braille cell is a ring of 8 dots, so one dot
+# missing is a wedge of 45° — the narrowest there is — and the missing one walks round the ring.
+_RING = (0x01, 0x08, 0x10, 0x20, 0x80, 0x40, 0x04, 0x02)  # braille dots clockwise from the top left
+WORKING_FRAMES = tuple(chr(0x2800 + 0xFF - dot) for dot in _RING)
 WORKING_STYLE = "bold #ffd700"
-FRAME_SECONDS = 0.4
+FRAME_SECONDS = 0.2
 DONE_STYLE, ERROR_STYLE, ATTENTION_STYLE = "bold green", "bold red", "bold dodger_blue1"
 
 

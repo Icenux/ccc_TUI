@@ -458,7 +458,7 @@ class ConversationsScreen(SidebarScreen):
 
     @staticmethod
     def _heading(title: str, count: int, folded: bool, markers: list[tuple[str, str]]) -> Text:
-        """▾ shop (3) · ●1 ◐2 — what its conversations are doing, also
+        """▾ shop (3) · ●1 ⣾2 — what its conversations are doing, also
         while it's folded."""
         label = Text.assemble(("▸ " if folded else "▾ ", "bold"), (title, "bold"), (f" ({count})", "dim"))
         counts: dict[tuple[str, str], int] = {}

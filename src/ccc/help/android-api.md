@@ -32,9 +32,9 @@ token.
    them, `ccc api revoke ID` signs one out. Signing out never deletes the
    row: it stays as read-only history (`ccc api devices --all`) with when
    and how the device was signed out — in the app, on the computer, by a new token,
-   or because it is gone: an app that held the events connection and has not
-   come back for 5 minutes is taken for uninstalled (an uninstall cannot tell ccc, but it breaks
-   the connection), and any device not seen for 30 days likewise — and its token stops working. When an app that is signed in connects with another token
+   or because it is gone: a device not seen for 30 days is taken for uninstalled
+   (an uninstall cannot tell ccc) — and its token stops working. A dropped connection alone
+   (a sleeping phone, a restart of the API) signs nothing out. When an app that is signed in connects with another token
    (a new QR code, or a typed one), it signs its old device out first, so
    the same phone doesn't pile up in the list. The app shows the same
    history under *Connection → Devices → History*. An app whose token was

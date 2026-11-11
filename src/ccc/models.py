@@ -330,6 +330,7 @@ class Device:
 REVOKED_BY_APP = "app"  # signed out from an app (this phone's own, or another one's)
 REVOKED_BY_COMPUTER = "computer"  # `ccc api revoke` or the Devices list
 REVOKED_BY_INACTIVE = "inactive"  # not seen for INACTIVE_DAYS: the app was most likely uninstalled (nothing tells the server)
+# Only this long silence signs a device out. A dropped events connection does not: a sleeping phone, a changed network
+# or a restart of the API looks the same, and a sign-out is for good (the phone must be paired again).
 INACTIVE_DAYS = 30
-STREAM_DROPPED_MINUTES = 5  # a device that held the events connection and has not come back for this long
 REVOKED_BY_TOKEN = "token"  # `ccc api token --new`: every token before it stopped working

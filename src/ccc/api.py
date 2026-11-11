@@ -131,12 +131,12 @@ def revoked_label(device: Device, short: bool = False) -> str:
     """How a signed-out device was signed out, for the TUI (short: a table cell) and `ccc api devices --all`."""
     if short:
         return {REVOKED_BY_APP: _("in the app"), REVOKED_BY_COMPUTER: _("on the computer"),
-                REVOKED_BY_TOKEN: _("new token"), REVOKED_BY_INACTIVE: _("no connection, probably uninstalled")}.get(device.revoked_by, "")
+                REVOKED_BY_TOKEN: _("new token"), REVOKED_BY_INACTIVE: _("not seen for a long time, probably uninstalled")}.get(device.revoked_by, "")
     return {
         REVOKED_BY_APP: _("signed out in the app"),
         REVOKED_BY_COMPUTER: _("signed out on the computer"),
         REVOKED_BY_TOKEN: _("token replaced (ccc api token --new)"),
-        REVOKED_BY_INACTIVE: _("connection lost for good, probably uninstalled"),
+        REVOKED_BY_INACTIVE: _("not seen for 30 days, probably uninstalled"),
     }.get(device.revoked_by, _("signed out"))
 
 

@@ -2,7 +2,7 @@ import sqlite3
 from datetime import datetime, timedelta
 
 from ccc import api, watch
-from ccc.models import INACTIVE_DAYS, REVOKED_BY_INACTIVE, STREAM_DROPPED_MINUTES
+from ccc.models import INACTIVE_DAYS, REVOKED_BY_INACTIVE
 
 from test_api import storage  # noqa: F401  (fixture)
 
@@ -47,15 +47,9 @@ def test_the_watch_signs_out_the_silent_device_and_tells_it(storage):  # noqa: F
     assert len(told) == 1 and "Phone" in told[0] and sent == told
 
 
-def test_a_device_whose_events_connection_dropped_is_signed_out_in_minutes(storage):  # noqa: F811
-    gone = api.add_device(storage, "Uninstalled")[0]
-    live = api.add_device(storage, "Open")[0]
-    rest_only = api.add_device(storage, "RestOnly")[0]
-    for device in (gone, live):
-        storage.mark_streaming(device.id, "1.2.3.4")
-    with sqlite3.connect(storage.db_path) as conn:
-        conn.execute("UPDATE devices SET last_seen_at = ? WHERE id IN (?, ?)",
-                     ((datetime.now() - timedelta(minutes=10)).isoformat(), gone.id, rest_only.id))
-    storage.touch_device(live.id, "1.2.3.4")  # the open connection keeps refreshing this
-    assert storage.revoke_dropped_streams(STREAM_DROPPED_MINUTES, REVOKED_BY_INACTIVE) == [gone.id]
-    assert {d.name for d in storage.list_devices()} == {"Open", "RestOnly"}  # no stream: only the long silence counts
+def test_a_dropped_events_connection_alone_signs_nothing_out(storage):  # noqa: F811
+    phone = api.add_device(storage, "Sleeping phone")[0]
+    storage.mark_streaming(phone.id, "1.2.3.4")
+    _seen(storage, phone.id, 1)  # silent for a day: asleep, out of range or the API was restarted
+    watch.devices_tick(storage, type("N", (), {"send_now": lambda self, text, category: None})())
+    assert [d.name for d in storage.list_devices()] == ["Sleeping phone"]

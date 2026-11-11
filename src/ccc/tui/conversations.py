@@ -19,7 +19,7 @@ from ccc.launch_options import describe_flags
 from ccc.models import DeliveryMode, Queue, QueueStatus
 from ccc.orchestrator import send_message
 from ccc.prompt_presets import load_prompt_presets
-from ccc.storage import Storage
+from ccc.storage import ArchivedConversationError, Storage
 from ccc.transcript import TranscriptEvent, find_transcript_path, parse_transcript_events
 from ccc.tui import cli_pane
 from ccc.tui.claude_pane import ClaudePane
@@ -1001,7 +1001,11 @@ class ConversationsScreen(SidebarScreen):
         text = text.strip()
         if not text or self._current_queue_id is None:
             return False
-        send_message(self.storage, self._current_queue_id, text)
+        try:
+            send_message(self.storage, self._current_queue_id, text)
+        except ArchivedConversationError as exc:
+            self.notify(str(exc), severity="error")
+            return False
         await self._refresh_current()
         return True
 

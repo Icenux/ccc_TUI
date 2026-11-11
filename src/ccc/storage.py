@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 
+from ccc.i18n import _
 from ccc.models import (
     Device,
     DeliveryMode,
@@ -288,6 +289,10 @@ def make_private(db_path: str | Path) -> None:
             os.chmod(f"{db_path}{suffix}", 0o600)
         except OSError:
             pass  # not there (or not ours): nothing to tighten
+
+
+class ArchivedConversationError(ValueError):
+    """A task or message was meant for a conversation that sits in the Archive."""
 
 
 class Storage:
@@ -596,6 +601,14 @@ class Storage:
             )
             conn.commit()
             return True
+
+    def ensure_not_archived(self, queue_id: int) -> None:
+        """Raise ArchivedConversationError for an archived conversation: it is
+        frozen, so nothing may be added to it until it's restored."""
+        queue = self.find_queue(queue_id)
+        if queue is not None and queue.archived:
+            raise ArchivedConversationError(
+                _("'{name}' is archived — restore it from the Archive first.").format(name=queue.name))
 
     def add_queue_item(self, queue_id: int, prompt_text: str, not_before: datetime | None = None,
                        routine_id: int | None = None, model: str | None = None) -> QueueItem:

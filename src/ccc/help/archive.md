@@ -11,9 +11,15 @@ but nothing is lost. When the Archive is empty it says **EMPTY**.
 conversation. It disappears from Conversations and the Dashboard and
 shows up in the Archive.
 
-- A conversation with **Claude Code beside ccc** stops: its Claude Code
+An archived conversation is frozen, headless or not: nothing in its
+queue runs and no process is started.
+
+- A conversation with **Claude Code beside ccc**: its Claude Code
   process ends (freeing its memory) and its queued tasks wait.
-- A **headless** conversation keeps working through its queue.
+- A **headless** conversation stops working through its queue; waiting
+  tasks stay until you restore it.
+- You can't add a task or send a message to it (the API answers 409) —
+  restore it first.
 
 ## Restoring
 

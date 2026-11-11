@@ -84,7 +84,7 @@ from ccc.heartbeat import daemon_alive
 from ccc.i18n import _
 from ccc.models import REVOKED_BY_APP, REVOKED_BY_COMPUTER, REVOKED_BY_INACTIVE, REVOKED_BY_TOKEN, Device, ItemStatus, QueueStatus
 from ccc.orchestrator import send_message, start_conversation
-from ccc.storage import Storage
+from ccc.storage import ArchivedConversationError, Storage
 from ccc.transcript import TranscriptEvent, find_transcript_path, parse_transcript_events
 
 logger = logging.getLogger(__name__)
@@ -451,8 +451,16 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             ],
         }
 
-    def send(self, queue_id: int, body: dict) -> dict:
+    def _active(self, queue_id: int) -> None:
+        """409 for an archived conversation: restore it first."""
         self._queue(queue_id)
+        try:
+            self.storage.ensure_not_archived(queue_id)
+        except ArchivedConversationError as exc:
+            raise ApiError(HTTPStatus.CONFLICT, str(exc)) from exc
+
+    def send(self, queue_id: int, body: dict) -> dict:
+        self._active(queue_id)
         text = body.get("text")
         if not isinstance(text, str) or not text.strip():
             raise ApiError(HTTPStatus.BAD_REQUEST, _("The message is empty."))
@@ -503,7 +511,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
 
     def add_task(self, queue_id: int, body: dict) -> dict:
         """{"text", "when"}: when is empty (as soon as possible), HH:MM, YYYY-MM-DD HH:MM or "reset"."""
-        self._queue(queue_id)
+        self._active(queue_id)
         text = text_of(body, "text").strip()
         if not text:
             raise ApiError(HTTPStatus.BAD_REQUEST, _("The task is empty."))

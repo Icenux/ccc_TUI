@@ -85,6 +85,8 @@ def enqueue_prompt(storage: Storage, project_path: str, prompt_text: str, name: 
             project_path,
             str(uuid.uuid4()),
         )
+    else:
+        storage.ensure_not_archived(queue.id)
     storage.add_queue_item(queue.id, prompt_text)
     return queue
 
@@ -92,7 +94,9 @@ def enqueue_prompt(storage: Storage, project_path: str, prompt_text: str, name: 
 def send_message(storage: Storage, queue_id: int, text: str) -> QueueItem:
     """Queue a message in a conversation (the TUI's message box, the API).
     Writing to a conversation paused at a limit means "go on". Pure
-    storage write — the daemon picks it up on its next poll."""
+    storage write — the daemon picks it up on its next poll. Raises
+    ArchivedConversationError for an archived conversation."""
+    storage.ensure_not_archived(queue_id)
     item = storage.add_queue_item(queue_id, text.strip())
     if storage.get_queue(queue_id).status == QueueStatus.PAUSED_LIMIT:
         storage.update_queue_status(queue_id, QueueStatus.IDLE)
@@ -332,13 +336,15 @@ class QueueRuntime:
                 return
             self.queue = queue
 
+            if queue.archived:
+                # Archiving freezes the conversation: no queue is processed
+                # and no process runs (a managed one is stopped, freeing it).
+                if queue.delivery_mode.managed and await asyncio.to_thread(managed_sessions.is_running, queue.id):
+                    await asyncio.to_thread(managed_sessions.stop, queue.id)
+                await self._wait_for_wake_or_poll(POLL_INTERVAL_SECONDS)
+                continue
+
             if queue.delivery_mode.managed:
-                if queue.archived:
-                    # Archiving frees the interactive process; nothing runs.
-                    if await asyncio.to_thread(managed_sessions.is_running, queue.id):
-                        await asyncio.to_thread(managed_sessions.stop, queue.id)
-                    await self._wait_for_wake_or_poll(POLL_INTERVAL_SECONDS)
-                    continue
                 await self._maintain_managed_session(queue)
                 queue = self.storage.find_queue(queue.id)
                 if queue is None:

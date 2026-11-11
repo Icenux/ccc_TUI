@@ -10,6 +10,8 @@ import json
 import os
 import secrets
 import subprocess
+import urllib.error
+import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import quote
@@ -60,6 +62,25 @@ def server_url(storage: Storage) -> str | None:
     else the one `tailscale serve` has for it, else None."""
     chosen = (storage.get_setting(SERVER_KEY) or "").strip()
     return chosen.rstrip("/") or tailscale_url()
+
+
+def api_reachable(server: str, timeout: float = 4.0) -> bool:
+    """Does the API answer at `server` — the way the phone will reach it (through `tailscale serve`)? A QR for
+    a dead API only sends the phone off to fail on the scan (a stopped ccc-api shows up as 502 from tailscale)."""
+    try:
+        with urllib.request.urlopen(f"{server.rstrip('/')}{api.PREFIX}/health", timeout=timeout) as reply:
+            return reply.status == 200
+    except (OSError, ValueError, urllib.error.URLError):
+        return False
+
+
+def start_api() -> bool:
+    """Start ccc-api.service (as the user's systemd does); True when the command went through."""
+    try:
+        return subprocess.run(["systemctl", "--user", "start", "ccc-api.service"], capture_output=True,
+                              timeout=30, check=False).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
 
 
 def tailscale_url() -> str | None:

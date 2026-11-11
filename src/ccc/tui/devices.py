@@ -2,6 +2,7 @@
 the QR code that pairs a new one (ccc.pairing), and the activity window."""
 from __future__ import annotations
 
+import sqlite3
 from datetime import datetime
 
 from rich.text import Text
@@ -47,12 +48,14 @@ class PairModal(ModalScreen):
         box = Container(
             Static(id="pair-qr"),
             Static(Text(_("Looking for the API's address…"), style="dim"), id="pair-info"),
-            Horizontal(Button(_("Close"), id="pair-close", classes="modal-cancel"), classes="modal-buttons"),
+            Horizontal(Button(_("Start the API"), id="pair-start-api", variant="primary"),
+                       Button(_("Close"), id="pair-close", classes="modal-cancel"), classes="modal-buttons"),
         )
         box.border_title = _("Pair a new device")
         yield box
 
     def on_mount(self) -> None:
+        self.query_one("#pair-start-api", Button).display = False  # only when the API does not answer
         self.set_interval(1.5, self._watch)
         self._make_code()
 
@@ -63,13 +66,24 @@ class PairModal(ModalScreen):
     def _make_code(self) -> None:
         server = pairing.server_url(self.storage)
         shown = None
-        if server:
+        if server and not pairing.api_reachable(server):
+            shown = server  # a QR for an API that does not answer would only send the phone off to fail
+        elif server:
             code, expires = pairing.new_code(self.storage)
             shown = (pairing.qr_lines(pairing.payload(server, code)), server, expires,
                      self.storage.get_setting(pairing.CODE_KEY), {d.id for d in self.storage.list_devices()})
         self.app.call_from_thread(self._shown, shown)
 
     def _shown(self, shown) -> None:
+        start = self.query_one("#pair-start-api", Button)
+        start.display = isinstance(shown, str)
+        start.disabled = False
+        if isinstance(shown, str):
+            self._waiting = None
+            self.query_one("#pair-qr", Static).update("")
+            self._info(Text(_("The API doesn't answer at {server} (is ccc-api running?). Start it and the QR appears.").format(
+                server=shown), style="yellow"))
+            return
         if shown is None:
             self._info(Text(_("ccc can't tell where the app reaches the API. Put it on the tailnet "
                               "(tailscale serve --bg 8737) or run: ccc api pair --server https://…"), style="yellow"))
@@ -80,22 +94,53 @@ class PairModal(ModalScreen):
         self._info(Text(_("Scan it in the app (Connect → Scan QR). Good until {time}, once.").format(
             time=expires.strftime("%H:%M")) + "\n" + _("Address: {server}").format(server=server), style="green"))
 
+    @work(thread=True, exclusive=True, group="pair-watch")
     def _watch(self) -> None:
-        """Once the phone has used the code (it is gone from the settings), close; when it runs out unused, say so."""
-        if self._waiting is None:
+        """Every 1.5 s: look at the settings in a thread — a locked database must not freeze the window (and its Close button)."""
+        waiting = self._waiting
+        if waiting is None:
             return
-        if self.storage.get_setting(pairing.CODE_KEY) == self._waiting:
+        try:
+            current = self.storage.get_setting(pairing.CODE_KEY)
+            devices = self.storage.list_devices() if current != waiting else None
+        except sqlite3.OperationalError:
+            return  # locked right now: next time
+        self.app.call_from_thread(self._watched, waiting, current, devices)
+
+    def _watched(self, waiting: str, current: str | None, devices) -> None:
+        """Once the phone has used the code (it is gone from the settings), close; when it runs out unused, say so."""
+        if self._waiting != waiting:
+            return
+        if current == waiting:
             if self._expires and datetime.now() > self._expires:
                 self._waiting = None
                 self.query_one("#pair-qr", Static).update("")
                 self._info(Text(_("The code has run out. Pair again for a new one."), style="yellow"))
             return
         self._waiting = None
-        new = [d for d in self.storage.list_devices() if d.id not in self._known]
+        new = [d for d in devices or [] if d.id not in self._known]
         self.dismiss(new[-1].name if new else None)
+
+    @work(thread=True, exclusive=True, group="pair-start-api")
+    def _start_api(self) -> None:
+        ok = pairing.start_api()
+        self.app.call_from_thread(self._api_started, ok)
+
+    def _api_started(self, ok: bool) -> None:
+        if ok:
+            self._info(Text(_("Looking for the API's address…"), style="dim"))
+            self._make_code()
+        else:
+            self.query_one("#pair-start-api", Button).disabled = False
+            self._info(Text(_("The API could not be started. See: journalctl --user -u ccc-api"), style="red"))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         event.stop()
+        if event.button.id == "pair-start-api":
+            event.button.disabled = True
+            self._info(Text(_("Starting the API…"), style="dim"))
+            self._start_api()
+            return
         self.action_close()
 
     def action_close(self) -> None:
@@ -195,7 +240,7 @@ class DevicesPanel(Vertical):
     def on_mount(self) -> None:
         self._columns()
         self.refresh_list()
-        self.set_interval(3, self.refresh_list)  # a phone signed out elsewhere disappears by itself
+        self.set_interval(3, self._poll)  # a phone signed out elsewhere disappears by itself
 
     def _columns(self) -> None:
         table = self.query_one("#devices-table", DataTable)
@@ -206,17 +251,36 @@ class DevicesPanel(Vertical):
     def _when(moment: datetime | None) -> str:
         return moment.strftime("%Y-%m-%d %H:%M") if moment else _("never")
 
+    def _read(self) -> list:
+        if self._history:
+            devices = [d for d in self.storage.list_devices(include_revoked=True) if d.revoked_at]
+            devices.sort(key=lambda d: d.revoked_at, reverse=True)
+            return devices
+        return self.storage.list_devices()
+
+    @work(thread=True, exclusive=True, group="devices-poll")
+    def _poll(self) -> None:
+        """The periodic reload reads in a thread: a database locked by the daemon must not freeze the TUI."""
+        history = self._history
+        try:
+            devices = self._read()
+        except sqlite3.OperationalError:
+            return  # locked right now: next time
+        self.app.call_from_thread(self._polled, history, devices)
+
+    def _polled(self, history: bool, devices: list) -> None:
+        if history == self._history:  # not switched meanwhile
+            self._show(devices)
+
     def refresh_list(self, select: int | None = None) -> None:
         """Reload the list, keeping the selected device (or selecting `select`)."""
+        self._show(self._read(), select)
+
+    def _show(self, devices: list, select: int | None = None) -> None:
         table = self.query_one("#devices-table", DataTable)
         if select is None and table.row_count:
             select = int(table.coordinate_to_cell_key(table.cursor_coordinate).row_key.value)
         row = table.cursor_row
-        if self._history:
-            devices = [d for d in self.storage.list_devices(include_revoked=True) if d.revoked_at]
-            devices.sort(key=lambda d: d.revoked_at, reverse=True)
-        else:
-            devices = self.storage.list_devices()
         table.clear()
         for device in devices:
             cells = [device.name, self._when(device.created_at), self._when(device.last_seen_at), device.last_ip or "—"]

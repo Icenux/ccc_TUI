@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from pathlib import Path
 
 from ccc import api, api_audit, api_scope, pairing
@@ -103,6 +104,9 @@ def _pair(storage, server: str | None, image: str | None = None) -> int:
         print(_("ccc can't tell where the app reaches the API. Put it on the tailnet (tailscale serve --bg 8737) "
                 "or give the address: ccc api pair --server https://<computer>.<tailnet>.ts.net"))
         return 1
+    if not pairing.api_reachable(server):
+        print(_("Warning: the API doesn't answer at {server} — the phone couldn't pair. Start it: systemctl --user start ccc-api").format(server=server),
+              file=sys.stderr)
     code, expires = pairing.new_code(storage)
     if image is not None:
         path = Path(image).expanduser() if image else Path.home() / "Pictures" / "ccc-pair-qr.png"

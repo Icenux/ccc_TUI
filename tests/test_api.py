@@ -816,11 +816,12 @@ def test_server_address_is_the_one_set_else_tailscales(storage, monkeypatch):
     assert pairing.server_url(storage) == "https://mine.example"
 
 
-def test_cli_pair_prints_a_qr_for_the_address(storage, capsys):
+def test_cli_pair_prints_a_qr_for_the_address(storage, capsys, monkeypatch):
     from argparse import Namespace
 
-    from ccc import api_cli
+    from ccc import api_cli, pairing
 
+    monkeypatch.setattr(pairing, "api_reachable", lambda server: True)
     assert api_cli.run(storage, "", Namespace(api_command="pair", server="https://x.ts.net:8737")) == 0
     out = capsys.readouterr().out
     assert "█" in out or "▀" in out
@@ -893,12 +894,33 @@ def test_http_devices_history_is_listed_with_all_and_cannot_be_deleted_again(ser
     assert _call(f"{base}/api/v1/devices/{other.id}", token, "POST", {"name": "x"})[0] == 404
 
 
+def test_cli_pair_warns_when_the_api_does_not_answer(storage, capsys, monkeypatch):
+    from argparse import Namespace
+
+    from ccc import api_cli, pairing
+
+    monkeypatch.setattr(pairing, "api_reachable", lambda server: False)
+    assert api_cli.run(storage, "", Namespace(api_command="pair", server="https://x.ts.net:8737")) == 0
+    assert "doesn't answer at https://x.ts.net:8737" in capsys.readouterr().err
+    assert storage.get_setting("api_pair_code")  # the code is made anyway: the API may be about to start
+
+
+def test_health_answers_without_a_token_and_api_reachable_uses_it(server):
+    from ccc import pairing
+
+    base, _token = server
+    assert _call(f"{base}/api/v1/health") == (200, {"ok": True})
+    assert pairing.api_reachable(base) is True
+    assert pairing.api_reachable("http://127.0.0.1:9") is False  # nothing listens there (the discard port)
+
+
 def test_cli_pair_can_save_the_qr_as_a_picture(storage, monkeypatch, tmp_path, capsys):
     from argparse import Namespace
 
     from ccc import api_cli, pairing
 
     monkeypatch.setattr(pairing, "tailscale_url", lambda: "https://xia.ts.net:8737")
+    monkeypatch.setattr(pairing, "api_reachable", lambda server: True)
     target = tmp_path / "out" / "qr.png"
     assert api_cli.run(storage, "", Namespace(api_command="pair", server=None, image=str(target))) == 0
     assert target.read_bytes().startswith(b"\x89PNG")

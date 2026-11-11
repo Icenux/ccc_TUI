@@ -406,6 +406,7 @@ async def test_devices_are_listed_in_the_tab_with_pairing_above_them(tmp_path, m
     from ccc.tui.devices import PairModal
 
     monkeypatch.setattr(pairing, "tailscale_url", lambda: "https://xia.ts.net:8737")
+    monkeypatch.setattr(pairing, "api_reachable", lambda server: True)
     app = _app(tmp_path)
     phone, _token = api.add_device(app.storage, "Pixel")
     api.add_device(app.storage, "Tablet")
@@ -434,6 +435,37 @@ async def test_devices_are_listed_in_the_tab_with_pairing_above_them(tmp_path, m
 
 
 @pytest.mark.asyncio
+async def test_pair_window_without_a_running_api_shows_no_qr_but_a_way_to_start_it(tmp_path, monkeypatch):
+    from textual.widgets import Button, Static
+
+    from ccc import pairing
+    from ccc.tui.devices import PairModal
+
+    up = {"api": False, "started": 0}
+    monkeypatch.setattr(pairing, "tailscale_url", lambda: "https://xia.ts.net:8737")
+    monkeypatch.setattr(pairing, "api_reachable", lambda server: up["api"])
+
+    def start_api():
+        up["api"], up["started"] = True, up["started"] + 1
+        return True
+
+    monkeypatch.setattr(pairing, "start_api", start_api)
+    app = _app(tmp_path)
+    async with app.run_test(size=(100, 30)) as pilot:
+        settings = await _open_connection_tab(pilot, app)
+        settings.query_one("#devices-pair", Button).press()
+        await _wait_for(pilot, lambda: isinstance(app.screen, PairModal) and "doesn't answer" in str(app.screen.query_one("#pair-info").render()))
+        assert not str(app.screen.query_one("#pair-qr", Static).render()).strip()
+        assert app.storage.get_setting(pairing.CODE_KEY) is None  # no code for a phone that cannot use it
+        start = app.screen.query_one("#pair-start-api", Button)
+        assert start.display
+        start.press()
+        await _wait_for(pilot, lambda: str(app.screen.query_one("#pair-qr", Static).render()).strip())
+        assert up["started"] == 1 and app.storage.get_setting(pairing.CODE_KEY)
+        assert not app.screen.query_one("#pair-start-api", Button).display
+
+
+@pytest.mark.asyncio
 async def test_pair_window_closes_by_itself_once_the_phone_has_paired(tmp_path, monkeypatch):
     from textual.widgets import Button, DataTable, Static
 
@@ -441,6 +473,7 @@ async def test_pair_window_closes_by_itself_once_the_phone_has_paired(tmp_path, 
     from ccc.tui.devices import PairModal
 
     monkeypatch.setattr(pairing, "tailscale_url", lambda: "https://xia.ts.net:8737")
+    monkeypatch.setattr(pairing, "api_reachable", lambda server: True)
     app = _app(tmp_path)
     async with app.run_test(size=(100, 30)) as pilot:
         settings = await _open_connection_tab(pilot, app)

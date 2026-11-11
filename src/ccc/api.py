@@ -16,6 +16,7 @@ open event stream too.
 Standard library only (http.server), like the ccc MCP server: no web
 framework to install for a handful of JSON endpoints.
 
+GET  /api/v1/health                       {"ok": true} — the one other request without a token: tells the pairing (ccc.pairing) the API is up
 GET  /api/v1/status                       daemon, counts, language, the update found, the Android build
 GET  /api/v1/conversations[?archived=1]   the list, with groups
 GET  /api/v1/conversations/{id}           one, with its queued messages and approvals
@@ -920,6 +921,9 @@ class _Handler(BaseHTTPRequestHandler):
         denied_folder = ""
         self._device = None
         try:
+            if method == "GET" and url.path == PREFIX + "/health":  # no token, no database, not audited: only "the process answers"
+                self._send(HTTPStatus.OK, {"ok": True})
+                return
             i18n.load(self.api.storage)
             if method == "POST" and url.path == PREFIX + "/pair":
                 paired = self.api.pair(self._body(), self._client_ip())  # a refusal is logged below, once

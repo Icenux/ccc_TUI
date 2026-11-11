@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from dataclasses import dataclass
+from pathlib import Path
 
 from ccc import profiles
 
@@ -29,6 +31,21 @@ def discover_sessions() -> list[DiscoveredSession]:
                 seen.add(session.session_id)
                 found.append(session)
     return found
+
+
+def _own_status(pid: int | None, env: dict[str, str] | None) -> str | None:
+    """What the Claude Code process itself wrote about its state (`<config dir>/sessions/<pid>.json`);
+    None when unreadable. `claude agents --json` folds its "shell" (nothing is being done, only a
+    background shell is still running) into "busy", so this is the finer source."""
+    if not isinstance(pid, int):
+        return None
+    config = (env or os.environ).get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude"
+    try:
+        data = json.loads((Path(config) / "sessions" / f"{pid}.json").read_text())
+    except (OSError, ValueError):
+        return None
+    status = data.get("status") if isinstance(data, dict) else None
+    return status if isinstance(status, str) else None
 
 
 def _discover(profile: str) -> list[DiscoveredSession]:
@@ -64,13 +81,17 @@ def _discover(profile: str) -> list[DiscoveredSession]:
         cwd = entry.get("cwd")
         if not session_id or not cwd:
             continue
+        status = entry.get("status")
+        if status == "busy" and entry.get("kind", "interactive") == "interactive" \
+                and _own_status(entry.get("pid"), profiles.env_for(profile)) == "shell":
+            status = "idle"  # only a background shell runs: the conversation isn't working
         sessions.append(
             DiscoveredSession(
                 session_id=session_id,
                 name=entry.get("name") or session_id[:8],
                 cwd=cwd,
                 kind=entry.get("kind", "interactive"),
-                status=entry.get("status"),
+                status=status,
                 pid=entry.get("pid"),
                 state=entry.get("state"),
             )

@@ -171,7 +171,7 @@ settings it shows are the ones that apply to both sides.
 |---|---|
 | `GET /status` | the daemon running?, how many conversations, running, waiting for approval |
 | `GET /conversations` | the list in the TUI's order, with groups, states (`status` is the queue's; `live_busy` is true while an interactive Claude Code works in its terminal, so the TUI and the app show it as running; `context`: how full its context window is — `percent`, `tokens`, `window` — as Claude Code's status line reports it via [`ccc statusline`](command-line.md#status-line), `null` until it did), queued messages and markers, and its git state (`git`: branch, added, removed, ahead, behind; `null` where Claude may not run commands) and its latest [goal loop](goal.md) (`goal`: id, status, status_label, phase_label, round, max_rounds, finished_at; while it runs and for a day after it ended, else `null`); `?archived=1` the archive |
-| `GET /conversations/{id}` | one, with its queued messages and approvals waiting |
+| `GET /conversations/{id}` | one, with its queued messages (`queued`; `sending` is true for the one ccc has taken and is waiting for Claude Code to be free) and approvals waiting |
 | `GET /conversations/{id}/messages` | its transcript, each message with an `index`; `?after=N` only newer ones, `?before=N` older ones, `?limit=` how many (200) |
 | `POST /conversations/{id}/messages` | `{"text": "…"}` queues a message, as the message box does |
 | `POST /conversations/{id}/retry` | retry / resume a blocked or paused conversation (`r`) |

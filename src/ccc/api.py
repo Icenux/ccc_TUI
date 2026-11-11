@@ -420,8 +420,9 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             "flags": launch_options.describe_flags(q.launch_flags),
             "remote_control_url": q.remote_control_url,
             "queued": [
-                {"id": item.id, "text": item.prompt_text, "not_before": iso(item.not_before)}
-                for item in self.storage.list_pending_items(q.id)
+                {"id": item.id, "text": item.prompt_text, "not_before": iso(item.not_before),
+                 "sending": item.status == ItemStatus.RUNNING}  # taken by ccc, waiting for Claude Code to be free
+                for item in self.storage.list_undelivered_items(q.id)
             ],
             "permissions": [self._permission(r) for r in self.storage.pending_permission_requests(q.id)],
         })

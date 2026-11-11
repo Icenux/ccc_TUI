@@ -10,9 +10,15 @@ se, ale nic se neztratí. Když je Archiv prázdný, stojí v něm **PRÁZDNO**.
 `x` v [Konverzacích](conversations.md) archivuje vybranou konverzaci.
 Zmizí z Konverzací i z Přehledu a objeví se v Archivu.
 
-- Konverzace s **Claude Code vedle ccc** se zastaví: její proces Claude
-  Code skončí (uvolní paměť) a úkoly ve frontě čekají.
-- Konverzace **na pozadí** dál zpracovává svou frontu.
+Archivovaná konverzace je zmrazená, ať je na pozadí nebo ne: nic z její
+fronty neběží a nespouští se žádný proces.
+
+- Konverzace s **Claude Code vedle ccc**: její proces Claude Code skončí
+  (uvolní paměť) a úkoly ve frontě čekají.
+- Konverzace **na pozadí** přestane zpracovávat svou frontu; čekající
+  úkoly zůstanou, dokud ji neobnovíš.
+- Přidat do ní úkol nebo poslat zprávu nejde (API odpoví 409) — nejdřív
+  ji obnov.
 
 ## Obnovení
 

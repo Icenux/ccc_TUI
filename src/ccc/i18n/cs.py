@@ -8,6 +8,8 @@ CS: dict[str, str] = {
     "Dashboard": "Přehled",
     "Conversations": "Konverzace",
     "Archive": "Archiv",
+    "'{name}' is archived — restore it from the Archive first.":
+        "'{name}' je archivovaná — nejdřív ji obnov z Archivu.",
     "Archive ({key})": "Archivovat ({key})",
     "{key} Filter": "{key} Filtr",
     "{key} Rename": "{key} Přejmenovat",

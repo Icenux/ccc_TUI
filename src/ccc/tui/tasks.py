@@ -15,7 +15,7 @@ from ccc import keymap
 from ccc.i18n import _
 from ccc.limits import RESET_BUFFER
 from ccc.schedule import format_when, parse_when
-from ccc.storage import Storage
+from ccc.storage import ArchivedConversationError, Storage
 from ccc.usage_api import get_pro_usage
 from ccc.tui.layout import MODAL_CSS
 from ccc.tui.mentions import MentionArea
@@ -209,6 +209,11 @@ class TasksModal(ModalScreen):
     def action_add(self) -> None:
         def added(edit: TaskEdit | None) -> None:
             if edit:
+                try:
+                    self.storage.ensure_not_archived(self.queue_id)
+                except ArchivedConversationError as exc:
+                    self.notify(str(exc), severity="error")
+                    return
                 item = self.storage.add_queue_item(self.queue_id, edit.text, not_before=edit.not_before)
                 self._refresh(select_item_id=item.id)
 

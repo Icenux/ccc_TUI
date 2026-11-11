@@ -33,6 +33,11 @@ from ccc.tui.layout import (
     SidebarScreen,
     queue_label,
     queue_marker,
+    ATTENTION_STYLE,
+    DONE_STYLE,
+    ERROR_STYLE,
+    WORKING_FRAMES,
+    WORKING_STYLE,
 )
 from ccc.tui.message_box import MessageBox
 from ccc.tui.pixel_text import PixelBanner
@@ -52,8 +57,10 @@ RENDER_CHUNK_EVENTS = 8
 # away: switching back is then instant instead of mounting it all again.
 VIEWS_KEPT = 6
 
-# Marker order in a group's heading (layout.queue_marker icons).
-HEADING_MARKERS = ("?", "●", "✖", "‖", "◆")
+# Marker order in a group's heading (layout.queue_marker styles): needs you,
+# working, error, paused, finished. The working dot turns, so it's told by its style.
+HEADING_MARKERS = (ATTENTION_STYLE, WORKING_STYLE, ERROR_STYLE, "bold magenta", "bold yellow", DONE_STYLE)
+MARKER_ANIMATION_SECONDS = 0.4
 
 
 class _View:
@@ -295,6 +302,7 @@ class ConversationsScreen(SidebarScreen):
         # Plain text of the list rows as last drawn — rebuild when it changes
         # (new/removed conversation, status marker, pending count).
         self._list_signature: list[str] = []
+        self._working_shown = False  # a dot is turning: _turn_markers has work
         self._row_keys: list = []
         self._column_key = None
         # The rendered transcripts kept (_View), least recently shown first,
@@ -366,6 +374,7 @@ class ConversationsScreen(SidebarScreen):
         # set_interval accepts an async callback directly (confirmed live
         # with a standalone sandbox script — no run_worker wrapper needed).
         self.set_interval(2.0, self._refresh_current)
+        self.set_interval(MARKER_ANIMATION_SECONDS, self._turn_markers)
         if not self.ARCHIVED:
             self._refresh_git_status()
             self.set_interval(GIT_STATUS_SECONDS, self._refresh_git_status)
@@ -404,6 +413,7 @@ class ConversationsScreen(SidebarScreen):
         labels: dict[int, Text] = {}
         markers: dict[int, tuple[str, str]] = {}
         queues = []
+        working = False
         for q in self.storage.list_queues():
             if q.archived != self.ARCHIVED:
                 continue
@@ -412,11 +422,13 @@ class ConversationsScreen(SidebarScreen):
                 continue
             queues.append(q)
             markers[q.id] = queue_marker(q, is_unseen, q.id in waiting)
+            working = working or markers[q.id][1] == WORKING_STYLE
             label = queue_label(q, is_unseen, self.storage.count_pending_items(q.id), needs_approval=q.id in waiting)
             status = self._git_status.get(q.id)
             if status is not None and status.short():
                 label.append(f" {status.short()}", style="cyan")
             labels[q.id] = label
+        self._working_shown = working
         folded = set() if self._filter.active else groups.collapsed(self.storage)
         rows: list[tuple[int | str, Text]] = []
         self._listed_ids, self._group_of = [], {}
@@ -433,16 +445,17 @@ class ConversationsScreen(SidebarScreen):
 
     @staticmethod
     def _heading(title: str, count: int, folded: bool, markers: list[tuple[str, str]]) -> Text:
-        """▾ shop (3) · ?1 ●2 — what its conversations are doing, also
+        """▾ shop (3) · ●1 ◐2 — what its conversations are doing, also
         while it's folded."""
         label = Text.assemble(("▸ " if folded else "▾ ", "bold"), (title, "bold"), (f" ({count})", "dim"))
         counts: dict[tuple[str, str], int] = {}
         for marker in markers:
-            if marker[0] in HEADING_MARKERS:
-                counts[marker] = counts.get(marker, 0) + 1
+            if marker[1] in HEADING_MARKERS:
+                key = (WORKING_FRAMES[0] if marker[1] == WORKING_STYLE else marker[0], marker[1])
+                counts[key] = counts.get(key, 0) + 1
         if counts:
             label.append(" ·", style="dim")
-            for (icon, style), n in sorted(counts.items(), key=lambda item: HEADING_MARKERS.index(item[0][0])):
+            for (icon, style), n in sorted(counts.items(), key=lambda item: HEADING_MARKERS.index(item[0][1])):
                 label.append(f" {icon}{n}", style=style)
         return label
 
@@ -954,6 +967,14 @@ class ConversationsScreen(SidebarScreen):
                 when = f"{next_at:%H:%M}" if next_at.date() == datetime.now().date() else f"{next_at:%Y-%m-%d %H:%M}"
                 status = (_("Next task at {time}").format(time=when), "cyan")
         return Content.assemble(status, _("  ·  {n} queued").format(n=pending) if pending else "")
+
+    def _turn_markers(self) -> None:
+        """Turn the "working" dots: only the labels change, and only while something works."""
+        if not self._working_shown or self.app.screen is not self:
+            return
+        rows = self._list_rows()
+        if [row for row, _label in rows] == self._rows and [l.plain for _i, l in rows] != self._list_signature:
+            self._update_list_labels(rows)
 
     async def _refresh_current(self) -> None:
         if self._current_queue_id is not None and self.app.screen is self:

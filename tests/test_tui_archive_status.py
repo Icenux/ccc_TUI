@@ -8,7 +8,7 @@ from ccc.models import PromptRun, QueueStatus, RunStatus
 from ccc.storage import Storage
 from ccc.tui.conversations import ConversationsScreen
 from ccc.tui.dashboard import DashboardScreen
-from ccc.tui.layout import ConfirmModal, queue_marker
+from ccc.tui.layout import WORKING_FRAMES, WORKING_STYLE, ConfirmModal, queue_marker
 
 
 def _host(screen):
@@ -42,17 +42,22 @@ def test_queue_marker():
 
     q = Queue(id=1, name="a", project_path="/a", session_id="s")
     assert queue_marker(q, unseen=False)[0] == "○"  # idle, already looked at
-    assert queue_marker(q, unseen=True)[0] == "◆"
+    assert queue_marker(q, unseen=True) == ("●", "bold green")  # green: finished, not looked at
     q.archived = True
     assert queue_marker(q, unseen=False)[0] == " "
     q.archived = False
-    for status, icon in [(QueueStatus.RUNNING, "●"), (QueueStatus.WAITING_RETRY, "‖"),
-                         (QueueStatus.PAUSED_LIMIT, "‖"), (QueueStatus.BLOCKED_ERROR, "✖")]:
+    for status, icon in [(QueueStatus.WAITING_RETRY, "‖"), (QueueStatus.PAUSED_LIMIT, "‖"),
+                         (QueueStatus.BLOCKED_ERROR, "●")]:
         q.status = status
         assert queue_marker(q, unseen=True)[0] == icon  # activity beats "new"
+    assert queue_marker(q, unseen=True)[1] == "bold red"  # error: red
+    q.status = QueueStatus.RUNNING
+    assert queue_marker(q, unseen=True)[0] in WORKING_FRAMES  # gold, turning
+    assert queue_marker(q, unseen=True)[1] == WORKING_STYLE
+    assert queue_marker(q, unseen=False, needs_approval=True) == ("●", "bold dodger_blue1")  # blue: needs you
     q.status = QueueStatus.IDLE
     q.live_busy = True  # typed into its Claude Code, not a queued prompt
-    assert queue_marker(q, unseen=False)[0] == "●"
+    assert queue_marker(q, unseen=False)[0] in WORKING_FRAMES
     q.live_busy = False
     q.paused = True
     assert queue_marker(q, unseen=False)[0] == "‖"
@@ -70,8 +75,8 @@ async def test_list_shows_markers_and_pending_count_and_clears_new_when_opened(s
     async with app.run_test() as pilot:
         await pilot.pause()
         names = _names(app.screen.query_one("#conversation-queue-list", DataTable))
-        assert names[0].startswith("● a") and names[0].endswith("·2")
-        assert names[1].startswith("◆ b")
+        assert names[0].startswith(tuple(f"{f} a" for f in WORKING_FRAMES)) and names[0].endswith("·2")
+        assert names[1].startswith("● b")
         app.screen.query_one("#conversation-queue-list", DataTable).move_cursor(row=1)
         await pilot.pause()
         await app.screen._refresh_current()
@@ -196,7 +201,7 @@ async def test_dashboard_hides_archived_and_marks_new(storage):
     async with app.run_test() as pilot:
         await pilot.pause()
         names = _names(app.screen.query_one("#dashboard-table", DataTable))
-        assert names == ["◆ a"]
+        assert names == ["● a"]
 
 
 @pytest.mark.asyncio

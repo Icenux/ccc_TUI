@@ -13,11 +13,11 @@ when N tasks wait in its [queue](tasks.md):
 
 | Marker | Meaning |
 |---|---|
-| `●` | Claude is working |
+| gold `◐◓◑◒` (turning) | Claude is working |
 | `‖` | waiting for a usage-limit reset, or paused |
-| `✖` | stopped on an error — needs you |
-| `?` | Claude is waiting for you to [approve a tool call](approvals.md) |
-| `◆` | a new reply you haven't looked at yet |
+| red `●` | stopped on an error — needs you |
+| blue `●` | Claude is waiting for you to [approve a tool call](approvals.md) |
+| green `●` | finished — a new reply you haven't looked at yet |
 | `○` | idle, and you have already looked at its last reply |
 
 With no conversation at all, the right side says **NO CONVERSATION** —
@@ -26,7 +26,7 @@ press `n` to start one.
 ## Groups
 
 The list is split into **groups** under foldable headings —
-`▾ shop (3) · ?1 ●2`: the name, how many conversations it holds and what
+`▾ shop (3) · ●1 ◐2`: the name, how many conversations it holds and what
 they're doing (the markers above, counted). A conversation goes under its
 **project** — the git repository it works in (a [worktree](new-conversation.md)
 under its repository), or its folder outside git; two projects with the

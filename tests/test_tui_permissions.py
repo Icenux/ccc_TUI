@@ -38,7 +38,7 @@ async def test_p_opens_request_and_keys_decide(storage, key, status, always):
         assert "approval" in str(app.screen.query_one("#conversation-status").render())
         names = [str(app.screen.query_one("#conversation-queue-list", DataTable).get_row(k)[0])
                  for k in app.screen.query_one("#conversation-queue-list", DataTable).rows]
-        assert names[0].startswith("? conv")
+        assert names[0].startswith("● conv")
         app.screen.query_one("#conversation-queue-list").focus()
         await pilot.press("p")
         await pilot.pause()
@@ -84,4 +84,4 @@ async def test_dashboard_marks_waiting_for_approval(storage):
     async with app.run_test() as pilot:
         await pilot.pause()
         table = app.screen.query_one("#dashboard-table", DataTable)
-        assert str(table.get_row_at(0)[0]).startswith("? conv")
+        assert str(table.get_row_at(0)[0]).startswith("● conv")

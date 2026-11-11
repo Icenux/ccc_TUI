@@ -970,3 +970,20 @@ async def test_discovery_survives_a_failed_poll_and_restarts_crashed_runtime(sto
     assert await _until(lambda: "three" in sent)
     assert orch.runtimes[first.id] is not old
     await orch.stop_all()
+
+
+async def test_live_busy_is_cleared_when_the_session_is_not_listed_any_more(storage, project_dir, monkeypatch):
+    """#289: a "busy" that was the last thing seen must not stay forever."""
+    from ccc.models import DeliveryMode
+    from ccc.orchestrator import QueueRuntime
+
+    queue = storage.create_queue("a", project_dir, "s1", delivery_mode=DeliveryMode.REMOTE_CONTROL)
+    storage.set_live_busy(queue.id, True)
+    monkeypatch.setattr("ccc.orchestrator.managed_sessions.is_running", lambda _id: True)
+    monkeypatch.setattr("ccc.orchestrator.managed_sessions.capture", lambda _id: "")
+    monkeypatch.setattr("ccc.orchestrator.managed_sessions.pane_pid", lambda _id: None)
+    monkeypatch.setattr("ccc.orchestrator.discover_sessions", lambda: [])
+
+    await QueueRuntime(storage, queue)._maintain_managed_session(queue, force=True)
+
+    assert not storage.get_queue(queue.id).live_busy

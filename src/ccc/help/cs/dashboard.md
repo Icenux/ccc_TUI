@@ -36,11 +36,11 @@ výchozí je ukázat i všechno ostatní.
 
 | Značka | Význam |
 |---|---|
-| `●` | Claude pracuje |
+| zlatá `◐◓◑◒` (otáčí se) | Claude pracuje |
 | `‖` | čeká na obnovení limitu využití, nebo je pozastavená |
-| `✖` | zastavila se chybou — potřebuje tě |
-| `?` | Claude čeká, až [schválíš nástroj](approvals.md) |
-| `◆` | nová odpověď, kterou jsi ještě neviděl(a) |
+| červená `●` | zastavila se chybou — potřebuje tě |
+| modrá `●` | Claude čeká, až [schválíš nástroj](approvals.md) |
+| zelená `●` | hotovo — nová odpověď, kterou jsi ještě neviděl(a) |
 | `○` | nečinná a poslední odpověď jsi už viděl(a) |
 
 V seznamu Konverzací znamená `·3` za názvem tři úkoly ve frontě.

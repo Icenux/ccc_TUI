@@ -8,6 +8,8 @@ sidebar section / main content / buttons through the hooks below.
 """
 from __future__ import annotations
 
+import time
+
 import sqlite3
 from dataclasses import dataclass
 
@@ -96,22 +98,34 @@ def styled_status(status: QueueStatus) -> str:
     return f"[{style}]{status_text(status)}[/]" if style else status_text(status)
 
 
+# The "working" dot turns clockwise: a gold dot with a dark wedge going round.
+WORKING_FRAMES = ("◐", "◓", "◑", "◒")
+WORKING_STYLE = "bold #ffd700"
+FRAME_SECONDS = 0.4
+DONE_STYLE, ERROR_STYLE, ATTENTION_STYLE = "bold green", "bold red", "bold dodger_blue1"
+
+
+def working_frame(now: float | None = None) -> str:
+    """The turning "working" dot at this moment."""
+    return WORKING_FRAMES[int((time.monotonic() if now is None else now) / FRAME_SECONDS) % len(WORKING_FRAMES)]
+
+
 def queue_marker(queue: Queue, unseen: bool, needs_approval: bool = False) -> tuple[str, str]:
     """(icon, style) shown before a conversation's name. Waiting for your
     approval first, then current activity, then idle: "new reply" or
     already looked at (an archived conversation has no marker)."""
     if needs_approval:
-        return "?", "bold yellow"
+        return "●", ATTENTION_STYLE  # blue: needs you
     if queue.status == QueueStatus.RUNNING or queue.live_busy:
-        return "●", "bold green"
+        return working_frame(), WORKING_STYLE  # gold, turning: working
     if queue.status == QueueStatus.BLOCKED_ERROR:
-        return "✖", "bold red"
+        return "●", ERROR_STYLE  # red: error
     if queue.status in (QueueStatus.PAUSED_LIMIT, QueueStatus.WAITING_RETRY):
         return "‖", "bold magenta"
     if queue.paused:
         return "‖", "bold yellow"
     if unseen:
-        return "◆", "bold cyan"
+        return "●", DONE_STYLE  # green: finished, not looked at yet
     if queue.archived:
         return " ", ""
     return "○", "dim"

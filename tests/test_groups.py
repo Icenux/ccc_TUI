@@ -121,7 +121,7 @@ def _host(screen):
 
 def _rows(app) -> list[str]:
     table = app.screen.query_one("#conversation-queue-list", DataTable)
-    return [str(table.get_row(k)[0]) for k in table.rows]
+    return [str(table.get_row(k)[0]).translate(str.maketrans("◑◓◒", "◐◐◐")) for k in table.rows]  # the turning dot, one frame
 
 
 def _setup(tmp_path, monkeypatch):
@@ -142,8 +142,8 @@ async def test_list_groups_by_project_enter_folds_and_it_survives_the_refresh(tm
     async with app.run_test() as pilot:
         await pilot.pause()
         assert [r.split(" ·")[0].strip() for r in _rows(app)] == [
-            "▾ docs (1)", "○ guide", "▾ shop (2)", "○ api", "● web"]
-        assert _rows(app)[2].endswith("· ●1")
+            "▾ docs (1)", "○ guide", "▾ shop (2)", "○ api", "◐ web"]
+        assert _rows(app)[2].endswith("· ◐1")
         table = app.screen.query_one("#conversation-queue-list", DataTable)
         table.focus()
 
@@ -151,7 +151,7 @@ async def test_list_groups_by_project_enter_folds_and_it_survives_the_refresh(tm
         assert table.cursor_row == 2
         await pilot.press("enter")
         await pilot.pause()
-        assert _rows(app)[2:] == ["▸ shop (2) · ●1"]  # folded, still says it works
+        assert _rows(app)[2:] == ["▸ shop (2) · ◐1"]  # folded, still says it works
         assert groups.collapsed(storage) == {f"project:{tmp_path / 'shop'}"}
         assert app.screen._current_queue_id == guide.id  # the open one stays
 
@@ -232,7 +232,7 @@ async def test_m_puts_a_conversation_into_a_new_group_and_renames_and_deletes_it
         assert _rows(app)[0] == "▾ Today (2)"
 
         # On a project's heading: nothing to rename.
-        table.move_cursor(row=_rows(app).index("▾ shop (1) · ●1"))
+        table.move_cursor(row=_rows(app).index("▾ shop (1) · ◐1"))
         await pilot.pause()
         await pilot.press("m")
         await pilot.pause()
@@ -288,4 +288,4 @@ async def test_settings_switch_to_own_groups_only(tmp_path, monkeypatch, groupin
     app = _host(ConversationsScreen(storage))
     async with app.run_test() as pilot:
         await pilot.pause()
-        assert [r.strip() for r in _rows(app)] == ["○ api", "○ guide", "● web"]  # no own group: flat
+        assert [r.strip() for r in _rows(app)] == ["○ api", "○ guide", "◐ web"]  # no own group: flat

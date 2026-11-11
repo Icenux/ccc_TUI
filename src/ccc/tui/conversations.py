@@ -78,8 +78,21 @@ class ConversationList(DataTable):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.heading_rows: set[int] = set()
+        # True while a RowSelected comes from Enter, not from a click: only
+        # Enter moves the keyboard into Claude Code (Alt+0 does it otherwise).
+        self.select_by_key = False
+
+    def action_select_cursor(self) -> None:
+        self.select_by_key = True
+        super().action_select_cursor()
 
     async def _on_click(self, event) -> None:
+        # Only the left button works the list; DataTable would also act on
+        # the right one.
+        if event.button != 1:
+            event.prevent_default()
+            event.stop()
+            return
         # Textual runs this before DataTable's own handler: with the cursor
         # already on the row, that one selects it.
         row = event.style.meta.get("row")
@@ -683,10 +696,14 @@ class ConversationsScreen(SidebarScreen):
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         if event.data_table.id != "conversation-queue-list":
             return
+        by_key = event.data_table.select_by_key
+        event.data_table.select_by_key = False
         if event.cursor_row < len(self._rows) and isinstance(self._rows[event.cursor_row], str):
             self._toggle_group(self._rows[event.cursor_row])
             return
-        self._conversation_chosen()
+        if by_key:
+            self._conversation_chosen()
+        # A click only selects: the keyboard stays in ccc (Alt+0 switches).
 
     def _conversation_chosen(self) -> None:
         """Enter / a click on a conversation in the list."""

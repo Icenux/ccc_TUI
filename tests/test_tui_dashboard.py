@@ -249,3 +249,44 @@ async def test_dashboard_goal_column_shows_the_running_goal_then_its_result(tmp_
         storage.update_goal(goal.id, finished_at=datetime.now() - timedelta(days=2))
         app.screen.refresh_table()
         assert _cells(app)[1][0][2] == "–"  # a day later it leaves the Dashboard
+
+
+@pytest.mark.asyncio
+async def test_x_archives_the_selected_conversation(tmp_path):
+    db_path = str(tmp_path / "history.db")
+    project_dir = tmp_path / "proj-a"
+    project_dir.mkdir()
+    add_command(db_path, str(project_dir), "do a thing")
+
+    app = CCContinueApp(db_path)
+    async with app.run_test(size=(140, 40)) as pilot:
+        await pilot.pause()
+        app.screen.query_one("#dashboard-table").move_cursor(row=0)
+        await pilot.press("x")
+        await pilot.pause()
+        assert all(q.archived for q in app.screen.storage.list_queues())
+        assert app.screen.query_one("#dashboard-table").row_count == 0
+
+
+@pytest.mark.asyncio
+async def test_long_press_menu_deletes_after_confirming(tmp_path):
+    from ccc.tui.dashboard import ConversationMenu
+    from ccc.tui.layout import ConfirmModal
+
+    db_path = str(tmp_path / "history.db")
+    project_dir = tmp_path / "proj-a"
+    project_dir.mkdir()
+    add_command(db_path, str(project_dir), "do a thing")
+
+    app = CCContinueApp(db_path)
+    async with app.run_test(size=(140, 40)) as pilot:
+        await pilot.pause()
+        app.screen._long_press(0)
+        await pilot.pause()
+        assert isinstance(app.screen, ConversationMenu)
+        await pilot.click("#menu-delete")
+        await pilot.pause()
+        assert isinstance(app.screen, ConfirmModal)
+        await pilot.press("y")
+        await pilot.pause()
+        assert app.screen.storage.list_queues() == []

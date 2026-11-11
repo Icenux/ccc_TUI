@@ -3,13 +3,17 @@ from __future__ import annotations
 from datetime import date
 
 from rich.text import Text
-from textual.widgets import DataTable, Static
+from textual import events
+from textual.containers import Vertical
+from textual.screen import ModalScreen
+from textual.widgets import Button, DataTable, Static
 
 from ccc import attention, dashboard_columns, gitops, keymap
 from ccc.i18n import _
 from ccc.models import QueueStatus
 from ccc.storage import Storage
 from ccc.tui.layout import (
+    ConfirmModal,
     SidebarScreen,
     panel,
     queue_label,
@@ -24,6 +28,9 @@ BRANCH_WIDTH = 20
 # How often the git folders are looked at, in a thread, so the 2 s refresh
 # of the table never waits for them.
 GIT_STATUS_SECONDS = 15.0
+# How long a row is held down for the Archive / Delete menu (like the
+# long press in the phone app).
+LONG_PRESS_SECONDS = 0.6
 
 # Instead of an empty table, until the first conversation exists.
 GETTING_STARTED = _("""\
@@ -55,6 +62,50 @@ def _shorten_path(path: str, width: int = PATH_COLUMN_WIDTH) -> str:
     return f"…/{kept}"
 
 
+class ConversationMenu(ModalScreen):
+    """What a long press on a Dashboard row offers: archive or delete.
+    Dismisses "archive", "delete" or None."""
+
+    DEFAULT_CSS = """
+    ConversationMenu {
+        align: center middle;
+    }
+    ConversationMenu > Vertical {
+        width: 50;
+        height: auto;
+        border: round $accent;
+        background: $surface;
+        padding: 1 2;
+    }
+    ConversationMenu Button {
+        width: 100%;
+        margin-top: 1;
+    }
+    """
+
+    BINDINGS = [keymap.binding("window.cancel", "close", _("Close"))]
+
+    def __init__(self, name: str):
+        super().__init__()
+        self.conversation_name = name
+
+    def compose(self):
+        box = Vertical(
+            Button(_("Archive"), id="menu-archive"),
+            Button(_("Delete"), id="menu-delete", classes="-danger"),
+            Button(_("Cancel"), id="menu-cancel"),
+        )
+        box.border_title = self.conversation_name
+        yield box
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        event.stop()
+        self.dismiss({"menu-archive": "archive", "menu-delete": "delete"}.get(event.button.id))
+
+    def action_close(self) -> None:
+        self.dismiss(None)
+
+
 class DashboardScreen(SidebarScreen):
     VIEW = "dashboard"
     SUB_TITLE = _("Dashboard")
@@ -63,6 +114,9 @@ class DashboardScreen(SidebarScreen):
         # Only an overview: a blocked queue is retried in Conversations or
         # its queue detail (Enter). Ctrl+Q closes ccc everywhere.
         keymap.binding("dashboard.quit", "quit", _("Close"), show=False),
+        # Also by a long press on a row (ConversationMenu).
+        keymap.binding("dashboard.archive", "archive_conversation", _("Archive"), show=False),
+        keymap.binding("dashboard.delete", "delete_conversation", _("Delete"), show=False),
     ]
 
     def __init__(self, storage: Storage):
@@ -224,6 +278,94 @@ class DashboardScreen(SidebarScreen):
             return
         queue = queues[event.cursor_row]
         self.app.push_screen(QueueDetailScreen(self.storage, queue.id))
+
+    # --- archive / delete: keys and a long press on a row -----------------
+
+    _press_timer = None
+    _long_pressed = False
+
+    def _row_of(self, event: events.MouseEvent) -> int | None:
+        meta = event.style.meta if event.style else {}
+        row = meta.get("row")
+        return row if isinstance(row, int) and row >= 0 else None
+
+    def on_mouse_down(self, event: events.MouseDown) -> None:
+        self._cancel_press()
+        row = self._row_of(event)
+        if row is None or event.button != 1:
+            return
+        self._press_timer = self.set_timer(LONG_PRESS_SECONDS, lambda: self._long_press(row))
+
+    def on_mouse_up(self, event: events.MouseUp) -> None:
+        self._cancel_press()
+
+    def on_mouse_move(self, event: events.MouseMove) -> None:
+        # Dragging is no long press.
+        if self._press_timer is not None and self._row_of(event) is None:
+            self._cancel_press()
+
+    def _cancel_press(self) -> None:
+        if self._press_timer is not None:
+            self._press_timer.stop()
+            self._press_timer = None
+
+    def _long_press(self, row: int) -> None:
+        self._press_timer = None
+        queues = self._visible_queues()
+        if row >= len(queues):
+            return
+        queue = queues[row]
+        self.query_one("#dashboard-table", DataTable).move_cursor(row=row)
+
+        def chosen(action: str | None) -> None:
+            if action == "archive":
+                self.action_archive_conversation()
+            elif action == "delete":
+                self.action_delete_conversation()
+
+        self.app.push_screen(ConversationMenu(queue.name), chosen)
+
+    def _cursor_queue(self):
+        table = self.query_one("#dashboard-table", DataTable)
+        queues = self._visible_queues()
+        if not queues or table.cursor_row is None or table.cursor_row >= len(queues):
+            return None
+        return queues[table.cursor_row]
+
+    def action_archive_conversation(self) -> None:
+        queue = self._cursor_queue()
+        if queue is None:
+            return
+        self.storage.set_queue_archived(queue.id, True)
+        self.refresh_table()
+
+    def action_delete_conversation(self) -> None:
+        queue = self._cursor_queue()
+        if queue is None:
+            return
+        if queue.status == QueueStatus.RUNNING:
+            self.app.push_screen(
+                ConfirmModal(
+                    _("Can't delete"),
+                    _("Claude is working on '{name}' right now — wait or pause it first (t, p).").format(name=queue.name),
+                    can_confirm=False,
+                )
+            )
+            return
+
+        def answered(yes: bool) -> None:
+            if yes:
+                self.storage.delete_queue(queue.id)
+                self.refresh_table()
+
+        self.app.push_screen(
+            ConfirmModal(
+                _("Delete conversation"),
+                _("Delete '{name}' with its queued tasks and run history from ccc?\n"
+                  "Claude Code's own transcript stays, so it can still be resumed later.").format(name=queue.name),
+            ),
+            answered,
+        )
 
     def action_view_conversations(self) -> None:
         self.action_goto("conversations")

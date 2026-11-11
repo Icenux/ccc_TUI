@@ -215,17 +215,19 @@ def restart_needed(storage) -> bool:
 
 
 def running_units() -> list[str]:
-    """The ccc systemd user units that are active now (the package's units live in /usr/lib/systemd/user,
-    a checkout's in ~/.config/systemd/user — either way systemd knows them)."""
-    active = []
+    """The ccc systemd user units to restart: the ones active now, and the ones enabled but not running
+    (an API killed by the OOM killer, or one that did not come up after a reboot, must not stay dead because
+    an update only restarted what happened to be alive — `restart` starts a stopped unit too). The package's
+    units live in /usr/lib/systemd/user, a checkout's in ~/.config/systemd/user — either way systemd knows them."""
+    wanted = []
     for unit in UNITS:
         try:
-            if subprocess.run(["systemctl", "--user", "is-active", "--quiet", unit], capture_output=True,
-                              timeout=10).returncode == 0:
-                active.append(unit)
+            if any(subprocess.run(["systemctl", "--user", verb, "--quiet", unit], capture_output=True,
+                                  timeout=10).returncode == 0 for verb in ("is-active", "is-enabled")):
+                wanted.append(unit)
         except (OSError, subprocess.TimeoutExpired):
             return []
-    return active
+    return wanted
 
 
 def restart(storage, spawn=None, units=None) -> tuple[bool, str]:

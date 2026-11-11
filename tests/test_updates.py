@@ -280,3 +280,17 @@ def test_restart_refuses_while_a_task_runs_and_otherwise_restarts_the_units(stor
     assert ok and spawned == ["systemctl --user restart ccc.service ccc-tui.service"]
     ok, message = updates.restart(storage, spawn=lambda *a: pytest.fail("nothing to restart"), units=lambda: [])
     assert not ok and "by hand" in message
+
+
+def test_restart_also_covers_an_enabled_unit_that_is_not_running(monkeypatch):
+    """ccc-api was dead (not started after a reboot) and an update left it dead: enabled counts, too."""
+    state = {"ccc.service": {"is-active"}, "ccc-tui.service": {"is-active", "is-enabled"}, "ccc-api.service": {"is-enabled"}}
+
+    def fake_run(cmd, **_):
+        verb, unit = cmd[2], cmd[-1]
+        return subprocess.CompletedProcess(cmd, 0 if verb in state.get(unit, set()) else 3)
+
+    monkeypatch.setattr(updates.subprocess, "run", fake_run)
+    assert updates.running_units() == ["ccc.service", "ccc-tui.service", "ccc-api.service"]
+    state["ccc-api.service"] = set()  # neither running nor enabled: left alone
+    assert updates.running_units() == ["ccc.service", "ccc-tui.service"]

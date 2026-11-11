@@ -37,11 +37,11 @@ by default everything else is too.
 
 | Marker | Meaning |
 |---|---|
-| `●` | Claude is working |
+| gold `◐◓◑◒` (turning) | Claude is working |
 | `‖` | waiting for a usage-limit reset, or paused |
-| `✖` | stopped on an error — needs you |
-| `?` | Claude is waiting for you to [approve a tool call](approvals.md) |
-| `◆` | a new reply you haven't looked at yet |
+| red `●` | stopped on an error — needs you |
+| blue `●` | Claude is waiting for you to [approve a tool call](approvals.md) |
+| green `●` | finished — a new reply you haven't looked at yet |
 | `○` | idle, and you have already looked at its last reply |
 
 In the Conversations list `·3` after the name means three tasks queued.

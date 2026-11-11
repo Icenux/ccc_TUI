@@ -341,6 +341,7 @@ class QueueRuntime:
                 # and no process runs (a managed one is stopped, freeing it).
                 if queue.delivery_mode.managed and await asyncio.to_thread(managed_sessions.is_running, queue.id):
                     await asyncio.to_thread(managed_sessions.stop, queue.id)
+                self.storage.set_live_busy(queue.id, False)  # nothing runs: never stay "working"
                 await self._wait_for_wake_or_poll(POLL_INTERVAL_SECONDS)
                 continue
 
@@ -641,6 +642,7 @@ class QueueRuntime:
         self._last_maintenance = now
 
         if not await asyncio.to_thread(managed_sessions.is_running, queue.id):
+            self.storage.set_live_busy(queue.id, False)  # the process is gone: it can't be working
             has_transcript = find_transcript_path(queue.session_id) is not None
             command = managed_sessions.build_interactive_command(queue, has_transcript)
             logger.info("Starting interactive session for '%s'", queue.name)
@@ -666,6 +668,9 @@ class QueueRuntime:
 
         session = await self._managed_agent(queue)
         if session is None:
+            # Claude Code isn't listed (ended, or the listing failed): without this the last
+            # "busy" would stay forever and the conversation would look like it's still working.
+            self.storage.set_live_busy(queue.id, False)
             return
         # What you typed into Claude Code yourself shows in the list too.
         self.storage.set_live_busy(queue.id, session.status == "busy")

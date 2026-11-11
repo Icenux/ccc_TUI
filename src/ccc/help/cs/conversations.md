@@ -13,11 +13,11 @@ Každá konverzace má před názvem značku a za ním `·N`, když v její
 
 | Značka | Význam |
 |---|---|
-| `●` | Claude pracuje |
+| zlatá `◐◓◑◒` (otáčí se) | Claude pracuje |
 | `‖` | čeká na obnovení limitu využití, nebo je pozastavená |
-| `✖` | zastavila se chybou — potřebuje tě |
-| `?` | Claude čeká, až [schválíš nástroj](approvals.md) |
-| `◆` | nová odpověď, kterou jsi ještě neviděl(a) |
+| červená `●` | zastavila se chybou — potřebuje tě |
+| modrá `●` | Claude čeká, až [schválíš nástroj](approvals.md) |
+| zelená `●` | hotovo — nová odpověď, kterou jsi ještě neviděl(a) |
 | `○` | nečinná a poslední odpověď jsi už viděl(a) |
 
 Když nemáš žádnou konverzaci, stojí vpravo **BEZ KONVERZACE** — stiskni
@@ -26,7 +26,7 @@ Když nemáš žádnou konverzaci, stojí vpravo **BEZ KONVERZACE** — stiskni
 ## Skupiny
 
 Seznam je rozdělený do **skupin** pod sbalitelnými nadpisy —
-`▾ shop (3) · ?1 ●2`: název, kolik má konverzací a co dělají (značky
+`▾ shop (3) · ●1 ◐2`: název, kolik má konverzací a co dělají (značky
 výše, sečtené). Konverzace patří pod svůj **projekt** — git repozitář,
 ve kterém pracuje ([worktree](new-conversation.md) pod svým
 repozitářem), mimo git pod svou složku; dva projekty se stejným názvem

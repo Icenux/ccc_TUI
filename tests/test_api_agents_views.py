@@ -199,6 +199,9 @@ def test_terminal_of_an_interactive_conversation(storage, tmp_path, monkeypatch)
     endpoint = api.Api(storage)
 
     assert endpoint.route("GET", f"/api/v1/conversations/{q.id}/terminal", {}, {})[1]["screen"] == "> hi"
+    monkeypatch.setattr(managed_sessions, "history", lambda queue_id, lines: f"{lines} lines above")
+    assert "history" not in endpoint.terminal(q.id)
+    assert endpoint.route("GET", f"/api/v1/conversations/{q.id}/terminal", {"history": "50"}, {})[1]["history"] == "50 lines above"
     endpoint.terminal_input(q.id, {"keys": ["Escape"]})
     endpoint.terminal_input(q.id, {"paste": "/compact", "submit": False})
     assert pressed == [["Escape"]] and pasted == [("/compact", False)]

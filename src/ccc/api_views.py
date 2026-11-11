@@ -12,7 +12,7 @@ POST /api/v1/settings/telegram-test, telegram-off, discord-test, discord-off
 POST /api/v1/prompt-presets                {"presets": [{"name", "text", "send_now"}]}: all of them, in order
 POST /api/v1/launch-presets                {"name", "options", …} save one; POST launch-presets/delete {"name"}
 POST /api/v1/backup                        back the database up now
-GET  /api/v1/conversations/{id}/terminal   what its Claude Code shows (an interactive conversation)
+GET  /api/v1/conversations/{id}/terminal   what its Claude Code shows (an interactive conversation); ?history=N adds N lines above the screen
 POST /api/v1/conversations/{id}/terminal   {"paste", "submit"} / {"keys": [tmux names]} / {"type": "y"}
 POST /api/v1/analytics/archive             archive finished months into the analytics folder now
 """
@@ -74,7 +74,7 @@ class ViewEndpoints:
             ok(r"/launch-presets", lambda ids, q, b: self.save_launch_preset(b), "POST"),
             ok(r"/launch-presets/delete", lambda ids, q, b: self.delete_launch_preset(b), "POST"),
             ok(r"/backup", lambda ids, q, b: self.backup(), "POST"),
-            ok(r"/conversations/(\d+)/terminal", lambda ids, q, b: self.terminal(*ids)),
+            ok(r"/conversations/(\d+)/terminal", lambda ids, q, b: self.terminal(*ids, history=int_of(q, "history") or 0)),
             ok(r"/conversations/(\d+)/terminal", lambda ids, q, b: self.terminal_input(*ids, b), "POST"),
         ]
 
@@ -422,16 +422,20 @@ class ViewEndpoints:
             raise ApiError(HTTPStatus.CONFLICT, _("Its Claude Code isn't running — the daemon starts it for its next task."))
         return queue
 
-    def terminal(self, queue_id: int) -> dict:
-        """The screen of the conversation's Claude Code, with its colours (ANSI) and cursor."""
+    def terminal(self, queue_id: int, history: int = 0) -> dict:
+        """The screen of the conversation's Claude Code, with its colours (ANSI) and cursor; ?history=N adds the
+        N lines that scrolled off above it ("history", empty in Claude Code's fullscreen mode)."""
         from ccc import managed_sessions
 
         self._terminal_queue(queue_id)
         shown = managed_sessions.screen(queue_id)
         if shown is None:
             raise ApiError(HTTPStatus.CONFLICT, _("Its Claude Code isn't running — the daemon starts it for its next task."))
-        return {"screen": shown.text, "width": shown.width, "height": shown.height,
-                "cursor_x": shown.cursor_x, "cursor_y": shown.cursor_y}
+        result = {"screen": shown.text, "width": shown.width, "height": shown.height,
+                  "cursor_x": shown.cursor_x, "cursor_y": shown.cursor_y}
+        if history > 0:
+            result["history"] = managed_sessions.history(queue_id, history)
+        return result
 
     def terminal_input(self, queue_id: int, body: dict) -> dict:
         """Into the conversation's Claude Code: {"paste": text, "submit": bool} as one paste (Enter after

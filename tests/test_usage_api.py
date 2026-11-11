@@ -151,3 +151,25 @@ def test_get_pro_usage_force_refresh_bypasses_cache(monkeypatch, tmp_path):
 
     usage = get_pro_usage(force_refresh=True)
     assert usage.five_hour.utilization_pct == 77.0
+
+
+def test_failed_live_query_falls_back_to_the_last_known_reset_times(tmp_path, monkeypatch):
+    """#analytics: no live answer must not hide when the limits reset."""
+    import json
+    from datetime import datetime, timedelta, timezone
+
+    from ccc import usage_api
+
+    soon = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+    past = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    cache = tmp_path / "usage.json"
+    cache.write_text(json.dumps({"timestamp": 0, "data": {
+        "five_hour": {"utilization": 50, "resets_at": soon},
+        "seven_day": {"utilization": 20, "resets_at": past}, "per_model": []}}))
+    monkeypatch.setattr(usage_api, "CACHE_PATH", cache)
+    monkeypatch.setattr(usage_api, "_read_oauth_token", lambda: "t")
+    monkeypatch.setattr(usage_api, "fetch_live_usage", lambda token: None)
+
+    usage = usage_api.get_pro_usage()
+
+    assert usage is not None and usage.five_hour is not None and usage.seven_day is None

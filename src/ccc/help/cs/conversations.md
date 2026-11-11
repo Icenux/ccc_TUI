@@ -87,7 +87,7 @@ ukazuje vpravo od svého menu:
 | `Alt+0` | přepíná klávesnici mezi ccc a Claudem (nebo klikni, kam chceš psát) |
 | `Ctrl+]` | zavře panel s Claudem — Claude běží dál, `Enter` ho zase otevře |
 | `Alt+N` | otevře tady v panelu další konverzaci, která tě potřebuje (i z Claude Code) |
-| výběr myší | zkopíruje do schránky (i přes SSH a v Termuxu) |
+| výběr myší | zkopíruje do schránky (i přes SSH a v Termuxu); výběr zůstane vidět, dokud nezačneš psát nebo neklikneš |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | zkopíruje výběr / vloží poslední kopii |
 
 Pod Claudem je lišta s tvými [přednastavenými prompty](settings.md) —

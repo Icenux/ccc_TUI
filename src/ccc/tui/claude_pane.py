@@ -13,7 +13,7 @@ from textual.containers import Horizontal, Vertical
 from textual.message import Message
 from textual.widgets import Static
 
-from ccc import clipboard_bridge, keymap
+from ccc import clipboard_bridge, keymap, managed_sessions
 from ccc.cli_input import apply_preset
 from ccc.i18n import _
 from ccc.prompt_presets import load_prompt_presets
@@ -75,6 +75,8 @@ class ClaudePane(Vertical):
             cli_pane.attach_command_list(self.queue_id, self.keys),
             release_key=self.keys["conversations.close_claude"],
             passthrough={self.keys[i] for i in PASSTHROUGH_IDS if i in self.keys},
+            copy_sequence=managed_sessions.COPY_SEQUENCE,
+            cancel_sequence=managed_sessions.CANCEL_SEQUENCE,
             id="claude-terminal")
         yield Horizontal(id="claude-presets")
 

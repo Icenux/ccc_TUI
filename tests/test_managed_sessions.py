@@ -42,7 +42,13 @@ def test_start_makes_the_server_transparent(monkeypatch):
     # also on a server that was started with another value.
     assert [c for c in calls if "set-clipboard" in c] == [("set-option", "-g", "set-clipboard", "external")]
     # Mouse copies only fill a paste buffer (clipboard_bridge takes it on).
-    assert ("bind-key", "-T", "copy-mode", "MouseDragEnd1Pane", "send-keys", "-X", "copy-pipe-and-cancel") in calls
+    # The selection stays shown after letting go (#276); Ctrl+Shift+C leaves copy mode.
+    assert ("bind-key", "-T", "copy-mode", "MouseDragEnd1Pane", "send-keys", "-X", "copy-pipe-no-clear") in calls
+    assert ("bind-key", "-T", "copy-mode", "C-S-c", "send-keys", "-X", "copy-pipe-and-cancel") in calls
+    # The embedded frame's sequences: copy-mode only, nothing outside it.
+    assert ("set-option", "-s", "user-keys[0]", ms.COPY_SEQUENCE) in calls
+    assert ("set-option", "-s", "user-keys[1]", ms.CANCEL_SEQUENCE) in calls
+    assert ("bind-key", "-n", "User1", "if-shell", "-F", "#{pane_in_mode}", "send-keys -X cancel", "") in calls
     assert not any("terminal-features" in c and "clipboard" in str(c) for c in calls)
 
 

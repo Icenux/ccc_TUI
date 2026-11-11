@@ -29,10 +29,9 @@ požadavek potřebuje token.
    se odhlásit samo: `ccc api devices` je vypíše, `ccc api revoke ID`
    odhlásí jedno. Odhlášení řádek nemaže: zůstane jako historie jen ke
    čtení (`ccc api devices --all`) s údajem, kdy a jak bylo zařízení
-   odhlášeno — v aplikaci, na počítači, novým tokenem, nebo proto, že zmizelo: aplikace, která držela spojení událostí a 5 minut se nevrátila,
-   se bere za odinstalovanou (odinstalace serveru nic neřekne, ale spojení přeruší), stejně jako
-   zařízení neviděné 30 dní — a jeho token
-   přestane platit. Připojí-li se přihlášená aplikace jiným tokenem (nový QR kód nebo
+   odhlášeno — v aplikaci, na počítači, novým tokenem, nebo proto, že zmizelo: zařízení neviděné 30 dní
+   se bere za odinstalované (odinstalace serveru nic neřekne) — a jeho token
+   přestane platit. Samotné přerušené spojení (uspaný telefon, restart API) nikoho neodhlásí. Připojí-li se přihlášená aplikace jiným tokenem (nový QR kód nebo
    ručně), nejdřív odhlásí své staré zařízení, aby se tentýž telefon
    v seznamu nehromadil. Aplikace ukazuje stejnou historii v *Připojení →
    Zařízení → Historie*. Aplikace se zneplatněným tokenem to pozná při dalším

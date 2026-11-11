@@ -320,7 +320,7 @@ class Storage:
             conn.commit()
 
     def _migrate_devices_streams(self, conn: sqlite3.Connection) -> None:
-        """`streams`: the device holds the events connection (GET /events), which an uninstall breaks at once."""
+        """`streams`: the device has opened the events connection (GET /events); kept for information, nothing signs a device out by it."""
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(devices)")}
         if "streams" not in columns:
             conn.execute("ALTER TABLE devices ADD COLUMN streams INTEGER NOT NULL DEFAULT 0")
@@ -1419,24 +1419,11 @@ class Storage:
         return ids
 
     def mark_streaming(self, device_id: int, ip: str) -> None:
-        """The device opened the events connection: from now on its dropping for good means the app is gone."""
+        """The device opened the events connection: it is in touch right now (last seen, address)."""
         with closing(self._connect()) as conn:
             conn.execute("UPDATE devices SET streams = 1, last_seen_at = ?, last_ip = ? WHERE id = ?",
                          (datetime.now().isoformat(), ip, device_id))
             conn.commit()
-
-    def revoke_dropped_streams(self, minutes: float, by: str) -> list[int]:
-        """Sign out the devices that held the events connection and have not been back for `minutes`.
-        While the connection is open the API refreshes last_seen_at, so a live one is never caught here."""
-        cutoff = (datetime.now() - timedelta(minutes=minutes)).isoformat()
-        with closing(self._connect()) as conn:
-            ids = [row["id"] for row in conn.execute(
-                "SELECT id FROM devices WHERE revoked_at IS NULL AND streams = 1 AND last_seen_at < ?", (cutoff,))]
-            for device_id in ids:
-                conn.execute("UPDATE devices SET revoked_at = ?, revoked_by = ?, token_sha256 = 'revoked-' || id "
-                             "WHERE id = ?", (datetime.now().isoformat(), by, device_id))
-            conn.commit()
-        return ids
 
     def revoke_all_devices(self, by: str) -> None:
         with closing(self._connect()) as conn:

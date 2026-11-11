@@ -1487,6 +1487,11 @@ CS: dict[str, str] = {
     "Sign out": "Odhlásit",
     "No device is signed in yet — pair one.": "Zatím není přihlášené žádné zařízení — spáruj nějaké.",
     "Looking for the API's address…": "Hledám adresu API…",
+    "Start the API": "Spustit API",
+    "Starting the API…": "Spouštím API…",
+    "The API doesn't answer at {server} (is ccc-api running?). Start it and the QR appears.": "API na {server} neodpovídá (běží ccc-api?). Spusť ho a QR se zobrazí.",
+    "The API could not be started. See: journalctl --user -u ccc-api": "API se nepodařilo spustit. Viz: journalctl --user -u ccc-api",
+    "Warning: the API doesn't answer at {server} — the phone couldn't pair. Start it: systemctl --user start ccc-api": "Pozor: API na {server} neodpovídá — telefon by se nespároval. Spusť ho: systemctl --user start ccc-api",
     "The code has run out. Pair again for a new one.": "Kód vypršel. Spáruj znovu a dostaneš nový.",
     "Paired: {name}": "Spárováno: {name}",
     "ccc can't tell where the app reaches the API. Put it on the tailnet "

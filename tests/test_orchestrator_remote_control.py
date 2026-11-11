@@ -306,3 +306,8 @@ def test_limit_message_ignored_once_answered_or_continued():
     assert ms.limit_message(LIMIT_PANE)
     assert ms.limit_message(LIMIT_PANE.replace("❯\n", "❯ Pokracuj\n\n● Překlad prošel.\n")) is None
     assert ms.limit_message("● hotovo\n❯\n") is None
+
+
+def test_limit_message_cannot_be_faked_by_text_on_screen():
+    assert ms.limit_message("● cat poznamky.txt\n  You've hit your 5-hour limit · resets 8pm\n❯\n") is None
+    assert ms.limit_message("● echo\n  ⎿  see: You've hit your 5-hour limit\n❯\n") is None

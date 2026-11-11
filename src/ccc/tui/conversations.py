@@ -997,6 +997,21 @@ class ConversationsScreen(SidebarScreen):
         if await self._enqueue_text(event.text):
             event.box.text = ""
 
+    async def on_message_box_submitted_now(self, event: MessageBox.SubmittedNow) -> None:
+        """Alt+Enter: into the running Claude Code at once, not behind the
+        queue. Without an interactive Claude Code it's an ordinary send."""
+        text = event.text.strip()
+        queue = self._cli_queue()
+        if not text or queue is None or not managed_sessions.is_running(queue.id):
+            if await self._enqueue_text(event.text):
+                event.box.text = ""
+            return
+        result = await asyncio.to_thread(managed_sessions.paste_and_submit, queue.id, text, True)
+        if result.delivered:
+            event.box.text = ""
+        else:
+            self.notify(result.error or _("Couldn't type it into Claude Code."), severity="warning")
+
     async def _enqueue_text(self, text: str) -> bool:
         text = text.strip()
         if not text or self._current_queue_id is None:

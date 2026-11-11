@@ -75,6 +75,8 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("window.cancel", "escape", N_("Close the window / cancel"), WINDOWS),
     KeyAction("window.save", "ctrl+s", N_("Save"), _EDITORS),
     KeyAction("dashboard.quit", "q", N_("Close ccc (on the Dashboard)"), ("dashboard",)),
+    KeyAction("dashboard.archive", "x", N_("Archive the conversation (Dashboard)"), ("dashboard",)),
+    KeyAction("dashboard.delete", "delete", N_("Delete the conversation (Dashboard)"), ("dashboard",)),
     KeyAction("screen.retry", "r", N_("Retry a blocked queue / resume one paused at a limit"),
               (*_CONVERSATIONS, "queue_detail")),
     KeyAction("screen.add_prompt", "plus", N_("Add prompt"), ("sessions", "queue_detail")),

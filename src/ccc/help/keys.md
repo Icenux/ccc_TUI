@@ -36,6 +36,8 @@ name the default keys.
 |---|---|
 | `Enter` | Open the queue detail |
 | `q` | Close ccc (same as Ctrl+Q) |
+| `x` | Archive the selected conversation (a long press on a row offers Archive / Delete) |
+| `Del` | Delete the selected conversation from ccc (asks first) |
 
 ## Live sessions
 
@@ -67,6 +69,7 @@ name the default keys.
 | `g` | Goal loop: rounds of work, check and review until the goal is met |
 | `w` | Workflow: plan, approve, build, check, parallel reviews, arbiter |
 | `Ctrl+J` | New line in the message box (Shift+Enter where supported) |
+| `Alt+Enter` | Send the message right away, past the queue (Ctrl+Enter where supported) |
 | `Alt+1` | Preset prompt 1–9 (⏎ sends it, ✎ puts it into the message box; set in Settings) |
 | `Alt+2` | Preset prompt 2 |
 | `Alt+3` | Preset prompt 3 |

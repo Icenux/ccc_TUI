@@ -36,6 +36,8 @@ uvádějí výchozí klávesy.
 |---|---|
 | `Enter` | Otevřít detail fronty |
 | `q` | Zavřít ccc (stejně jako Ctrl+Q) |
+| `x` | Archivovat vybranou konverzaci (dlouhé podržení řádku nabídne Archivovat / Smazat) |
+| `Del` | Smazat vybranou konverzaci z ccc (nejdřív se zeptá) |
 
 ## Živé relace
 
@@ -67,6 +69,7 @@ uvádějí výchozí klávesy.
 | `g` | Smyčka k cíli: kola práce, kontroly a recenze, dokud není cíl splněný |
 | `w` | Workflow: plán, schválení, stavba, kontrola, paralelní recenze, rozhodčí |
 | `Ctrl+J` | Nový řádek v poli pro zprávu (Shift+Enter, kde funguje) |
+| `Alt+Enter` | Odeslat zprávu ihned, mimo frontu (Ctrl+Enter, kde to terminál umí) |
 | `Alt+1` | Přednastavený prompt 1–9 (⏎ odešle, ✎ vloží do pole pro zprávu; nastavíš v Nastavení) |
 | `Alt+2` | Přednastavený prompt 2 |
 | `Alt+3` | Přednastavený prompt 3 |

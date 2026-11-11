@@ -6,6 +6,13 @@ they are."""
 CS: dict[str, str] = {
     # --- shared words --------------------------------------------------------
     "Dashboard": "Přehled",
+    "Archive the conversation (Dashboard)": "Archivovat konverzaci (Přehled)",
+    "Delete the conversation (Dashboard)": "Smazat konverzaci (Přehled)",
+    "Archive the selected conversation (a long press on a row offers Archive / Delete)":
+        "Archivovat vybranou konverzaci (dlouhé podržení řádku nabídne Archivovat / Smazat)",
+    "Delete the selected conversation from ccc (asks first)": "Smazat vybranou konverzaci z ccc (nejdřív se zeptá)",
+    "Send the message right away, past the queue (Ctrl+Enter where supported)":
+        "Odeslat zprávu ihned, mimo frontu (Ctrl+Enter, kde to terminál umí)",
     "Conversations": "Konverzace",
     "Archive": "Archiv",
     "'{name}' is archived — restore it from the Archive first.":

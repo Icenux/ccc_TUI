@@ -39,6 +39,8 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
     (N_("Dashboard"), [
         ("enter", N_("Open the queue detail")),
         ("dashboard.quit", N_("Close ccc (same as Ctrl+Q)")),
+        ("dashboard.archive", N_("Archive the selected conversation (a long press on a row offers Archive / Delete)")),
+        ("dashboard.delete", N_("Delete the selected conversation from ccc (asks first)")),
     ]),
     (N_("Live sessions"), [
         ("enter", N_("Send the selected session a prompt")),
@@ -65,6 +67,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("screen.goal", N_("Goal loop: rounds of work, check and review until the goal is met")),
         ("screen.workflow", N_("Workflow: plan, approve, build, check, parallel reviews, arbiter")),
         ("ctrl+j", N_("New line in the message box (Shift+Enter where supported)")),
+        ("alt+enter", N_("Send the message right away, past the queue (Ctrl+Enter where supported)")),
         ("conversations.preset1", N_("Preset prompt 1–9 (⏎ sends it, ✎ puts it into the message box; set in Settings)")),
         *[(f"conversations.preset{n}", N_("Preset prompt {n}")) for n in range(2, 10)],
     ]),

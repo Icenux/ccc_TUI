@@ -787,3 +787,32 @@ async def test_f2_renames_the_selected_conversation(tmp_path, monkeypatch):
         await pilot.pause()
         assert storage.get_queue(q.id).name == "novy nazev"
         assert _list_names(app) == ["novy"]
+
+
+@pytest.mark.asyncio
+async def test_alt_enter_types_into_running_claude_instead_of_queueing(tmp_path, monkeypatch):
+    from ccc import managed_sessions
+    from ccc.managed_sessions import DeliveryResult
+    from ccc.tui.conversations import ConversationsScreen
+
+    monkeypatch.setattr("ccc.transcript.PROJECTS_ROOT", tmp_path / "projects")
+    storage = Storage(tmp_path / "history.db")
+    q = storage.create_queue("a", "/tmp/a", "s-a")
+    sent = []
+    monkeypatch.setattr(ConversationsScreen, "_cli_queue", lambda self: q)
+    monkeypatch.setattr(managed_sessions, "is_running", lambda queue_id: True)
+    monkeypatch.setattr(
+        managed_sessions, "paste_and_submit",
+        lambda queue_id, text, submit=True: sent.append((queue_id, text, submit)) or DeliveryResult(delivered=True),
+    )
+    app = await _open(storage)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        box = app.screen.query_one("#message-input", MessageBox)
+        box.focus()
+        await pilot.press(*"hi")
+        await pilot.press("alt+enter")
+        await pilot.pause()
+        assert sent == [(q.id, "hi", True)]
+        assert storage.list_pending_items(q.id) == []
+        assert box.text == ""

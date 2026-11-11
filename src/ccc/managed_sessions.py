@@ -110,10 +110,19 @@ TRANSPARENT_OPTIONS: tuple[tuple[str, ...], ...] = (
 )
 
 
+# Claude Code's fullscreen mode (alternate screen): the prompt and status
+# line stay at the bottom of the pane also right after /clear (#274); inline
+# it would draw them under the header, at the top.
+FULLSCREEN_ENV = "CLAUDE_CODE_NO_FLICKER=1"
+
+
 def start(queue: Queue, command: list[str]) -> None:
+    agent = profiles.get(queue.profile)
+    fullscreen = [] if agent is not None and agent.is_command else ["env", FULLSCREEN_ENV]
     _tmux(
         "new-session", "-d", "-s", target(queue.id), "-x", "200", "-y", "50",
-        "-c", queue.project_path, shlex.join([*profiles.env_assignments(queue.profile), *command]),
+        "-c", queue.project_path,
+        shlex.join([*profiles.env_assignments(queue.profile), *fullscreen, *command]),
     )
     make_transparent()
 

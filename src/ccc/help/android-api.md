@@ -195,7 +195,7 @@ settings it shows are the ones that apply to both sides.
 | `GET /analytics?year=&month=` | a month's tokens per day, model and conversation, the months there are ([Analytics](analytics.md)); `POST /analytics/archive` archives finished months now |
 | `GET /settings` | ccc's [settings](settings.md) with the choices for each (secrets only as set / not set); `POST` changes some of them; `POST /settings/telegram-test`, `telegram-off`, `discord-test`, `discord-off` |
 | `POST /prompt-presets` | `{"presets": [{"name", "text", "send_now"}]}` — all of them, in order; `POST /launch-presets` saves a New conversation preset, `POST /launch-presets/delete` `{"name"}` |
-| `GET /conversations/{id}/terminal` | what an interactive conversation's Claude Code shows now — its screen with colours (ANSI) and cursor |
+| `GET /conversations/{id}/terminal` | what an interactive conversation's Claude Code shows now — its screen with colours (ANSI) and cursor; `?history=N` adds the N lines that scrolled off above it as `history` (empty in Claude Code's fullscreen mode, which keeps its scrollback itself: use PageUp/PageDown) |
 | `POST /conversations/{id}/terminal` | into its Claude Code: `{"paste", "submit"}` text as one paste (Enter after it unless `submit` is false), `{"keys": […]}` keys (Enter, Escape, Tab, BTab, arrows, Home, End, PageUp, PageDown, BSpace, Space, C-c, C-d, C-l, C-o, C-r, C-t, C-u), `{"type": "y"}` a few characters |
 | `POST /backup` | back the database up now |
 | `GET /launch-options` | the options a conversation can be started with (keys and labels) |

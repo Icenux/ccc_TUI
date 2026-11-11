@@ -186,7 +186,7 @@ jen to, co platí pro obě strany.
 | `GET /analytics?year=&month=` | tokeny měsíce po dnech, modelech a konverzacích, měsíce s daty ([Analytika](analytics.md)); `POST /analytics/archive` archivuje skončené měsíce hned |
 | `GET /settings` | [nastavení](settings.md) ccc s možnostmi u každého (tajné údaje jen jako nastaveno / nenastaveno); `POST` některá změní; `POST /settings/telegram-test`, `telegram-off`, `discord-test`, `discord-off` |
 | `POST /prompt-presets` | `{"presets": [{"name", "text", "send_now"}]}` — všechny, v pořadí; `POST /launch-presets` uloží předvolbu nové konverzace, `POST /launch-presets/delete` `{"name"}` |
-| `GET /conversations/{id}/terminal` | co teď ukazuje Claude Code interaktivní konverzace — obrazovka s barvami (ANSI) a kurzorem |
+| `GET /conversations/{id}/terminal` | co teď ukazuje Claude Code interaktivní konverzace — obrazovka s barvami (ANSI) a kurzorem; `?history=N` přidá jako `history` N řádků, které odjely nahoru (v celoobrazovkovém režimu Claude Code je prázdná, ten si historii drží sám: PageUp/PageDown) |
 | `POST /conversations/{id}/terminal` | do jejího Claude Code: `{"paste", "submit"}` text jako jedno vložení (potom Enter, pokud `submit` není false), `{"keys": […]}` klávesy (Enter, Escape, Tab, BTab, šipky, Home, End, PageUp, PageDown, BSpace, Space, C-c, C-d, C-l, C-o, C-r, C-t, C-u), `{"type": "y"}` pár znaků |
 | `POST /backup` | zálohovat databázi hned |
 | `GET /launch-options` | volby, se kterými jde konverzace založit (klíče a popisky) |

@@ -8,6 +8,7 @@ sidebar section / main content / buttons through the hooks below.
 """
 from __future__ import annotations
 
+import sqlite3
 from dataclasses import dataclass
 
 from rich.markup import escape
@@ -514,7 +515,12 @@ class SidebarScreen(Screen):
             button = self.query_one(f"#{RETRY_BUTTON.id}")
         except NoMatches:
             return
-        target = self.retry_target()
+        try:
+            target = self.retry_target()
+        except sqlite3.OperationalError:
+            # The DB is locked by another process: keep the button as it is
+            # instead of crashing the whole TUI; the next refresh retries.
+            return
         button.display = target is not None and target.status in RETRYABLE
 
     def on_mount(self) -> None:

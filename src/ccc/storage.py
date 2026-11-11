@@ -448,6 +448,13 @@ class Storage:
         # TUI instance can both be writing to the same file concurrently.
         conn = sqlite3.connect(self.db_path, timeout=10.0)
         conn.row_factory = sqlite3.Row
+        # WAL: readers (the TUI redrawing) no longer block on a writer and
+        # vice versa. The mode is stored in the file, so this is a no-op once
+        # set; if another process holds the lock right now, keep the old mode.
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+        except sqlite3.OperationalError:
+            pass
         return conn
 
     def create_queue(

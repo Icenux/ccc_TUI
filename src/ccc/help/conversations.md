@@ -87,7 +87,7 @@ the right of its menu:
 | `Alt+0` | switch the keyboard between ccc and Claude (or click where you want to type) |
 | `Ctrl+]` | close Claude's pane — Claude keeps running, `Enter` opens it again |
 | `Alt+N` | open the next conversation that needs you, here in the pane (also from Claude Code) |
-| select with the mouse | copies to your clipboard (also over SSH and in Termux) |
+| select with the mouse | copies to your clipboard (also over SSH and in Termux); the selection stays shown until you type or click |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | copy the selection / paste the last copy |
 
 Under Claude a bar shows your [preset prompts](settings.md) — click one

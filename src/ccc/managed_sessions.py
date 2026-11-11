@@ -91,6 +91,9 @@ def is_running(queue_id: int) -> bool:
 DETACH_KEY = "C-]"
 # The detach key bound now (server option), so a changed one replaces it.
 DETACH_OPTION = "@ccc-detach-key"
+# tmux user-keys (see TRANSPARENT_OPTIONS): copy mode's copy and leave.
+COPY_SEQUENCE = "\x1b[19991~"
+CANCEL_SEQUENCE = "\x1b[19992~"
 TRANSPARENT_OPTIONS: tuple[tuple[str, ...], ...] = (
     ("set-option", "-g", "prefix", "None"),
     ("set-option", "-g", "prefix2", "None"),
@@ -102,11 +105,30 @@ TRANSPARENT_OPTIONS: tuple[tuple[str, ...], ...] = (
     ("set-option", "-g", "set-clipboard", "external"),
     ("set-option", "-g", "default-terminal", "tmux-256color"),
     ("set-option", "-ga", "terminal-features", ",*:RGB"),
-    # tmux copy mode (mouse, Ctrl+Shift+C): copy into a paste buffer and
-    # leave copy mode. clipboard_bridge takes new buffers — these and
-    # Claude Code's own copies — to your device's clipboard.
-    *[("bind-key", "-T", table, key, "send-keys", "-X", "copy-pipe-and-cancel")
-      for table in ("copy-mode", "copy-mode-vi") for key in ("MouseDragEnd1Pane", "C-S-c")],
+    # tmux copy mode: letting go of the mouse copies into a paste buffer
+    # and keeps the selection shown (and copy mode on); Ctrl+Shift+C copies
+    # it and leaves copy mode; a click clears it. clipboard_bridge takes new
+    # buffers — these and Claude Code's own copies — to your device's
+    # clipboard.
+    *[("bind-key", "-T", table, "MouseDragEnd1Pane", "send-keys", "-X", "copy-pipe-no-clear")
+      for table in ("copy-mode", "copy-mode-vi")],
+    *[("bind-key", "-T", table, "C-S-c", "send-keys", "-X", "copy-pipe-and-cancel")
+      for table in ("copy-mode", "copy-mode-vi")],
+    *[("bind-key", "-T", table, "MouseDown1Pane", "select-pane ; send-keys -X clear-selection")
+      for table in ("copy-mode", "copy-mode-vi")],
+    # ccc's embedded frame (tui.terminal_pane) talks to copy mode with two
+    # sequences no terminal sends: COPY_SEQUENCE (its Ctrl+Shift+C when it
+    # has no selection of its own) and CANCEL_SEQUENCE (before the first
+    # key typed after a mouse selection, so the key reaches Claude, not copy
+    # mode). Outside copy mode both do nothing — never Ctrl+C to Claude.
+    ("set-option", "-s", "user-keys[0]", COPY_SEQUENCE),
+    ("set-option", "-s", "user-keys[1]", CANCEL_SEQUENCE),
+    ("bind-key", "-n", "User0", "if-shell", "-F", "#{pane_in_mode}", "send-keys -X copy-pipe-and-cancel", ""),
+    ("bind-key", "-n", "User1", "if-shell", "-F", "#{pane_in_mode}", "send-keys -X cancel", ""),
+    *[("bind-key", "-T", table, "User0", "send-keys", "-X", "copy-pipe-and-cancel")
+      for table in ("copy-mode", "copy-mode-vi")],
+    *[("bind-key", "-T", table, "User1", "send-keys", "-X", "cancel")
+      for table in ("copy-mode", "copy-mode-vi")],
 )
 
 

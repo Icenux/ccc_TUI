@@ -161,7 +161,8 @@ class TerminalPane(Widget, can_focus=True):
 
     def __init__(self, command: list[str], *, release_key: str = "ctrl+right_square_bracket",
                  passthrough: frozenset[str] | set[str] = frozenset(),
-                 env: dict[str, str] | None = None, **kwargs) -> None:
+                 env: dict[str, str] | None = None,
+                 copy_sequence: str = "", cancel_sequence: str = "", **kwargs) -> None:
         super().__init__(**kwargs)
         self.command = command
         self.release_key = release_key
@@ -170,6 +171,13 @@ class TerminalPane(Widget, can_focus=True):
         self.modes: set[int] = set()  # DEC private modes the command has switched on
         self._selection: tuple[tuple[int, int], tuple[int, int]] | None = None
         self._selecting = False
+        # The command's own selection (a tmux client's copy mode, made with
+        # the mouse we hand on): copy_sequence copies it (Ctrl+Shift+C
+        # without a selection of ours), cancel_sequence leaves it before the
+        # next key typed or pasted, so that goes to the program again.
+        self.copy_sequence = copy_sequence
+        self.cancel_sequence = cancel_sequence
+        self._command_selection = False
         self.env = env
         self.screen_ = Screen(80, 24)
         self._stream = ByteStream(self.screen_)
@@ -341,6 +349,9 @@ class TerminalPane(Widget, can_focus=True):
             text = self.selected_text()
             if text.strip():
                 self.app.copy_to_clipboard(text)
+            elif self.copy_sequence:
+                self._command_selection = False
+                self.write(self.copy_sequence)
             return
         if event.key in self.passthrough:
             return  # ccc's own key: the screen's bindings take it
@@ -349,10 +360,17 @@ class TerminalPane(Widget, can_focus=True):
             event.stop()
             event.prevent_default()
             self._selection = None
+            self._leave_command_selection()
             self.write(data)
+
+    def _leave_command_selection(self) -> None:
+        if self._command_selection and self.cancel_sequence:
+            self.write(self.cancel_sequence)
+        self._command_selection = False
 
     def on_paste(self, event: events.Paste) -> None:
         event.stop()
+        self._leave_command_selection()
         text = safe_paste(event.text)
         self.write(f"\x1b[200~{text}\x1b[201~" if self._bracketed else text.replace("\n", "\r"))
 
@@ -427,6 +445,8 @@ class TerminalPane(Widget, can_focus=True):
             self.refresh()
         elif self._mouse_taken(event):
             self._send_mouse(event.button - 1, event, release=True)
+            if event.button == 1:
+                self._command_selection = True
 
     def _bounds(self) -> tuple[tuple[int, int], tuple[int, int]] | None:
         if self._selection is None:

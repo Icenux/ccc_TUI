@@ -174,6 +174,39 @@ async def test_ctrl_shift_c_copies_the_selection_and_never_reaches_the_command()
 
 
 @pytest.mark.asyncio
+async def test_the_commands_own_selection_is_copied_and_left_by_its_sequences():
+    # A tmux client takes the mouse: the selection is copy mode's. Ctrl+Shift+C
+    # sends the copy sequence; the first key after a selection is preceded by
+    # the cancel sequence (#276).
+    class SeqHost(Host):
+        def compose(self):
+            yield TerminalPane(self.command, id="term", copy_sequence="<C>", cancel_sequence="<X>")
+
+    app = SeqHost(reader("sys.stdout.write('\\x1b[?1002h\\x1b[?1006h');"))
+    async with app.run_test(size=(60, 12)) as pilot:
+        pane = app.query_one(TerminalPane)
+        await wait_for(pane, "ready")
+        await pilot.pause(0.2)
+        await pilot.mouse_down(TerminalPane, offset=(1, 1))
+        await pilot.mouse_up(TerminalPane, offset=(4, 1))
+        await pilot.pause(0.2)
+        await pilot.press("ctrl+shift+c")
+        await wait_for(pane, "<C>")
+        await pilot.press("a")
+        await wait_for(pane, "'a'")
+        assert "<X>" not in pane.text()  # the copy already left copy mode
+        await pilot.mouse_down(TerminalPane, offset=(1, 1))
+        await pilot.mouse_up(TerminalPane, offset=(4, 1))
+        await pilot.pause(0.2)
+        await pilot.press("b")
+        await wait_for(pane, "<X>")
+        await wait_for(pane, "b")
+        await pilot.press("c")
+        await wait_for(pane, "'c'")
+        assert pane.text().count("<X>") == 1
+
+
+@pytest.mark.asyncio
 async def test_clipboard_sequence_from_the_command_reaches_the_clipboard():
     app = Host(["sh", "-c", r"printf '\033]52;c;aGVsbG8=\007'; printf 'ok'; sleep 5"])
     copied = []

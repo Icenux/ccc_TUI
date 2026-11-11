@@ -452,7 +452,7 @@ class SidebarScreen(Screen):
         keymap.binding("views.new_conversation", "new_conversation", _("New conversation"), show=False),
         keymap.binding("views.help", "key_help", _("Help")),
         keymap.binding("views.routines", "routines", _("Routines")),
-        keymap.binding("views.agents", "agents", _("Agents"), show=False),
+        keymap.binding("views.agents", "agents", _("Agents")),
         keymap.binding("views.update", "update", _("Update"), show=False),
     ]
 

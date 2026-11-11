@@ -44,3 +44,8 @@ def test_backoff_progression():
     step3 = next_backoff_seconds(step2)
     assert step3 == MAX_BACKOFF_SECONDS
     assert next_backoff_seconds(MAX_BACKOFF_SECONDS) == MAX_BACKOFF_SECONDS
+
+
+def test_parse_reset_time_hour_only_claude_code_message():
+    now = datetime(2026, 11, 11, 19, 30)
+    assert parse_reset_time("You've hit your 5-hour limit · resets 8pm (Europe/Prague)", now=now) == datetime(2026, 11, 11, 20, 0)

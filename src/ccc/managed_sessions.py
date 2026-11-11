@@ -208,6 +208,29 @@ def stop(queue_id: int) -> None:
         _signal(pid, signal.SIGKILL)
 
 
+# Only Claude Code's own notice counts: a tool-result line ("⎿") that starts with it. Text a tool
+# printed (a file, command output) is indented under another marker or sits mid-line, so it can't fake a limit.
+_LIMIT_RE = re.compile(r"^⎿\s+You['’]ve hit your [\w\- ]{1,30}?limit\b")
+
+
+def limit_message(pane: str) -> str | None:
+    """The "You've hit your 5-hour limit · resets 8pm" notice when it is the
+    latest thing on the screen (nothing was answered or typed after it), else
+    None. Claude Code does not report a blocked state for this, so the screen
+    is all there is to see."""
+    lines = [ln.strip() for ln in pane.splitlines() if ln.strip()]
+    for i in range(len(lines) - 1, -1, -1):
+        if _LIMIT_RE.match(lines[i]):
+            after = lines[i + 1:]
+            if any(ln.startswith(("●", "❯ ")) and len(ln) > 2 and ln != "❯" for ln in after):
+                return None  # answered or a new message typed: no longer stuck
+            return " ".join(lines[i:i + 3])
+        # keep scanning only through the last screenful
+        if len(lines) - i > 25:
+            break
+    return None
+
+
 def capture(queue_id: int) -> str:
     result = _tmux("capture-pane", "-p", "-t", exact(queue_id))
     return result.stdout if result.returncode == 0 else ""

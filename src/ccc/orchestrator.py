@@ -678,7 +678,8 @@ class QueueRuntime:
             # Fork / from-PR, but also a plain --resume: the process writes to a new session id,
             # and the app (API) must read that transcript, not the old one.
             self._adopt_session(queue, session.session_id, blocking=queue.first_run_flags is not None)
-        blocked = session.state == "blocked"
+        limit_text = managed_sessions.limit_message(pane)
+        blocked = session.state == "blocked" or limit_text is not None
         if blocked and not self._managed_was_blocked and queue.status not in (
             QueueStatus.WAITING_RETRY,
             QueueStatus.PAUSED_LIMIT,
@@ -690,7 +691,7 @@ class QueueRuntime:
             now_dt = datetime.now()
             retry_at = retry_time_after_rate_limit(
                 await asyncio.to_thread(get_pro_usage, True), now_dt
-            ) or (now_dt + MANAGED_LIMIT_FALLBACK)
+            ) or parse_reset_time(limit_text or "", now_dt) or (now_dt + MANAGED_LIMIT_FALLBACK)
             self._hold_for_limit(queue, retry_at)
         self._managed_was_blocked = blocked
 

@@ -18,7 +18,7 @@ import sqlite3
 import subprocess
 import sys
 
-from ccc import instance, keymap
+from ccc import instance, keymap, tmux
 from ccc.storage import Storage
 from ccc.tui import theme
 from ccc.i18n import _
@@ -102,8 +102,8 @@ def _own_pane() -> str:
 
 
 def _tmux(*args: str) -> subprocess.CompletedProcess:
-    # Plain `tmux`: $TMUX points it at the server ccc runs in.
-    return subprocess.run(["tmux", *args], capture_output=True, text=True, timeout=5)
+    # $TMUX points it at the server ccc runs in; ccc's tmux binary.
+    return subprocess.run(tmux.own(*args), capture_output=True, text=True, timeout=5)
 
 
 def attach_command_list(queue_id: int, keys: dict[str, str] | None = None) -> list[str]:

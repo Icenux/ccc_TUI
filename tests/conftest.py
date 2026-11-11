@@ -31,6 +31,18 @@ def _no_real_tmux(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def tmux_dir(tmp_path_factory, monkeypatch):
+    """ccc's tmux sockets (ccc.tmux) in a directory of the test's own, and
+    no servers from before #280: the real ones on this machine must not
+    decide which socket a test sees."""
+    path = tmp_path_factory.mktemp("ccc-tmux")
+    monkeypatch.setenv("CCC_TMUX_DIR", str(path))
+    monkeypatch.setenv("TMUX_TMPDIR", str(tmp_path_factory.mktemp("tmux-tmpdir")))
+    monkeypatch.delenv("CCC_TMUX_BIN", raising=False)
+    return str(path)
+
+
+@pytest.fixture(autouse=True)
 def _flat_conversation_list(monkeypatch):
     # The list groups conversations by project by default (ccc.groups): each
     # test's tmp folder would get a heading of its own. Tests of other

@@ -7,7 +7,7 @@ from pathlib import Path
 from textual.app import App
 from textual.widgets import TextArea
 
-from ccc import keymap
+from ccc import keymap, tmux
 from ccc.export_paths import SCREENSHOTS, export_dir
 from ccc.i18n import _
 from ccc.storage import Storage
@@ -165,7 +165,7 @@ class CCContinueApp(App):
         value = encode(footer_items(self))
         if value != self._published_footer:
             self._published_footer = value
-            subprocess.run(["tmux", "set-option", "-w", "-t", os.environ["TMUX_PANE"], FOOTER_OPTION, value],
+            subprocess.run(tmux.own("set-option", "-w", "-t", os.environ["TMUX_PANE"], FOOTER_OPTION, value),
                            capture_output=True)
 
     def copy_to_clipboard(self, text: str) -> None:
@@ -178,7 +178,7 @@ class CCContinueApp(App):
         if cli_pane._on_ccc_server():
             import subprocess
 
-            subprocess.run(["tmux", "load-buffer", "-w", "-"], input=text.encode(),
+            subprocess.run(tmux.own("load-buffer", "-w", "-"), input=text.encode(),
                            capture_output=True, timeout=5)
 
     def copy_to_clipboard_threadsafe(self, text: str) -> None:
@@ -268,7 +268,7 @@ class CCContinueApp(App):
         if instance.inside_ccc_tmux():
             import subprocess
 
-            subprocess.run(["tmux", "detach-client"], capture_output=True)
+            subprocess.run(tmux.own("detach-client"), capture_output=True)
             return
         self.exit()
 

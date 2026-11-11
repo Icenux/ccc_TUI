@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from ccc import tmux
+
 # Overridable so tests (and a second, separate ccc) never touch the real one.
 TMUX_SOCKET = os.environ.get("CCC_TMUX_SOCKET", "ccc")
 SESSION = "ccc"
@@ -34,9 +36,8 @@ def inside_ccc_tmux() -> bool:
 
 
 def _tmux(*args: str) -> list[str]:
-    # -f /dev/null: no user tmux.conf (plugins like tmux-continuum would
-    # restore the user's sessions into this server).
-    return ["tmux", "-L", TMUX_SOCKET, "-f", "/dev/null", *args]
+    # ccc's own tmux (binary, socket, no user tmux.conf), see ccc.tmux.
+    return tmux.command(TMUX_SOCKET, *args)
 
 
 def running() -> bool:

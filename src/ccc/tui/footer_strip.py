@@ -20,7 +20,7 @@ from textual.app import App
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Static
 
-from ccc import keymap
+from ccc import keymap, tmux
 
 FOOTER_OPTION = "@ccc-footer"
 POLL_SECONDS = 0.3
@@ -74,8 +74,8 @@ def wrap(items: list[list[str]], width: int) -> list[list[list[str]]]:
 
 
 def _tmux(*args: str) -> subprocess.CompletedProcess:
-    # Plain `tmux`: $TMUX points at ccc's server (this runs in its pane).
-    return subprocess.run(["tmux", *args], capture_output=True, text=True, timeout=5)
+    # $TMUX points at ccc's server (this runs in its pane); ccc's tmux binary.
+    return subprocess.run(tmux.own(*args), capture_output=True, text=True, timeout=5)
 
 
 class FooterStrip(App):

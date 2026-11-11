@@ -21,10 +21,30 @@ spuštění ve svém desktopu, která zavolá
 
 ## `ccc` se neotevře / ukazuje něco divného
 
-Stále běžící ccc má vlastní tmux server (`tmux -L ccc`), takže ho
-v obyčejném `tmux ls` neuvidíš. `ccc` se k němu připojí; pokud neběží
-služba `ccc-tui`, `ccc` ji spustí. Když ccc samo skončí, za vteřinu je
-zpátky. `systemctl --user restart ccc-tui` ho restartuje.
+Stále běžící ccc má vlastní tmux server (socket
+`/tmp/ccc-tmux-<uid>/ccc`), takže ho v obyčejném `tmux ls` neuvidíš.
+`ccc` se k němu připojí; pokud neběží služba `ccc-tui`, `ccc` ji spustí.
+Když ccc samo skončí, za vteřinu je zpátky.
+`systemctl --user restart ccc-tui` ho restartuje.
+
+## ccc a tvůj vlastní tmux
+
+Tmux servery ccc jsou oddělené od tvých: jejich sockety jsou
+v `/tmp/ccc-tmux-<uid>/` (ne vedle tvých v `/tmp/tmux-<uid>/`) a nikdy
+nenačítají tvůj `~/.tmux.conf`, takže změna tvého nastavení tmuxu ccc
+nezmění. Dvě proměnné prostředí je oddělí ještě víc:
+
+- `CCC_TMUX_BIN` — program tmux, který ccc používá (např. vlastní build,
+  aby upgrade systémového tmuxu ccc neovlivnil);
+- `CCC_TMUX_DIR` — adresář pro sockety ccc.
+
+Nastav je pro služby (např. v `~/.config/environment.d/ccc.conf`, pak se
+znovu přihlas nebo `systemctl --user daemon-reload` a restartuj
+`ccc ccc-tui`) **a** v shellu, ze kterého spouštíš `ccc` — obojí musí
+používat stejný tmux.
+
+Když spustíš `ccc` uvnitř svého tmuxu, vnoří se: klávesy a myš nejdřív
+vidí tvůj tmux (jeho prefix, režim myši, copy mode, nastavení schránky).
 
 ## Konverzace se zastavila
 
@@ -66,7 +86,7 @@ Zapnutí: `systemctl --user edit ccc-tui`, přidej `[Service]` /
 - Obojí sdílí jednu databázi SQLite (`~/.local/share/ccc/history.db`);
   úkol se přebírá atomicky, takže nikdy neběží dvakrát.
 - Konverzace s Claude Code vedle ccc běží jako interaktivní procesy
-  `claude` ve skrytém tmux serveru (`tmux -L ccc-sessions`), které daemon
+  `claude` ve skrytém tmux serveru (socket `/tmp/ccc-tmux-<uid>/ccc-sessions`), které daemon
   drží naživu.
 - ccc používá tvoje běžné přihlášení do Claude Code — žádný API klíč —
   a **stejné** 5hodinové / týdenní využití jako každá jiná relace Claude

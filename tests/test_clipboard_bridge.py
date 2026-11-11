@@ -17,7 +17,7 @@ def test_ccc_own_paste_buffers_never_reach_the_clipboard():
     assert clipboard_bridge.changed_buffer("%paste-buffer-changed buffer12x") is None
 
 
-def test_forward_loads_into_ccc_with_clipboard(monkeypatch):
+def test_forward_loads_into_ccc_with_clipboard(monkeypatch, tmux_dir):
     calls = []
 
     def run(args, input=None, capture_output=True, timeout=5):
@@ -26,13 +26,15 @@ def test_forward_loads_into_ccc_with_clipboard(monkeypatch):
 
     monkeypatch.setattr(clipboard_bridge.subprocess, "run", run)
     assert clipboard_bridge.forward("buffer3")
-    assert calls[0][0] == ["tmux", "-L", "ccc-sessions", "save-buffer", "-b", "buffer3", "-"]
-    assert calls[1] == (["tmux", "-L", "ccc", "load-buffer", "-w", "-"], b"copied text")
+    assert calls[0][0] == ["tmux", "-S", f"{tmux_dir}/ccc-sessions", "-f", "/dev/null",
+                           "save-buffer", "-b", "buffer3", "-"]
+    assert calls[1] == (["tmux", "-S", f"{tmux_dir}/ccc", "-f", "/dev/null", "load-buffer", "-w", "-"],
+                        b"copied text")
 
 
-def test_control_client_is_read_only():
+def test_control_client_is_read_only(tmux_dir):
     assert clipboard_bridge.control_command(7) == [
-        "tmux", "-L", "ccc-sessions", "-C", "attach-session", "-r", "-t", "=q7:",
+        "tmux", "-S", f"{tmux_dir}/ccc-sessions", "-f", "/dev/null", "-C", "attach-session", "-r", "-t", "=q7:",
     ]
 
 

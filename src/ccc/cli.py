@@ -30,10 +30,10 @@ def _tell_tmux_client(client: str | None, message: str, socket: str | None = Non
         return
     import subprocess
 
-    from ccc import instance
+    from ccc import instance, tmux
 
-    server = ["-S", socket] if socket else ["-L", instance.TMUX_SOCKET]
-    subprocess.run(["tmux", *server, "display-message", "-c", client, "-d", "4000", message], capture_output=True)
+    server = ["-S", socket] if socket else tmux.server(instance.TMUX_SOCKET)
+    subprocess.run([tmux.binary(), *server, "display-message", "-c", client, "-d", "4000", message], capture_output=True)
 
 
 def add_command(db_path: str, project_path: str, prompt: str) -> None:

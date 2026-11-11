@@ -4,8 +4,8 @@ Description=ccc TUI, always alive in a persistent tmux session
 After=ccc.service
 
 [Service]
-# The TUI gets its OWN tmux server (`-L ccc`), never the user's
-# default one. If this unit were the first to start tmux, the default
+# The TUI gets its OWN tmux server (socket /tmp/ccc-tmux-<uid>/ccc, see
+# src/ccc/tmux.py), never the user's default one. If this unit were the first to start tmux, the default
 # server — and with it every other tmux session on the machine — would
 # live inside this unit's cgroup, so systemd-oomd picking this unit would
 # kill all of them at once (that happened twice).
@@ -13,13 +13,13 @@ After=ccc.service
 # The unit stays "running" for as long as the tmux session exists: the
 # ExecStart script creates the detached session and then just waits on
 # it. If the session disappears for any reason (oomd kill, tmux crash,
-# `tmux -L ccc kill-server`), the script exits non-zero and
+# `ccc-tui-supervise.sh stop`), the script exits non-zero and
 # Restart=always brings everything back after RestartSec.
 Type=simple
 Environment=CCC_BIN=/usr/bin/ccc
 Environment=CCC_START_DIR=%h
 ExecStart=/usr/lib/ccc/ccc-tui-supervise.sh
-ExecStop=/usr/bin/tmux -L ccc kill-session -t ccc
+ExecStop=/usr/lib/ccc/ccc-tui-supervise.sh stop
 Restart=always
 RestartSec=5
 

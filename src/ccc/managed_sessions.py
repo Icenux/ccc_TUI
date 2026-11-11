@@ -16,7 +16,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 
-from ccc import mcp_servers, plugins, profiles
+from ccc import mcp_servers, plugins, profiles, tmux
 from ccc.live_delivery import DeliveryResult
 from ccc.models import DeliveryMode, Queue
 
@@ -39,9 +39,9 @@ def _run(args: list[str], input_text: str | None = None) -> subprocess.Completed
 
 
 def _tmux(*args: str, input_text: str | None = None) -> subprocess.CompletedProcess:
-    # -f /dev/null: the server must not load the user's tmux.conf — plugins
-    # like tmux-continuum would restore the user's own sessions into it.
-    return _run(["tmux", "-L", TMUX_SOCKET, "-f", "/dev/null", *args], input_text=input_text)
+    # ccc's own tmux (binary, socket, no user tmux.conf — plugins like
+    # tmux-continuum would restore the user's own sessions into it), see ccc.tmux.
+    return _run(tmux.command(TMUX_SOCKET, *args), input_text=input_text)
 
 
 def target(queue_id: int) -> str:

@@ -5,8 +5,8 @@ After=ccc.service
 RequiresMountsFor=@CCC_DIR@
 
 [Service]
-# The TUI gets its OWN tmux server (`-L ccc`), never the user's
-# default one. If this unit were the first to start tmux, the default
+# The TUI gets its OWN tmux server (socket /tmp/ccc-tmux-<uid>/ccc, see
+# src/ccc/tmux.py), never the user's default one. If this unit were the first to start tmux, the default
 # server — and with it every other tmux session on the machine — would
 # live inside this unit's cgroup, so systemd-oomd picking this unit would
 # kill all of them at once (that happened twice).
@@ -14,11 +14,11 @@ RequiresMountsFor=@CCC_DIR@
 # The unit stays "running" for as long as the tmux session exists: the
 # ExecStart script creates the detached session and then just waits on
 # it. If the session disappears for any reason (oomd kill, tmux crash,
-# `tmux -L ccc kill-server`), the script exits non-zero and
+# `ccc-tui-supervise.sh stop`), the script exits non-zero and
 # Restart=always brings everything back after RestartSec.
 Type=simple
 ExecStart=@CCC_DIR@/bin/ccc-tui-supervise.sh
-ExecStop=/usr/bin/tmux -L ccc kill-session -t ccc
+ExecStop=@CCC_DIR@/bin/ccc-tui-supervise.sh stop
 Restart=always
 RestartSec=5
 

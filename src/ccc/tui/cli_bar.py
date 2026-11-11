@@ -12,7 +12,7 @@ from textual.app import App
 from textual.containers import Horizontal
 from textual.widgets import Static
 
-from ccc import clipboard_bridge, keymap
+from ccc import clipboard_bridge, keymap, tmux
 from ccc.cli_input import apply_preset
 from ccc.i18n import _
 from ccc.prompt_presets import load_prompt_presets
@@ -86,9 +86,9 @@ class CliBar(App):
         pane, queue_id = current
         error = apply_preset(self.storage, queue_id, int(widget.id.removeprefix("bar-preset-")))
         if error:
-            subprocess.run(["tmux", "display-message", "-d", "4000", error], capture_output=True)
+            subprocess.run(tmux.own("display-message", "-d", "4000", error), capture_output=True)
         # Back to Claude: the bar is only clicked, never typed in.
-        subprocess.run(["tmux", "select-pane", "-t", pane], capture_output=True)
+        subprocess.run(tmux.own("select-pane", "-t", pane), capture_output=True)
 
 
 def main() -> None:

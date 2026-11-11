@@ -23,7 +23,7 @@ import re
 import subprocess
 import threading
 
-from ccc import instance, managed_sessions
+from ccc import instance, managed_sessions, tmux
 
 NOTIFICATION = "%paste-buffer-changed "
 RETRY_SECONDS = 1.0
@@ -47,7 +47,7 @@ def changed_buffer(line: str) -> str | None:
 def read_buffer(buffer_name: str) -> bytes | None:
     """The session server's paste buffer (None if it's empty or gone)."""
     saved = subprocess.run(
-        ["tmux", "-L", managed_sessions.TMUX_SOCKET, "save-buffer", "-b", buffer_name, "-"],
+        tmux.command(managed_sessions.TMUX_SOCKET, "save-buffer", "-b", buffer_name, "-"),
         capture_output=True, timeout=5,
     )
     return saved.stdout if saved.returncode == 0 and saved.stdout else None
@@ -57,13 +57,13 @@ def forward(buffer_name: str) -> bool:
     """Load the session server's buffer into ccc's server and onto the
     clipboard of its client."""
     saved = subprocess.run(
-        ["tmux", "-L", managed_sessions.TMUX_SOCKET, "save-buffer", "-b", buffer_name, "-"],
+        tmux.command(managed_sessions.TMUX_SOCKET, "save-buffer", "-b", buffer_name, "-"),
         capture_output=True, timeout=5,
     )
     if saved.returncode != 0 or not saved.stdout:
         return False
     loaded = subprocess.run(
-        ["tmux", "-L", instance.TMUX_SOCKET, "load-buffer", "-w", "-"],
+        tmux.command(instance.TMUX_SOCKET, "load-buffer", "-w", "-"),
         input=saved.stdout, capture_output=True, timeout=5,
     )
     return loaded.returncode == 0
@@ -71,8 +71,8 @@ def forward(buffer_name: str) -> bool:
 
 def control_command(queue_id: int) -> list[str]:
     # -r: read-only, the bridge never types into the session.
-    return ["tmux", "-L", managed_sessions.TMUX_SOCKET, "-C", "attach-session", "-r",
-            "-t", managed_sessions.exact(queue_id)]
+    return tmux.command(managed_sessions.TMUX_SOCKET, "-C", "attach-session", "-r",
+                        "-t", managed_sessions.exact(queue_id))
 
 
 def listen(queue_id: int, stop: threading.Event, on_copy=None) -> None:

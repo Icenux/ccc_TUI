@@ -11,7 +11,7 @@ import os
 import sys
 import time
 
-from ccc import managed_sessions
+from ccc import managed_sessions, tmux
 from ccc.i18n import _
 
 WAIT_POLL_SECONDS = 0.5
@@ -21,8 +21,7 @@ DAEMON_HINT_SECONDS = 60.0
 
 
 def attach_command(queue_id: int) -> list[str]:
-    return ["tmux", "-L", managed_sessions.TMUX_SOCKET, "-f", "/dev/null",
-            "attach-session", "-t", managed_sessions.exact(queue_id)]
+    return tmux.command(managed_sessions.TMUX_SOCKET, "attach-session", "-t", managed_sessions.exact(queue_id))
 
 
 def wait_for_session(queue_id: int, out=sys.stdout, sleep=time.sleep, clock=time.monotonic) -> None:

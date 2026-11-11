@@ -20,10 +20,30 @@ instead, e.g. with an autostart entry of your desktop that runs
 
 ## `ccc` doesn't open / shows something odd
 
-The always-on ccc runs in its own tmux server (`tmux -L ccc`), so it
-doesn't show up in plain `tmux ls`. `ccc` attaches to it; if the
-`ccc-tui` service isn't running, `ccc` starts it. If ccc itself quits, it
-is back a second later. `systemctl --user restart ccc-tui` restarts it.
+The always-on ccc runs in its own tmux server (socket
+`/tmp/ccc-tmux-<uid>/ccc`), so it doesn't show up in plain `tmux ls`.
+`ccc` attaches to it; if the `ccc-tui` service isn't running, `ccc`
+starts it. If ccc itself quits, it is back a second later.
+`systemctl --user restart ccc-tui` restarts it.
+
+## ccc and your own tmux
+
+ccc's tmux servers are kept apart from yours: their sockets are in
+`/tmp/ccc-tmux-<uid>/` (not next to yours in `/tmp/tmux-<uid>/`) and they
+never load your `~/.tmux.conf`, so changing your tmux setup doesn't
+change ccc. Two environment variables move them further:
+
+- `CCC_TMUX_BIN` — the tmux program ccc uses (e.g. a build of its own,
+  so upgrading the system tmux doesn't touch ccc);
+- `CCC_TMUX_DIR` — the directory for ccc's sockets.
+
+Set them for the services (e.g. in `~/.config/environment.d/ccc.conf`,
+then log in again or `systemctl --user daemon-reload` and restart
+`ccc ccc-tui`) **and** in the shell you run `ccc` from — both must use
+the same tmux.
+
+Running `ccc` inside your own tmux nests it: your tmux sees the keys and
+the mouse first (its prefix, mouse mode, copy mode, clipboard settings).
 
 ## A conversation stopped
 
@@ -66,7 +86,7 @@ Turn it on: `systemctl --user edit ccc-tui`, add
 - Both share one SQLite database (`~/.local/share/ccc/history.db`); a task
   is claimed atomically, so it never runs twice.
 - Conversations with Claude Code beside ccc run as interactive `claude`
-  processes in a hidden tmux server (`tmux -L ccc-sessions`), kept alive
+  processes in a hidden tmux server (socket `/tmp/ccc-tmux-<uid>/ccc-sessions`), kept alive
   by the daemon.
 - ccc uses your normal Claude Code login — no API key — and the **same**
   5-hour / weekly usage as any other Claude Code session on the machine.

@@ -54,6 +54,16 @@ class CCContinueApp(App):
         self.register_theme(theme.THEME)
         self.theme = theme.NAME
 
+    def on_key(self, event) -> None:
+        """Ctrl+Shift+C (ccc's tmux hands it on as CSI-u) copies the text
+        selected with the mouse. Textual only binds Ctrl+C, which ccc must
+        not use (#276). Not a binding: the key is reserved in keymap."""
+        if event.key == "ctrl+shift+c":
+            event.stop()
+            text = self.screen.get_selected_text()
+            if text:
+                self.copy_to_clipboard(text)
+
     def get_theme_variable_defaults(self) -> dict[str, str]:
         return theme.VARIABLES
 

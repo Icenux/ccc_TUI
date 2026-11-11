@@ -49,6 +49,43 @@ _KEYS = {
 }
 
 
+class Screen(pyte.Screen):
+    """pyte's screen plus what a tmux client uses and pyte lacks: REP
+    (CSI n b — repeat the last character) and SU/SD (CSI n S / T — scroll
+    the region). Without them characters go missing and lines are drawn
+    twice or shifted (#278)."""
+
+    _last_char = ""
+
+    def draw(self, data: str) -> None:
+        super().draw(data)
+        if data:
+            self._last_char = data[-1]
+
+    def repeat(self, count: int = 0) -> None:
+        if self._last_char:
+            super().draw(self._last_char * (count or 1))
+
+    def _scroll(self, count: int, up: bool) -> None:
+        top, bottom = self.margins or pyte.screens.Margins(0, self.lines - 1)
+        x, y = self.cursor.x, self.cursor.y
+        self.cursor.y = bottom if up else top
+        for _ in range(min(count or 1, self.lines)):
+            (self.index if up else self.reverse_index)()
+        self.cursor.x, self.cursor.y = x, y
+
+    def scroll_up(self, count: int = 0) -> None:
+        self._scroll(count, up=True)
+
+    def scroll_down(self, count: int = 0) -> None:
+        self._scroll(count, up=False)
+
+
+class ByteStream(pyte.ByteStream):
+    csi = {**pyte.ByteStream.csi, "b": "repeat", "S": "scroll_up", "T": "scroll_down"}
+    events = pyte.ByteStream.events | {"repeat", "scroll_up", "scroll_down"}
+
+
 # CSI with a "private" prefix (> = <): pyte reads CSI > 4;2 m (xterm's modifyOtherKeys)
 # as "underline" and CSI > 1 u (the kitty keyboard protocol) as "restore cursor".
 _PRIVATE_CSI = re.compile(rb"\x1b\[[>=<][0-9;:]*[ -/]*[@-~]")
@@ -134,8 +171,8 @@ class TerminalPane(Widget, can_focus=True):
         self._selection: tuple[tuple[int, int], tuple[int, int]] | None = None
         self._selecting = False
         self.env = env
-        self.screen_ = pyte.Screen(80, 24)
-        self._stream = pyte.ByteStream(self.screen_)
+        self.screen_ = Screen(80, 24)
+        self._stream = ByteStream(self.screen_)
         self._fd: int | None = None
         self._process: subprocess.Popen | None = None
         self._bracketed = False

@@ -5,7 +5,7 @@ import sys
 import pytest
 from textual.app import App
 
-from ccc.tui.terminal_pane import TerminalPane, color, encode_key, safe_paste
+from ccc.tui.terminal_pane import ByteStream, Screen, TerminalPane, color, encode_key, safe_paste
 
 
 class Host(App):
@@ -209,3 +209,18 @@ def test_unknown_colours_fall_back_and_paste_loses_control_characters():
     assert color("brightbrown") == "bright_yellow" and color("nonsense") is None
     assert color("brightnonsense") is None and color("zzzzzz") is None
     assert safe_paste("a\x1b[201~b\x1b]52;c;x\x07\tc\r\nd\x9bq") == "a[201~b]52;c;x\tc\r\ndq"
+
+
+def test_repeat_and_scroll_sequences_of_a_tmux_client():
+    """REP and SU/SD, which plain pyte ignores (#278)."""
+    screen = Screen(10, 4)
+    stream = ByteStream(screen)
+    stream.feed(b"a\x1b[4b")
+    assert screen.display[0].rstrip() == "aaaaa"
+    screen = Screen(5, 4)
+    stream = ByteStream(screen)
+    stream.feed(b"1\r\n2\r\n3\r\n4\x1b[1;1H\x1b[2S")
+    assert [line.strip() for line in screen.display] == ["3", "4", "", ""]
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    stream.feed(b"\x1b[1T")
+    assert [line.strip() for line in screen.display] == ["", "3", "4", ""]

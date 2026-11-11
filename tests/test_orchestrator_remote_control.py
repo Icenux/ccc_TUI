@@ -262,3 +262,47 @@ async def test_work_typed_into_claude_code_is_tracked_busy_then_unseen(storage, 
         assert not storage.get_queue(q.id).live_busy
 
     await _run_orch(storage, body)
+
+
+LIMIT_PANE = """● Bash(cargo build)
+  ⎿  You've hit your 5-hour limit · resets 8pm
+     (Europe/Prague)
+     /upgrade or /usage-credits to finish what
+     you're working on.
+
+✻ Crunched for 1h 9m 28s · done 19:24
+
+❯
+"""
+
+
+async def test_limit_message_on_screen_is_a_limit_without_blocked_state(storage, project_dir, tmux):
+    """Claude Code reports no `blocked` state: the notice on screen is all there is (auto-continue on)."""
+    q = _rc(storage, project_dir)
+
+    async def body():
+        assert await _until(lambda: tmux.started)
+        tmux.pane_text = LIMIT_PANE
+        assert await _until(lambda: storage.get_queue(q.id).status == QueueStatus.WAITING_RETRY)
+        assert [i.prompt_text for i in storage.list_pending_items(q.id)] == [DEFAULT_CONTINUE_TEXT]
+        await asyncio.sleep(0.2)
+        assert len(storage.list_pending_items(q.id)) == 1
+
+    await _run_orch(storage, body)
+
+
+async def test_limit_message_with_auto_continue_off_pauses(storage, project_dir, tmux):
+    q = start_conversation(storage, project_dir, DEFAULT_SELECTION, remote_control=True, auto_continue=False)
+
+    async def body():
+        assert await _until(lambda: tmux.started)
+        tmux.pane_text = LIMIT_PANE
+        assert await _until(lambda: storage.get_queue(q.id).status == QueueStatus.PAUSED_LIMIT)
+
+    await _run_orch(storage, body)
+
+
+def test_limit_message_ignored_once_answered_or_continued():
+    assert ms.limit_message(LIMIT_PANE)
+    assert ms.limit_message(LIMIT_PANE.replace("❯\n", "❯ Pokracuj\n\n● Překlad prošel.\n")) is None
+    assert ms.limit_message("● hotovo\n❯\n") is None

@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta
 
 _RESET_RE = re.compile(
-    r"resets?\s+(?:at\s+)?(\d{1,2}):(\d{2})\s*(am|pm)?",
+    r"resets?\s+(?:at\s+)?(?:(\d{1,2}):(\d{2})\s*(am|pm)?|(\d{1,2})\s*(am|pm))",
     re.IGNORECASE,
 )
 
@@ -17,9 +17,10 @@ def parse_reset_time(text: str, now: datetime | None = None) -> datetime | None:
     if not match:
         return None
     now = now or datetime.now()
-    hour = int(match.group(1))
-    minute = int(match.group(2))
-    meridiem = (match.group(3) or "").lower()
+    if match.group(1) is not None:
+        hour, minute, meridiem = int(match.group(1)), int(match.group(2)), (match.group(3) or "").lower()
+    else:  # "resets 8pm" (Claude Code's own limit message)
+        hour, minute, meridiem = int(match.group(4)), 0, match.group(5).lower()
     if meridiem == "pm" and hour != 12:
         hour += 12
     if meridiem == "am" and hour == 12:

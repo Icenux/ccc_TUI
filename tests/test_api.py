@@ -417,6 +417,19 @@ def test_archive_and_restore(storage, tmp_path):
     assert error.value.status == 400
 
 
+def test_archived_conversation_takes_no_task_or_message(storage, tmp_path):
+    q = _queue(storage, tmp_path)
+    endpoint = api.Api(storage)
+    endpoint.archive(q.id, {"archived": True})
+    for call in (lambda: endpoint.add_task(q.id, {"text": "x"}), lambda: endpoint.send(q.id, {"text": "x"})):
+        with pytest.raises(api.ApiError) as error:
+            call()
+        assert error.value.status == 409
+    assert storage.list_pending_items(q.id) == []
+    endpoint.archive(q.id, {"archived": False})
+    endpoint.add_task(q.id, {"text": "x"})
+
+
 def test_delete_but_not_while_it_runs(storage, tmp_path):
     q = _queue(storage, tmp_path)
     storage.update_queue_status(q.id, QueueStatus.RUNNING)

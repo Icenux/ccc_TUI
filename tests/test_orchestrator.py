@@ -892,3 +892,37 @@ def test_a_session_not_recorded_in_the_folder_is_not_resumed(storage, project_di
     with pytest.raises(ValueError):
         start_conversation(storage, str(project_dir), toggle(DEFAULT_SELECTION, SESSION_RESUME, True),
                            session_id="from-elsewhere", interactive=False)
+
+
+async def test_archived_headless_conversation_runs_nothing_until_restored(storage, project_dir, fast_poll):
+    queue = enqueue_prompt(storage, project_dir, "do work")
+    storage.set_queue_archived(queue.id, True)
+    sent = []
+
+    async def fake_run(project_path, session_id, prompt, resume, launch_flags=None, first_run_flags=None):
+        sent.append(prompt)
+        return RunResult(status=RunStatus.SUCCESS)
+
+    orch = Orchestrator(storage, run_fn=fake_run)
+    await orch.start_all()
+    await asyncio.sleep(0.2)
+    assert sent == []
+    storage.set_queue_archived(queue.id, False)
+    assert await _until(lambda: sent == ["do work"])
+    await orch.stop_all()
+
+
+def test_nothing_can_be_added_to_an_archived_conversation(storage, project_dir):
+    from ccc.orchestrator import send_message
+    from ccc.storage import ArchivedConversationError
+
+    queue = enqueue_prompt(storage, project_dir, "first")
+    storage.set_queue_archived(queue.id, True)
+    with pytest.raises(ArchivedConversationError):
+        send_message(storage, queue.id, "hello")
+    with pytest.raises(ArchivedConversationError):
+        enqueue_prompt(storage, project_dir, "more")
+    assert len(storage.list_pending_items(queue.id)) == 1
+    storage.set_queue_archived(queue.id, False)
+    send_message(storage, queue.id, "hello")
+    assert len(storage.list_pending_items(queue.id)) == 2

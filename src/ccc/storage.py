@@ -671,6 +671,16 @@ class Storage:
             ).fetchone()
             return row[0]
 
+    def list_undelivered_items(self, queue_id: int) -> list[QueueItem]:
+        """Pending items plus the one being delivered now (it waits for Claude Code to be free): all of them
+        are a message the person wrote and Claude hasn't got yet."""
+        with closing(self._connect()) as conn:
+            rows = conn.execute(
+                "SELECT * FROM queue_items WHERE queue_id = ? AND status IN (?, ?) ORDER BY position",
+                (queue_id, ItemStatus.PENDING.value, ItemStatus.RUNNING.value),
+            ).fetchall()
+            return [self._row_to_item(r) for r in rows]
+
     def list_pending_items(self, queue_id: int) -> list[QueueItem]:
         with closing(self._connect()) as conn:
             rows = conn.execute(

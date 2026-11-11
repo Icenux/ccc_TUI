@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from ccc import api, api_scope
-from ccc.models import QueueStatus
+from ccc.models import ItemStatus, QueueStatus
 from ccc.storage import Storage
 from ccc.usage_api import ProUsage, WindowUsage
 
@@ -114,6 +114,18 @@ def test_conversation_detail_has_queued_messages_and_approvals(storage, tmp_path
     assert [m["text"] for m in detail["queued"]] == ["first"]
     assert detail["permissions"][0]["id"] == request.id
     assert detail["permissions"][0]["input"] == {"file_path": "a.py"}
+
+
+def test_a_message_waiting_for_claude_code_stays_in_the_queue(storage, tmp_path):
+    """Taken by the runtime (status running) but not delivered yet: the app must still show it, not lose it."""
+    q = _queue(storage, tmp_path)
+    storage.add_queue_item(q.id, "later")
+    item = storage.add_queue_item(q.id, "now")
+    storage.set_item_status(item.id, ItemStatus.RUNNING)
+
+    queued = api.Api(storage).conversation(q.id)["queued"]
+
+    assert [(m["text"], m["sending"]) for m in queued] == [("later", False), ("now", True)]
 
 
 def test_unknown_conversation_is_404(storage):

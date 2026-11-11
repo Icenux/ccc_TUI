@@ -308,6 +308,13 @@ class QueueRuntime:
         if exc is not None:
             logger.error("Queue runtime for %s crashed and stopped: %r", self.queue.project_path, exc)
 
+    @property
+    def crashed(self) -> bool:
+        """The loop ended with an exception (it never ends otherwise unless
+        the queue was deleted or the daemon stops it)."""
+        task = self._task
+        return task is not None and task.done() and not task.cancelled() and task.exception() is not None
+
     def notify(self) -> None:
         self._wake.set()
 
@@ -807,9 +814,20 @@ class Orchestrator:
     async def _discover_new_queues_loop(self) -> None:
         while True:
             await asyncio.sleep(POLL_INTERVAL_SECONDS)
-            for queue in self.storage.list_queues():
-                if queue.id not in self.runtimes:
-                    self._start_runtime(queue)
+            try:
+                for queue in self.storage.list_queues():
+                    runtime = self.runtimes.get(queue.id)
+                    if runtime is None:
+                        self._start_runtime(queue)
+                    elif runtime.crashed:
+                        # Its crash was logged; a transient error (a locked
+                        # database) must not leave the conversation dead.
+                        logger.warning("Restarting the runtime of '%s' after a crash", queue.name)
+                        self._start_runtime(queue)
+            except Exception:
+                # One failed poll (e.g. 'database is locked') must never end
+                # the discovery for good: new conversations would never start.
+                logger.exception("Discovering conversations failed, trying again")
 
     def _start_runtime(self, queue: Queue) -> QueueRuntime:
         runtime = QueueRuntime(self.storage, queue, self.run_fn, self.notifier)

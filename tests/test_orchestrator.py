@@ -926,3 +926,47 @@ def test_nothing_can_be_added_to_an_archived_conversation(storage, project_dir):
     storage.set_queue_archived(queue.id, False)
     send_message(storage, queue.id, "hello")
     assert len(storage.list_pending_items(queue.id)) == 2
+
+
+async def test_discovery_survives_a_failed_poll_and_restarts_crashed_runtime(storage, project_dir, fast_poll, monkeypatch, tmp_path):
+    import sqlite3
+
+    first = enqueue_prompt(storage, project_dir, "one")
+    other = tmp_path / "other"
+    other.mkdir()
+    sent = []
+
+    async def fake_run(project_path, session_id, prompt, resume, launch_flags=None, first_run_flags=None):
+        sent.append(prompt)
+        return RunResult(status=RunStatus.SUCCESS)
+
+    orch = Orchestrator(storage, run_fn=fake_run)
+    await orch.start_all()
+    assert await _until(lambda: sent == ["one"])
+
+    # A poll that fails once ('database is locked') must not end the discovery …
+    real = storage.list_queues
+    calls = {"n": 0}
+
+    def flaky():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise sqlite3.OperationalError("database is locked")
+        return real()
+
+    monkeypatch.setattr(storage, "list_queues", flaky)
+    enqueue_prompt(storage, str(other), "two")
+    assert await _until(lambda: "two" in sent)
+
+    # … and a runtime whose loop crashed is started again.
+    orch.runtimes[first.id]._task.cancel()
+    crashed = asyncio.get_running_loop().create_future()
+    crashed.set_exception(RuntimeError("boom"))
+    crashed.exception()
+    orch.runtimes[first.id]._task = crashed
+    assert orch.runtimes[first.id].crashed
+    old = orch.runtimes[first.id]
+    storage.add_queue_item(first.id, "three")
+    assert await _until(lambda: "three" in sent)
+    assert orch.runtimes[first.id] is not old
+    await orch.stop_all()

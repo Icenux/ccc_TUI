@@ -65,7 +65,7 @@ async def test_strip_shows_published_keys_and_clicks_press_them(monkeypatch):
     async with app.run_test(size=(100, 1)) as pilot:
         await pilot.pause()
         items = list(app.query(".strip-item"))
-        assert [str(i.render()) for i in items] == ["? Keys", "t Tasks"]
+        assert [str(i.render()) for i in items] == ["? keys", "t tasks"]  # lower case, as in the design (#250)
         await pilot.click(items[1])
         await pilot.pause()
     assert ("send-keys", "-t", "%0", "t") in sent and ("select-pane", "-t", "%0") in sent
@@ -115,3 +115,17 @@ async def test_hover_goes_away_when_the_mouse_stops_reporting(monkeypatch):
         assert item.has_class("-hover")
         await pilot.pause(0.6)
         assert not item.has_class("-hover")
+
+
+@pytest.mark.asyncio
+async def test_strip_starts_with_the_screens_name(monkeypatch):
+    import subprocess
+
+    value = footer_strip.encode([["?", "Help", "?"]], "Dashboard")
+    assert footer_strip.decode(value) == [["?", "Help", "?"]]
+    assert footer_strip.decode_title(value) == "Dashboard"
+    monkeypatch.setattr(footer_strip, "_tmux", lambda *a: subprocess.CompletedProcess(a, 0, value, ""))
+    app = footer_strip.FooterStrip("%0")
+    async with app.run_test(size=(100, 1)) as pilot:
+        await pilot.pause()
+        assert str(app.query_one(".strip-title").render()) == "DASHBOARD"

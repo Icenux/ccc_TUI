@@ -21,6 +21,7 @@ name the default keys.
 | `?` | This help |
 | `o` | Routines: prompts on a schedule |
 | `A` | Agents: helpers Claude Code can call |
+| `t` | Tasks of the selected conversation (Conversations and Archive: their own t) |
 | `U` | Update ccc — only when a new version is there |
 | `Ctrl+P` | Settings (language, Telegram, queues, presets, shortcuts, backup) |
 | `Alt+S` | Screenshot of ccc (an SVG in the export folder, see Settings) |
@@ -38,6 +39,7 @@ name the default keys.
 | `q` | Close ccc (same as Ctrl+Q) |
 | `x` | Archive the selected conversation (a long press on a row offers Archive / Delete) |
 | `Del` | Delete the selected conversation from ccc (asks first) |
+| `/` | Filter the table: all, running, with pending tasks, blocked (also a click on the filter row) |
 
 ## Live sessions
 

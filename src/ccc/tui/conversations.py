@@ -120,6 +120,9 @@ class ConversationsScreen(SidebarScreen):
     ARCHIVED = False
     # Big pixel text when there's nothing to show (see _shows_nothing).
     BANNER_TEXT = _("NO CONVERSATION")
+    # The conversation list shares the menu's column: its buttons shrink sooner.
+    MEDIUM_WINDOW = 64
+    SHORT_WINDOW = 44
 
     BINDINGS = [
         # Back = Dashboard (d) and Retry has its sidebar button.

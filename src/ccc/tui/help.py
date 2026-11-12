@@ -26,6 +26,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("views.help", N_("This help")),
         ("views.routines", N_("Routines: prompts on a schedule")),
         ("views.agents", N_("Agents: helpers Claude Code can call")),
+        ("views.tasks", N_("Tasks of the selected conversation (Conversations and Archive: their own t)")),
         ("views.update", N_("Update ccc — only when a new version is there")),
         ("app.settings", N_("Settings (language, Telegram, queues, presets, shortcuts, backup)")),
         ("app.screenshot", N_("Screenshot of ccc (an SVG in the export folder, see Settings)")),
@@ -41,6 +42,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("dashboard.quit", N_("Close ccc (same as Ctrl+Q)")),
         ("dashboard.archive", N_("Archive the selected conversation (a long press on a row offers Archive / Delete)")),
         ("dashboard.delete", N_("Delete the selected conversation from ccc (asks first)")),
+        ("dashboard.filter", N_("Filter the table: all, running, with pending tasks, blocked (also a click on the filter row)")),
     ]),
     (N_("Live sessions"), [
         ("enter", N_("Send the selected session a prompt")),

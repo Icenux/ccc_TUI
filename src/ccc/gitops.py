@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from ccc.i18n import _
@@ -385,6 +386,32 @@ def work_status(cwd: str) -> WorkStatus | None:
                 behind, ahead = int(counts[0]), int(counts[1])
         head = _git(cwd, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
         return WorkStatus(added, removed, ahead, behind, base, head or None)
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        return None
+
+
+@dataclass(frozen=True)
+class Commit:
+    sha: str  # short
+    subject: str
+    when: datetime
+
+
+def last_commit(cwd: str) -> Commit | None:
+    """The newest commit of the folder's branch; None outside git or where
+    the repo's config isn't safe. Only for conversations that may run
+    commands (see the module docstring)."""
+    try:
+        if _git(cwd, "rev-parse", "--is-inside-work-tree").stdout.strip() != "true":
+            return None
+        if _config_problem(_local_config(cwd)):
+            return None
+        out = _git(cwd, "log", "-1", "--no-show-signature", "--format=%h%x00%ct%x00%s").stdout.strip()
+        sha, _sep, rest = out.partition("\x00")
+        stamp, _sep, subject = rest.partition("\x00")
+        if not sha or not stamp:
+            return None
+        return Commit(sha, subject, datetime.fromtimestamp(int(stamp)))
     except (OSError, subprocess.TimeoutExpired, ValueError):
         return None
 

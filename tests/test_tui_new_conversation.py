@@ -209,6 +209,10 @@ async def test_clicked_option_stays_readable(tmp_path):
     app = _host(NewConversationModal(storage, browse_root=tmp_path), [])
     async with app.run_test(size=(160, 50)) as pilot:
         await pilot.pause()
+        await pilot.click("#nc-more-button")  # every option is behind "+ option" (#250)
+        await pilot.pause()
+        app.screen.query_one("#opt-model_sonnet").scroll_visible(animate=False)
+        await pilot.pause()
         await pilot.click("#opt-model_sonnet")
         await pilot.pause()
         box = app.screen.query_one("#opt-model_sonnet", Checkbox)
@@ -323,3 +327,32 @@ async def test_plugins_start_ticked_as_enabled_and_can_be_unticked(tmp_path, mon
         await pilot.click("#launch-start")
         await pilot.pause()
     assert storage.get_queue(results[0]).launch_flags == ["--dangerously-skip-permissions", "--ccc-plugins=a@m"]
+
+
+@pytest.mark.asyncio
+async def test_chosen_options_are_chips_and_a_chip_click_drops_one(tmp_path):
+    # #250: the options as coloured chips with ×; "+ option" opens all of them.
+    storage = Storage(tmp_path / "h.db")
+    app = _host(NewConversationModal(storage, browse_root=tmp_path), [])
+    async with app.run_test(size=(160, 50)) as pilot:
+        await pilot.pause()
+        dialog = app.screen
+        assert not dialog.query_one("#nc-more").display
+        dialog.query_one("#opt-model_opus", Checkbox).value = True
+        await pilot.pause()
+        dialog.query_one("#opt-effort_max", Checkbox).value = True
+        await pilot.pause()
+        chips = {chip.option_key: str(chip.render()) for chip in dialog.query(".nc-chip")}
+        assert chips["model_opus"].startswith("Opus") and chips["effort_max"].startswith("effort max")
+        await pilot.click(f"#{next(c.id for c in dialog.query('.nc-chip') if c.option_key == 'model_opus')}")
+        await pilot.pause()
+        assert "model_opus" not in dialog.selection
+        assert "model_opus" not in {chip.option_key for chip in dialog.query(".nc-chip")}
+        dialog.query_one("#nc-more-button").press()
+        await pilot.pause()
+        assert dialog.query_one("#nc-more").display and dialog.query_one("#dir-tree").display
+        # The session field opens the options too, on the session's choice.
+        dialog.action_toggle_more(False)
+        dialog.query_one("#nc-session").press()
+        await pilot.pause()
+        assert dialog.has_class("-more") and app.focused.id == "opt-session_new"

@@ -84,4 +84,4 @@ async def test_dashboard_marks_waiting_for_approval(storage):
     async with app.run_test() as pilot:
         await pilot.pause()
         table = app.screen.query_one("#dashboard-table", DataTable)
-        assert str(table.get_row_at(0)[0]).startswith("● conv")
+        assert str(table.get_row_at(0)[1]).startswith("● conv")  # [0] is the cursor's ">"

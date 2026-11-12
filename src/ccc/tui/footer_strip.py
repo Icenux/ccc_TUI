@@ -21,6 +21,7 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Static
 
 from ccc import keymap, tmux
+from ccc.tui.theme import ACCENT
 
 FOOTER_OPTION = "@ccc-footer"
 POLL_SECONDS = 0.3
@@ -45,24 +46,38 @@ def footer_items(app) -> list[list[str]]:
     return items
 
 
-def encode(items: list[list[str]]) -> str:
-    return json.dumps(items, ensure_ascii=False)
+def encode(items: list[list[str]], title: str = "") -> str:
+    """The keys (and the screen's name, shown first — #250) as the window option's value."""
+    return json.dumps({"title": title, "items": items} if title else items, ensure_ascii=False)
+
+
+def _load(value: str):
+    try:
+        return json.loads(value)
+    except ValueError:
+        return None
 
 
 def decode(value: str) -> list[list[str]]:
-    try:
-        items = json.loads(value)
-    except ValueError:
-        return []
+    items = _load(value)
+    if isinstance(items, dict):  # with the screen's name
+        items = items.get("items")
     return [i for i in items if isinstance(i, list) and len(i) == 3] if isinstance(items, list) else []
 
 
-def wrap(items: list[list[str]], width: int) -> list[list[list[str]]]:
+def decode_title(value: str) -> str:
+    data = _load(value)
+    title = data.get("title") if isinstance(data, dict) else None
+    return title if isinstance(title, str) else ""
+
+
+def wrap(items: list[list[str]], width: int, title: str = "") -> list[list[list[str]]]:
     """Items split into rows no wider than `width` (an item is its key, a
-    space, its description and a cell of padding either side), so the
-    whole key list stays readable in a narrow window."""
+    space, its description and a cell of padding either side; the first row
+    starts with the screen's name), so the whole key list stays readable in
+    a narrow window."""
     rows: list[list[list[str]]] = [[]]
-    used = 0
+    used = cell_len(title) + 5 if title else 0
     for item in items:
         cost = cell_len(f"{item[0]} {item[1]}") + 2
         if rows[-1] and used + cost > width:
@@ -79,9 +94,22 @@ def _tmux(*args: str) -> subprocess.CompletedProcess:
 
 
 class FooterStrip(App):
+    def get_theme_variable_defaults(self) -> dict[str, str]:
+        from ccc.tui import theme
+
+        return theme.VARIABLES
+
     CSS = """
     Screen {
         background: $footer-background;
+    }
+    .strip-title {
+        width: auto;
+        padding: 0 2;
+        margin-right: 1;
+        background: $ccc-accent;
+        color: $ccc-background;
+        text-style: bold;
     }
     #strip-items {
         height: auto;
@@ -102,6 +130,10 @@ class FooterStrip(App):
 
     def __init__(self, main_pane: str):
         super().__init__()
+        from ccc.tui import theme
+
+        self.register_theme(theme.THEME)
+        self.theme = theme.NAME
         self.main_pane = main_pane
         self._shown: str | None = None
         self._laid_out: tuple[str, int, int] | None = None
@@ -148,17 +180,20 @@ class FooterStrip(App):
         if value is None or width == 0 or self._laid_out == (value, width, height):
             return
         self._laid_out = (value, width, height)
-        rows = wrap(decode(value), width)
+        title = decode_title(value)
+        rows = wrap(decode(value), width, title)
         column = self.query_one("#strip-items", Vertical)
         self._hovered = None
         await column.remove_children()
         await column.mount_all(
-            Horizontal(*(
-                Static(Text.assemble((shown, "bold yellow"), " ", description),
-                       classes="strip-item", name=key)
-                for shown, description, key in row
-            ), classes="strip-row")
-            for row in rows
+            Horizontal(
+                *([Static(title.upper(), classes="strip-title")] if title and number == 0 else []),
+                *(
+                    Static(Text.assemble((shown, f"bold {ACCENT}"), " ", description.lower()),
+                           classes="strip-item", name=key)
+                    for shown, description, key in row
+                ), classes="strip-row")
+            for number, row in enumerate(rows)
         )
         # The pane is as tall as the rows the keys wrap into (tmux puts it
         # back to 1 row when the window is resized, which resizes this app).

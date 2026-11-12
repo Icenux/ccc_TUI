@@ -6,8 +6,9 @@ used", "review the diff". Claude hands it a task, the helper works in its
 own context, and Claude gets back just the summary. That keeps the
 conversation short and the usage low.
 
-Press `A` anywhere to open **Agents**: the helpers Claude Code would find
-for the selected conversation.
+Press `A` anywhere (or **Agents** in the menu on the left, under Live
+sessions) to open **Agents**: the helpers Claude Code would find for the
+selected conversation.
 
 | Key | |
 |---|---|

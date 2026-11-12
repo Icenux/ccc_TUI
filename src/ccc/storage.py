@@ -671,6 +671,16 @@ class Storage:
             ).fetchone()
             return row[0]
 
+    def count_all_pending_items(self) -> int:
+        """Pending items of all conversations that aren't archived (the menu's Tasks count)."""
+        with closing(self._connect()) as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) FROM queue_items i JOIN queues q ON q.id = i.queue_id "
+                "WHERE i.status = ? AND NOT q.archived",
+                (ItemStatus.PENDING.value,),
+            ).fetchone()
+            return row[0]
+
     def list_undelivered_items(self, queue_id: int) -> list[QueueItem]:
         """Pending items plus the one being delivered now (it waits for Claude Code to be free): all of them
         are a message the person wrote and Claude hasn't got yet."""
@@ -1533,6 +1543,21 @@ class Storage:
                 "COALESCE(SUM(status = 'success'), 0) AS success, COALESCE(SUM(cost_usd), 0) AS cost "
                 "FROM prompt_runs WHERE finished_at >= ?", (since.isoformat(),)).fetchone()
         return {"runs": row["runs"], "queues": row["queues"], "success": row["success"], "cost": row["cost"]}
+
+    def recent_runs(self, limit: int = 20) -> list[PromptRun]:
+        """The latest runs of every conversation, newest first (the Dashboard's activity)."""
+        with closing(self._connect()) as conn:
+            rows = conn.execute(
+                "SELECT * FROM prompt_runs ORDER BY COALESCE(finished_at, started_at) DESC, id DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+            return [self._row_to_run(r) for r in rows]
+
+    def pending_permission_requests_all(self) -> list[PermissionRequest]:
+        """Every tool call that waits for your approval, oldest first."""
+        with closing(self._connect()) as conn:
+            rows = conn.execute("SELECT * FROM permission_requests WHERE status = 'pending' ORDER BY id").fetchall()
+            return [self._row_to_request(r) for r in rows]
 
     def runs_for_queue(self, queue_id: int) -> list[PromptRun]:
         with closing(self._connect()) as conn:

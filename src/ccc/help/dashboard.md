@@ -6,30 +6,48 @@ doing right now. It's only for looking — you work with a conversation in
 
 ![Dashboard](../../../docs/screenshots/dashboard.png)
 
-## Overview
+## The header and the filter
 
-The top line counts all conversations: how many Claude is working on
-(**running**), how many tasks wait in their queues (**pending**), how
-many stopped on an error (**blocked**, red), how many **wait for you**
-(yellow: a tool approval, an error, a usage limit, a finished reply you
-haven't looked at — the same ones the Alt+N key jumps to), and how many
-tokens they used today.
+The panel starts with **DASHBOARD** and the number of conversations; on
+the right, `[n] new conversation` (a click or `n` opens it).
+
+The row under it filters the table: **all** · **running** (Claude is
+working on them) · **pending** (tasks waiting in their queues) ·
+**blocked** (stopped on an error). Click one, or press `/` to go round
+them; the chosen one is green. Next to them: the tokens used today and,
+in yellow, how many conversations **wait for you** (a tool approval, an
+error, a usage limit, a finished reply you haven't looked at — the same
+ones the Alt+N key jumps to).
 
 ## The table
 
-One row per conversation (archived ones are in the [Archive](archive.md)):
+One row per conversation (archived ones are in the [Archive](archive.md));
+the selected one is green, with `>` in front:
 
 | Column | |
 |---|---|
-| Project | the conversation's name, with its marker (see below) |
+| Project | the conversation's name, with its marker (see below), and under it the project folder Claude works in (*Path*), shortened from the front — the last folder is always shown |
+| Branch | the branch, uncommitted lines (`+12−3`) and commits ahead `↑` / behind `↓` its base branch; `–` outside git, and for a conversation where Claude may not run commands itself (ccc runs git only there, see [Git](git.md)) |
+| Queued | tasks waiting in its [queue](tasks.md) |
+| Ctx | how full its context is (yellow from 80 %, red from 90 %) |
 | Status | what it's doing — see the table below |
 | Goal | its latest [goal loop](goal.md): `◎ 3/5` (round / rounds) while it runs, `✅ met 3/5` / `⛔ stuck 4/5` / `⛔ out of rounds 5/5` / `✖ failed` / `■ stopped` for a day after it ended; `–` otherwise |
-| Pending | tasks waiting in its [queue](tasks.md) |
-| Today's tokens | tokens it used today |
-| Git | the branch, uncommitted lines (`+12−3`) and commits ahead `↑` / behind `↓` its base branch; `–` outside git, and for a conversation where Claude may not run commands itself (ccc runs git only there, see [Git](git.md)) |
-| Path | the project folder Claude works in, shortened from the front — the last folder is always shown |
+| Tokens | tokens it used today |
 
-**Which columns** — Settings → Dashboard: one choice for the terminal
+Under the table: how many rows are shown of how many, and the keys.
+
+**The selected conversation** is described under the table: its folder,
+Claude Code options and auto-continue; how many tasks are queued, how
+full the context is, today's tokens, the branch; on the right its newest
+commit (git folders where Claude may run commands) and the keys
+`[↵] open` and `[t] tasks`.
+
+**Activity** at the bottom is what happened lately in all conversations,
+newest first: `task` (a finished task, with its commit), `queue` (tasks
+waiting), `limit` (a usage limit), `approve` (a tool call waits for you),
+`error` and `review`.
+
+**Which columns** (*Path* is the folder under the name) — Settings → Dashboard: one choice for the terminal
 version of ccc (the Android app has its own). The name is always shown;
 by default everything else is too.
 
@@ -50,11 +68,11 @@ In the Conversations list `·3` after the name means three tasks queued.
 
 | Status | |
 |---|---|
-| `idle` | nothing to do; the next task starts as soon as you add one |
-| `running` | Claude is working on a task |
-| `waiting_retry` | waiting for a usage limit to reset; then it carries on by itself |
-| `paused_limit` | stopped at a usage limit with auto-continue off — waits for you |
-| `blocked_error` | stopped on an error — waits for you |
+| `IDLE` | nothing to do; the next task starts as soon as you add one |
+| `RUNNING` | Claude is working on a task |
+| `WAITING` | waiting for a usage limit to reset; then it carries on by itself |
+| `LIMIT` | stopped at a usage limit with auto-continue off — waits for you |
+| `BLOCKED` | stopped on an error — waits for you |
 
 What to do with the last two: [Usage limits & blocked queues](limits.md).
 

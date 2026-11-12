@@ -46,14 +46,15 @@ QUIT_OPTION = "@ccc-quit-key"
 # Only while Claude Code is open (#{P:} looks through the window's panes
 # for @ccc-cli): with ccc alone the keys can't go anywhere else.
 CLI_OPEN_FORMAT = f"#{{P:#{{?#{{{PANE_OPTION}}},1,}}}}"
-# Every line of the frame (the borders of all panes) is green, in ccc and
-# in Claude Code alike; "typing here" marks where the keys go.
+# Every line of the frame (the borders of all panes) is the theme's grey
+# line, in ccc and in Claude Code alike; "typing here" (in the accent
+# green) marks where the keys go.
 BORDER_COLOR = theme.TMUX_FRAME
 BORDER_OPTIONS: tuple[tuple[str, str], ...] = (
     ("pane-border-status", "top"),
     ("pane-border-format",
      f"#{{?#{{&&:#{{pane_active}},{CLI_OPEN_FORMAT}}},"
-     f"#[fg=black#,bg={theme.TMUX_FRAME}#,bold]"
+     f"#[fg=black#,bg={theme.TMUX_ACCENT}#,bold]"
      f" {_("⌨ typing here")} #[default],}}"
      f"#{{?#{{{TITLE_OPTION}}}, #{{{TITLE_OPTION}}} ,}}"
      f"#{{?#{{&&:#{{{PANE_OPTION}}},#{{{WAITING_OPTION}}}}},#[fg=black#,bg=yellow#,bold] #{{{WAITING_OPTION}}} #[default] ,}}"),
@@ -367,7 +368,9 @@ def style_window(keys: dict[str, str] | None = None) -> None:
     _tmux("set-option", "-t", _own_pane(), "mouse", "on")
     for name, value in BORDER_OPTIONS:
         _tmux("set-option", "-w", "-t", _own_pane(), name, value)
-    _tmux("set-option", "-p", "-t", _own_pane(), TITLE_OPTION, "ccc")
+    # No title over ccc (#250: no bar at the top) — its menu starts right
+    # under the frame line; one set by an older ccc goes too.
+    _tmux("set-option", "-pu", "-t", _own_pane(), TITLE_OPTION)
     for command in CLIPBOARD_COMMANDS:
         _tmux(*command)
     bind_quit_key(keys)

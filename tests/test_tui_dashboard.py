@@ -188,10 +188,12 @@ async def test_dashboard_shows_git_and_what_waits_for_you(tmp_path, monkeypatch)
         await pilot.pause(0.5)
         app.screen.refresh_table()
         headers, rows = _cells(app)
-        assert headers == ["Project", "Status", "Goal", "Pending", "Today's tokens", "Git", "Path"]
+        # The cursor's mark, then the design's columns (#250); the path is under the name.
+        assert headers == [" ", "PROJECT", "BRANCH", "QUEUED", "CTX", "STATUS", "GOAL", "TOKENS"]
         row = rows[0]
-        assert row[5] == "feature-x +12−3 ↑2" and row[6].endswith("shop-api")
-        assert "1 waiting for you" in app.screen.query_one("#dashboard-overview", Static).render().plain
+        assert row[1].endswith("shop-api") and "\n" in row[1]
+        assert row[2] == "feature-x +12−3 ↑2" and row[5] == "BLOCKED"
+        assert "1 waiting for you" in app.screen.query_one("#dashboard-tokens", Static).render().plain
 
 
 @pytest.mark.asyncio
@@ -202,16 +204,16 @@ async def test_columns_choice_does_not_depend_on_window_width(tmp_path, monkeypa
     app = CCContinueApp(db_path)
     async with app.run_test(size=(80, 30)) as pilot:
         await pilot.pause(0.5)
-        assert len(_cells(app)[0]) == 7  # the default is everything, even in a narrow window
+        assert len(_cells(app)[0]) == 8  # the default is everything, even in a narrow window
         dashboard_columns.save(storage, [dashboard_columns.GIT, dashboard_columns.PATH])
         app.screen.refresh_table()
         headers, rows = _cells(app)
-        assert headers == ["Project", "Git", "Path"]
-        assert rows[0][2].endswith("shop-api")
+        assert headers == [" ", "PROJECT", "BRANCH"]
+        assert rows[0][1].endswith("shop-api")
     app = CCContinueApp(db_path)
     async with app.run_test(size=(160, 30)) as pilot:
         await pilot.pause(0.5)
-        assert _cells(app)[0] == ["Project", "Git", "Path"]
+        assert _cells(app)[0] == [" ", "PROJECT", "BRANCH"]
 
 
 def test_columns_choice_defaults_and_saves_in_table_order(tmp_path):
@@ -220,8 +222,8 @@ def test_columns_choice_defaults_and_saves_in_table_order(tmp_path):
 
     storage = Storage(str(tmp_path / "h.db"))
     assert dc.shown(storage) == list(dc.IDS)
-    dc.save(storage, [dc.PATH, dc.STATUS])
-    assert dc.shown(storage) == [dc.STATUS, dc.PATH]
+    dc.save(storage, [dc.STATUS, dc.PATH])
+    assert dc.shown(storage) == [dc.PATH, dc.STATUS]
     dc.save(storage, [])  # chosen: none — only the name
     assert dc.shown(storage) == []
 
@@ -238,17 +240,17 @@ async def test_dashboard_goal_column_shows_the_running_goal_then_its_result(tmp_
     async with app.run_test(size=(160, 40)) as pilot:
         await pilot.pause(0.5)
         app.screen.refresh_table()
-        assert _cells(app)[1][0][2] == "–"  # no goal yet
+        assert _cells(app)[1][0][6] == "–"  # no goal yet
         goal = goals.start(storage, queue.id, "tokens expire", max_rounds=5)
         storage.update_goal(goal.id, round=3)
         app.screen.refresh_table()
-        assert _cells(app)[1][0][2] == "◎ 3/5"
+        assert _cells(app)[1][0][6] == "◎ 3/5"
         storage.update_goal(goal.id, status=GoalStatus.PASSED, finished_at=datetime.now())
         app.screen.refresh_table()
-        assert _cells(app)[1][0][2] == "✅ met 3/5"
+        assert _cells(app)[1][0][6] == "✅ met 3/5"
         storage.update_goal(goal.id, finished_at=datetime.now() - timedelta(days=2))
         app.screen.refresh_table()
-        assert _cells(app)[1][0][2] == "–"  # a day later it leaves the Dashboard
+        assert _cells(app)[1][0][6] == "–"  # a day later it leaves the Dashboard
 
 
 @pytest.mark.asyncio

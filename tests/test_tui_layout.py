@@ -266,3 +266,19 @@ def test_button_colours_stay_distinct_in_a_256_colour_terminal():
     assert len(downgraded) == 3
     standard = {Color.parse(c).downgrade(ColorSystem.STANDARD).number for c in colours}
     assert len(standard) == 3
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("rows", [24, 40, 50])
+async def test_menu_items_are_all_the_same_size_the_open_view_marked_by_an_arrow(tmp_path, rows):
+    # The open view had a white frame that took a column on each side: it looked narrower.
+    app = _app(tmp_path)
+    async with app.run_test(size=(140, rows)) as pilot:
+        await pilot.pause()
+        for key in ("d", "a"):
+            await pilot.press(key)
+            await pilot.pause()
+            buttons = list(app.screen.query(".nav-button"))
+            assert len({(b.region.width, b.region.height, b.content_region.width) for b in buttons}) == 1, key
+            marked = [b.id for b in buttons if str(b.render()).lstrip().startswith(">")]
+            assert marked == [f"nav-{ {'d': 'dashboard', 'a': 'analytics'}[key]}"]

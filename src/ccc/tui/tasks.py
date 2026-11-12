@@ -8,7 +8,6 @@ from datetime import datetime
 from rich.text import Text
 from textual.containers import Container
 from textual.content import Content
-from textual.screen import ModalScreen
 from textual.widgets import DataTable, Input, Static, TextArea
 
 from ccc import keymap
@@ -17,7 +16,7 @@ from ccc.limits import RESET_BUFFER
 from ccc.schedule import format_when, parse_when
 from ccc.storage import ArchivedConversationError, Storage
 from ccc.usage_api import get_pro_usage
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 from ccc.tui.mentions import MentionArea
 
 PREVIEW_CHARS = 100
@@ -36,7 +35,7 @@ def _next_five_hour_reset() -> datetime | None:
     return usage.five_hour.resets_at.astimezone().replace(tzinfo=None) + RESET_BUFFER
 
 
-class TaskEditModal(ModalScreen):
+class TaskEditModal(CccModal):
     """Multi-line editor for one task plus when it may start. Dismisses
     with a TaskEdit, or None when cancelled (or left empty)."""
 
@@ -110,7 +109,7 @@ class TaskEditModal(ModalScreen):
         self.dismiss(None)
 
 
-class TasksModal(ModalScreen):
+class TasksModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="TasksModal") + """
     TasksModal > Container {
         width: 90%;

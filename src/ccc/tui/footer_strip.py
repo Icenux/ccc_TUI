@@ -46,9 +46,9 @@ def footer_items(app) -> list[list[str]]:
     return items
 
 
-def encode(items: list[list[str]], title: str = "") -> str:
-    """The keys (and the screen's name, shown first — #250) as the window option's value."""
-    return json.dumps({"title": title, "items": items} if title else items, ensure_ascii=False)
+def encode(items: list[list[str]]) -> str:
+    """The keys as the window option's value."""
+    return json.dumps(items, ensure_ascii=False)
 
 
 def _load(value: str):
@@ -60,24 +60,17 @@ def _load(value: str):
 
 def decode(value: str) -> list[list[str]]:
     items = _load(value)
-    if isinstance(items, dict):  # with the screen's name
+    if isinstance(items, dict):  # published by an older ccc, with the screen's name
         items = items.get("items")
     return [i for i in items if isinstance(i, list) and len(i) == 3] if isinstance(items, list) else []
 
 
-def decode_title(value: str) -> str:
-    data = _load(value)
-    title = data.get("title") if isinstance(data, dict) else None
-    return title if isinstance(title, str) else ""
-
-
-def wrap(items: list[list[str]], width: int, title: str = "") -> list[list[list[str]]]:
+def wrap(items: list[list[str]], width: int) -> list[list[list[str]]]:
     """Items split into rows no wider than `width` (an item is its key, a
-    space, its description and a cell of padding either side; the first row
-    starts with the screen's name), so the whole key list stays readable in
-    a narrow window."""
+    space, its description and a cell of padding either side), so the whole
+    key list stays readable in a narrow window."""
     rows: list[list[list[str]]] = [[]]
-    used = cell_len(title) + 5 if title else 0
+    used = 0
     for item in items:
         cost = cell_len(f"{item[0]} {item[1]}") + 2
         if rows[-1] and used + cost > width:
@@ -102,14 +95,6 @@ class FooterStrip(App):
     CSS = """
     Screen {
         background: $footer-background;
-    }
-    .strip-title {
-        width: auto;
-        padding: 0 2;
-        margin-right: 1;
-        background: $ccc-accent;
-        color: $ccc-background;
-        text-style: bold;
     }
     #strip-items {
         height: auto;
@@ -180,20 +165,18 @@ class FooterStrip(App):
         if value is None or width == 0 or self._laid_out == (value, width, height):
             return
         self._laid_out = (value, width, height)
-        title = decode_title(value)
-        rows = wrap(decode(value), width, title)
+        rows = wrap(decode(value), width)
         column = self.query_one("#strip-items", Vertical)
         self._hovered = None
         await column.remove_children()
         await column.mount_all(
             Horizontal(
-                *([Static(title.upper(), classes="strip-title")] if title and number == 0 else []),
                 *(
                     Static(Text.assemble((shown, f"bold {ACCENT}"), " ", description.lower()),
                            classes="strip-item", name=key)
                     for shown, description, key in row
                 ), classes="strip-row")
-            for number, row in enumerate(rows)
+            for row in rows
         )
         # The pane is as tall as the rows the keys wrap into (tmux puts it
         # back to 1 row when the window is resized, which resizes this app).

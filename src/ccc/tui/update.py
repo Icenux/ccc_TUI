@@ -5,20 +5,17 @@ from __future__ import annotations
 from rich.text import Text
 from textual import work
 from textual.containers import Container, Horizontal
-from textual.screen import ModalScreen
 from textual.widgets import Button, Static
 
 from ccc import keymap, updates
 from ccc.i18n import _
 from ccc.storage import Storage
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 
-class UpdateModal(ModalScreen):
+class UpdateModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="UpdateModal") + """
     UpdateModal > Container {
-        border: round yellow;
-        border-title-color: yellow;
     }
     UpdateModal #update-info {
         margin-bottom: 1;

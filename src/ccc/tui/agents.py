@@ -6,12 +6,11 @@ from __future__ import annotations
 
 from rich.text import Text
 from textual.containers import Container, Horizontal
-from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Select, Static, TextArea
 
 from ccc import agent_templates, agent_wizard, agents, keymap
 from ccc.i18n import N_, _
-from ccc.tui.layout import ConfirmModal, MODAL_CSS
+from ccc.tui.layout import CccModal, ConfirmModal, MODAL_CSS
 
 SCOPE_LABELS = {agents.SCOPE_PROJECT: N_("project"), agents.SCOPE_USER: N_("all projects")}
 PROMPT_LINES = 4
@@ -24,7 +23,7 @@ def tools_label(agent: agents.Agent) -> str:
 CUSTOM = "_custom"  # the first "Start from" entry: the user's own description
 
 
-class AgentCreateModal(ModalScreen):
+class AgentCreateModal(CccModal):
     """A new agent: from a template, or from the user's own description (three plain
     questions; the prompt is an outline or written by Claude). Shows what will be
     written. Dismisses with the new file's path, or None."""
@@ -250,7 +249,7 @@ class AgentCreateModal(ModalScreen):
         self.dismiss(None)
 
 
-class AgentEditModal(ModalScreen):
+class AgentEditModal(CccModal):
     """Change an existing agent's description, tools, model and prompt. The name, the file and every
     other field of the file stay as they are. Dismisses with True when saved, else None."""
 
@@ -339,7 +338,7 @@ class AgentEditModal(ModalScreen):
         self.dismiss(None)
 
 
-class AgentsModal(ModalScreen):
+class AgentsModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="AgentsModal") + """
     AgentsModal > Container {
         width: 95%;

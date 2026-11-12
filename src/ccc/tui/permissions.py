@@ -6,25 +6,22 @@ import json
 
 from rich.text import Text
 from textual.containers import Container, VerticalScroll
-from textual.screen import ModalScreen
 from textual.widgets import Static
 
 from ccc import keymap
 from ccc.i18n import _
 from ccc.models import PermissionRequest
 from ccc.storage import Storage
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 
-class PermissionModal(ModalScreen):
+class PermissionModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="PermissionModal") + """
     PermissionModal > Container {
         width: 90%;
         max-width: 130;
         height: auto;
         max-height: 80%;
-        border: round yellow;
-        border-title-color: yellow;
     }
     PermissionModal VerticalScroll {
         height: auto;

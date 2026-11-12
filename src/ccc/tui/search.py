@@ -3,17 +3,16 @@ from __future__ import annotations
 
 from rich.text import Text
 from textual.containers import Container
-from textual.screen import ModalScreen
 from textual.widgets import DataTable, Input, Static
 
 from ccc import keymap
 from ccc.i18n import _
 from ccc.search import search_conversations
 from ccc.storage import Storage
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 
-class SearchModal(ModalScreen):
+class SearchModal(CccModal):
     """Dismisses with the queue id of the chosen hit, or None."""
 
     DEFAULT_CSS = MODAL_CSS.format(cls="SearchModal") + """

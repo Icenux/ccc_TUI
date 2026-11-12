@@ -6,7 +6,6 @@ from datetime import date, datetime
 from rich.text import Text
 from textual import events
 from textual.containers import Horizontal, Vertical, VerticalScroll
-from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Static
 from textual.widgets.data_table import ColumnKey
 
@@ -17,6 +16,7 @@ from ccc.models import QueueStatus
 from ccc.storage import Storage
 from ccc.tui import theme
 from ccc.tui.layout import (
+    CccModal,
     ConfirmModal,
     SidebarScreen,
     panel,
@@ -71,19 +71,20 @@ def _home(path: str) -> str:
     return "~" + path[len(home):] if home not in ("", "/") and (path == home or path.startswith(home + "/")) else path
 
 
-class ConversationMenu(ModalScreen):
+class ConversationMenu(CccModal):
     """What a long press on a Dashboard row offers: archive or delete.
     Dismisses "archive", "delete" or None."""
 
     DEFAULT_CSS = """
     ConversationMenu {
         align: center middle;
+        background: $ccc-background 60%;
     }
     ConversationMenu > Vertical {
         width: 50;
         height: auto;
-        border: round $accent;
-        background: $surface;
+        border: solid $ccc-text;
+        background: $ccc-panel;
         padding: 1 2;
     }
     ConversationMenu Button {

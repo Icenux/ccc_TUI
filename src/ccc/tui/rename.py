@@ -3,15 +3,14 @@ conversation a new name in ccc."""
 from __future__ import annotations
 
 from textual.containers import Container
-from textual.screen import ModalScreen
 from textual.widgets import Input, Static
 
 from ccc import keymap
 from ccc.i18n import _
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 
-class RenameModal(ModalScreen):
+class RenameModal(CccModal):
     """Dismisses True when the name changed."""
 
     DEFAULT_CSS = MODAL_CSS.format(cls="RenameModal")

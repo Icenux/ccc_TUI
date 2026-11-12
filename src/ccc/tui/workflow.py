@@ -8,14 +8,13 @@ from datetime import datetime
 
 from rich.text import Text
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Select, Static, TextArea
 
 from ccc import keymap, workflows
 from ccc.i18n import N_, _
 from ccc.models import WorkflowRun, WorkflowStatus
 from ccc.schedule import format_when
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 REFRESH_SECONDS = 2.0
 OUTPUT_CHARS = 2000
@@ -50,7 +49,7 @@ def graph(run: WorkflowRun) -> Text:
     return Text("  →  ").join(parts)
 
 
-class WorkflowModal(ModalScreen):
+class WorkflowModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="WorkflowModal") + """
     WorkflowModal > Container {
         width: 98%;
@@ -93,7 +92,7 @@ class WorkflowModal(ModalScreen):
     }
     WorkflowModal #workflow-detail-box {
         height: 1fr;
-        border: round $primary;
+        border: solid $ccc-line;
         padding: 0 1;
     }
     WorkflowModal .workflow-actions {

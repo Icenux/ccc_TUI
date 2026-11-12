@@ -7,14 +7,13 @@ from datetime import datetime
 
 from rich.text import Text
 from textual.containers import Container, Horizontal
-from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Select, Static, TextArea
 
 from ccc import keymap, routines
 from ccc.i18n import _
 from ccc.models import Routine, RoutineTarget
 from ccc.schedule import format_when
-from ccc.tui.layout import ConfirmModal, MODAL_CSS
+from ccc.tui.layout import CccModal, ConfirmModal, MODAL_CSS
 
 TARGETS = [
     (RoutineTarget.SAME, _("In this conversation (Claude remembers earlier runs)")),
@@ -22,7 +21,7 @@ TARGETS = [
 ]
 
 
-class RoutineEditModal(ModalScreen):
+class RoutineEditModal(CccModal):
     """Add or edit one routine. Dismisses with the routine's id, or None."""
 
     DEFAULT_CSS = MODAL_CSS.format(cls="RoutineEditModal") + """
@@ -168,7 +167,7 @@ class RoutineEditModal(ModalScreen):
         self.dismiss(None)
 
 
-class RoutinesModal(ModalScreen):
+class RoutinesModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="RoutinesModal") + """
     RoutinesModal > Container {
         width: 95%;

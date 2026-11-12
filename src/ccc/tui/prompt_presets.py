@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from rich.text import Text
 from textual.containers import Container
-from textual.screen import ModalScreen
 from textual.widgets import Checkbox, Input, Static, TextArea
 
 from ccc import keymap
 from ccc.i18n import _
 from ccc.prompt_presets import PromptPreset
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
+from ccc.tui.theme import ACCENT
 
 # Most terminals (and tmux, Termux) send Alt+digit as Esc+digit, which
 # Textual turns into the character macOS Option+digit types ("\x1b1" -> "¡");
@@ -48,10 +48,11 @@ def preset_key(number: int, keys: dict[str, str] | None = None) -> str:
 
 
 def bar_item(number: int, preset: PromptPreset, keys: dict[str, str] | None = None) -> Text:
-    return Text.assemble((f"{preset_key(number, keys)} ", "bold cyan"), (mode_mark(preset) + " ", "yellow"), preset.name)
+    """A preset in the bar under a conversation: its key in the colour of the keys in the status bar."""
+    return Text.assemble((f"{preset_key(number, keys)} ", f"bold {ACCENT}"), (mode_mark(preset) + " ", "yellow"), preset.name)
 
 
-class PromptPresetModal(ModalScreen):
+class PromptPresetModal(CccModal):
     """Name, prompt text and mode of one preset. Dismisses with a
     PromptPreset, or None when cancelled."""
 

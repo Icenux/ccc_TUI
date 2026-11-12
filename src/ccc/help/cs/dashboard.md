@@ -36,7 +36,7 @@ výchozí je ukázat i všechno ostatní.
 
 | Značka | Význam |
 |---|---|
-| zlatá `◐◓◑◒` (otáčí se) | Claude pracuje |
+| zlatá `⣾⣷⣯⣟⡿⢿⣻⣽` (otáčí se) | Claude pracuje |
 | `‖` | čeká na obnovení limitu využití, nebo je pozastavená |
 | červená `●` | zastavila se chybou — potřebuje tě |
 | modrá `●` | Claude čeká, až [schválíš nástroj](approvals.md) |

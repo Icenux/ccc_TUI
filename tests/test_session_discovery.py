@@ -125,3 +125,20 @@ def test_find_tmux_pane_for_pid_process_gone_returns_none():
     ppid_result = MagicMock(returncode=1, stdout="")
     with patch("subprocess.run", side_effect=[panes_result, ppid_result]):
         assert find_tmux_pane_for_pid(999999) is None
+
+
+def test_session_with_only_a_background_shell_is_not_busy(tmp_path, monkeypatch):
+    """`claude agents --json` says "busy" for a session that only has a background shell running;
+    its own file says "shell" — that is not work."""
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path))
+    (tmp_path / "sessions").mkdir()
+    (tmp_path / "sessions" / "11.json").write_text(json.dumps({"pid": 11, "status": "shell"}))
+    (tmp_path / "sessions" / "12.json").write_text(json.dumps({"pid": 12, "status": "busy"}))
+    entries = [
+        {"pid": pid, "cwd": "/tmp", "kind": "interactive", "sessionId": f"s{pid}", "name": f"n{pid}", "status": "busy"}
+        for pid in (11, 12, 13)  # 13 has no file at all
+    ]
+    with patch("subprocess.run", return_value=MagicMock(returncode=0, stdout=json.dumps(entries))):
+        statuses = {s.pid: s.status for s in discover_sessions()}
+
+    assert statuses == {11: "idle", 12: "busy", 13: "busy"}

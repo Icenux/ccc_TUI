@@ -37,7 +37,7 @@ by default everything else is too.
 
 | Marker | Meaning |
 |---|---|
-| gold `◐◓◑◒` (turning) | Claude is working |
+| gold `⣾⣷⣯⣟⡿⢿⣻⣽` (turning) | Claude is working |
 | `‖` | waiting for a usage-limit reset, or paused |
 | red `●` | stopped on an error — needs you |
 | blue `●` | Claude is waiting for you to [approve a tool call](approvals.md) |

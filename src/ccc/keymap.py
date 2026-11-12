@@ -42,7 +42,8 @@ CLAUDE = "claude"
 EVERYWHERE = (*VIEWS, *WINDOWS, CLAUDE)
 _CONVERSATIONS = ("conversations", "archive")
 _BACK = ("conversations", "archive", "sessions", "analytics", "queue_detail")
-_EDITORS = ("task_edit", "preset_edit", "settings", "keys", "routine_edit", "review", "goal", "workflow", "agent_new", "agent_edit")
+_EDITORS = ("task_edit", "preset_edit", "settings", "keys", "routine_edit", "review", "goal", "workflow", "agent_new", "agent_edit",
+            "new_conversation")
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,9 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("views.help", "question_mark", N_("This help"), (*VIEWS, "help")),
     KeyAction("views.routines", "o", N_("Routines (prompts on a schedule)"), VIEWS),
     KeyAction("views.agents", "A", N_("Agents (helpers Claude Code can call)"), VIEWS),
+    # In Conversations and Archive t is conversations.tasks (same window).
+    KeyAction("views.tasks", "t", N_("Tasks of the selected conversation"),
+              tuple(v for v in VIEWS if v not in _CONVERSATIONS)),
     KeyAction("views.update", "U", N_("Update ccc (when there is a new version)"), VIEWS),
     KeyAction("app.settings", "ctrl+p", N_("Settings"), EVERYWHERE, tmux=True),
     KeyAction("app.screenshot", "alt+s", N_("Screenshot of ccc"), EVERYWHERE, tmux=True),
@@ -77,6 +81,7 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("dashboard.quit", "q", N_("Close ccc (on the Dashboard)"), ("dashboard",)),
     KeyAction("dashboard.archive", "x", N_("Archive the conversation (Dashboard)"), ("dashboard",)),
     KeyAction("dashboard.delete", "delete", N_("Delete the conversation (Dashboard)"), ("dashboard",)),
+    KeyAction("dashboard.filter", "slash", N_("Filter the Dashboard (all, running, pending, blocked)"), ("dashboard",)),
     KeyAction("screen.retry", "r", N_("Retry a blocked queue / resume one paused at a limit"),
               (*_CONVERSATIONS, "queue_detail")),
     KeyAction("screen.add_prompt", "plus", N_("Add prompt"), ("sessions", "queue_detail")),

@@ -234,7 +234,7 @@ async def test_buttons_keep_size_and_colour_on_hover_focus_and_click(tmp_path):
         button.scroll_visible(animate=False)
         await pilot.pause()
         normal = (button.region.height, button.styles.background)
-        assert normal[1] != Color.parse("blue") and normal[1] == Color.parse("#008787")
+        assert normal[1] == Color.parse("#3a3a3a")
         assert normal[0] == 3
         for state in ("hover", "focus", "active"):
             if state == "hover":
@@ -246,8 +246,9 @@ async def test_buttons_keep_size_and_colour_on_hover_focus_and_click(tmp_path):
             await pilot.pause()
             assert (button.region.height, button.styles.background) == normal, state
             assert button.styles.border_top[0] in ("", "none"), state
-        assert app.screen.query_one("#settings-save", Button).styles.background == Color.parse("#008700")
-        assert app.screen.query_one("#settings-cancel", Button).styles.background == Color.parse("#af0000")
+        assert app.screen.query_one("#settings-save", Button).styles.background == Color.parse("#00af5f")
+        # Cancel is grey, as in the design (#250); red is for deleting.
+        assert app.screen.query_one("#settings-cancel", Button).styles.background == Color.parse("#3a3a3a")
 
 
 def test_button_colours_stay_distinct_in_a_256_colour_terminal():

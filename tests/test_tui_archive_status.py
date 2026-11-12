@@ -200,7 +200,9 @@ async def test_dashboard_hides_archived_and_marks_new(storage):
     app = _host(DashboardScreen(storage))
     async with app.run_test() as pilot:
         await pilot.pause()
-        names = _names(app.screen.query_one("#dashboard-table", DataTable))
+        table = app.screen.query_one("#dashboard-table", DataTable)
+        # [0] is the cursor's ">"; the name's line is first, its folder under it.
+        names = [str(table.get_row(k)[1]).splitlines()[0] for k in table.rows]
         assert names == ["● a"]
 
 

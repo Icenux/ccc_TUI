@@ -11,8 +11,8 @@ from textual.widgets.option_list import Option
 from ccc import agents, keymap, mcp_servers, plugins, profiles
 from ccc.i18n import _
 from ccc.launch_options import (
-    AGENT_PREFIX, AGENT_SELECT, DEFAULT_SELECTION, FORK, GROUPS, MCP_PREFIX, MCP_SELECT, PLUGIN_PREFIX, PLUGINS_SELECT, SESSION_FROM_PR, SESSION_NEW, SESSION_RESUME,
-    is_agent, is_mcp_server, is_plugin, session_mode, toggle,
+    AGENT_PREFIX, AGENT_SELECT, DEFAULT_SELECTION, FORK, GROUPS, MCP_PREFIX, MCP_SELECT, PLUGIN_PREFIX, PLUGINS_SELECT, SESSION_FROM_PR, SESSION_GROUP_KEYS, SESSION_NEW, SESSION_RESUME,
+    group_of, is_agent, is_mcp_server, is_plugin, session_mode, toggle,
 )
 from ccc.orchestrator import start_conversation
 from ccc.presets import LaunchChoice, list_presets, load_last, save_last, save_preset
@@ -56,30 +56,124 @@ class PresetNameModal(ModalScreen):
         self.dismiss(None)
 
 
+# The option chips' colours (#250): by the option's group, as in the design.
+CHIP_COLOURS = {"permissions": "#af5f5f", "model": "#005fd7", "effort": "#af8700"}
+CHIP_OTHER = "#3a3a3a"
+
+
 class NewConversationModal(ModalScreen):
+    """The design's window (#250): a red title bar, the folder, the recent
+    ones, the chosen options as chips, name / session / preset / ccc, Start.
+    "+ option" opens every option (and the folder tree to browse)."""
+
     DEFAULT_CSS = MODAL_CSS.format(cls="NewConversationModal") + """
     NewConversationModal > Container {
         width: 90%;
-        max-width: 150;
+        max-width: 110;
         height: 90%;
+        padding: 0;
+        border: solid $ccc-text;
     }
-    NewConversationModal #new-conv-columns {
+    NewConversationModal #nc-titlebar {
+        height: 3;
+        padding: 1 2;
+        background: #af5f5f;
+    }
+    NewConversationModal #nc-title {
+        width: 1fr;
+        color: white;
+        text-style: bold;
+    }
+    NewConversationModal #nc-esc {
+        width: auto;
+        color: white;
+    }
+    NewConversationModal #nc-body {
         height: 1fr;
+        padding: 1 2 0 2;
     }
-    NewConversationModal #new-conv-left {
+    NewConversationModal .nc-label-row {
+        height: 1;
+    }
+    NewConversationModal .nc-label {
+        width: 1fr;
+        color: $ccc-text-muted;
+        text-style: bold;
+    }
+    NewConversationModal .nc-hint {
+        width: auto;
+        color: $ccc-text-dim;
+    }
+    NewConversationModal #launch-path {
+        margin-bottom: 1;
+        border: tall $ccc-accent;
+    }
+    NewConversationModal #recent-dirs {
+        height: 6;
+        margin-bottom: 1;
+        border: solid $ccc-line;
+        background: $ccc-background;
+    }
+    NewConversationModal #nc-chips {
+        height: auto;
+        margin-bottom: 1;
+    }
+    NewConversationModal .nc-chip {
+        width: auto;
+        height: 1;
+        padding: 0 1;
+        margin-right: 1;
+        color: white;
+        text-style: bold;
+    }
+    NewConversationModal .nc-chip:hover {
+        background-tint: white 15%;
+    }
+    NewConversationModal #nc-more {
+        display: none;
+        height: auto;
+        border: solid $ccc-line;
+        padding: 0 1;
+        margin-bottom: 1;
+    }
+    NewConversationModal.-more #nc-more {
+        display: block;
+    }
+    NewConversationModal #nc-more-columns {
+        height: auto;
+    }
+    NewConversationModal #nc-browse {
         width: 1fr;
         margin-right: 2;
     }
     NewConversationModal #new-conv-right {
         width: 1fr;
-    }
-    NewConversationModal #recent-dirs {
-        height: 7;
-        margin-bottom: 1;
+        height: auto;
     }
     NewConversationModal #dir-tree {
-        height: 1fr;
+        height: 16;
         margin-bottom: 1;
+    }
+    NewConversationModal #nc-grid {
+        layout: grid;
+        grid-size: 2;
+        grid-columns: 1fr 1fr;
+        /* a label and a field; ccc's three switches in theirs */
+        grid-rows: 4 6;
+        grid-gutter: 1 2;
+        height: 11;
+    }
+    NewConversationModal .nc-cell {
+        height: 100%;
+    }
+    NewConversationModal #launch-name {
+        margin: 0;
+    }
+    NewConversationModal #nc-ccc {
+        height: auto;
+        border: tall $ccc-line;
+        background: $ccc-background;
+        padding: 0 1;
     }
     NewConversationModal #resume-sessions {
         height: 8;
@@ -108,11 +202,45 @@ class NewConversationModal(ModalScreen):
     }
     NewConversationModal #preset-save {
         margin-left: 1;
+        min-width: 0;
+        width: auto;
     }
     NewConversationModal .group-title {
         text-style: bold;
-        color: $ccc-title;
+        color: $ccc-text-muted;
         margin-top: 1;
+    }
+    NewConversationModal #nc-buttons {
+        height: 3;
+        align-horizontal: right;
+        padding: 0 2;
+        margin-bottom: 1;
+    }
+    NewConversationModal #nc-buttons Button {
+        margin-left: 1;
+    }
+    NewConversationModal #launch-cancel {
+        min-width: 14;
+    }
+    NewConversationModal #launch-start {
+        min-width: 24;
+    }
+    NewConversationModal #launch-error {
+        padding: 0 2;
+    }
+    NewConversationModal #nc-keys {
+        height: 1;
+        padding: 0 2;
+        border-top: solid $ccc-line;
+        height: 2;
+    }
+    NewConversationModal #nc-keys-left {
+        width: 1fr;
+        color: $ccc-text-muted;
+    }
+    NewConversationModal #nc-keys-right {
+        width: auto;
+        color: $ccc-text-muted;
     }
     NewConversationModal Checkbox {
         border: none;
@@ -138,7 +266,7 @@ class NewConversationModal(ModalScreen):
     }
     NewConversationModal Checkbox.-on > .toggle--button {
         color: black;
-        background: green;
+        background: $ccc-accent;
         text-style: bold;
     }
     NewConversationModal Checkbox.-on > .toggle--label {
@@ -149,7 +277,10 @@ class NewConversationModal(ModalScreen):
     }
     """
 
-    BINDINGS = [keymap.binding("window.cancel", "cancel", _("Cancel"))]
+    BINDINGS = [
+        keymap.binding("window.cancel", "cancel", _("Cancel")),
+        keymap.binding("window.save", "save_preset", _("Save as preset"), priority=True),
+    ]
 
     def __init__(self, storage: Storage, browse_root: Path | None = None):
         super().__init__()
@@ -167,81 +298,171 @@ class NewConversationModal(ModalScreen):
         self._plugin_generation = 0
         self._agents_shown: list[str] | None = None  # agent names currently listed
         self._agent_generation = 0
+        self._chips_shown: list[tuple[str, str]] | None = None
+        self._chip_generation = 0
 
     def _preset_options(self) -> list[tuple[str, str]]:
         return [(name, name) for name in sorted(list_presets(self.storage))]
 
+    @staticmethod
+    def _label_row(label: str, hint: str = "") -> Horizontal:
+        return Horizontal(Static(label.upper(), classes="nc-label"), Static(hint, classes="nc-hint"),
+                          classes="nc-label-row")
+
     def compose(self):
-        right = [
-            Static(_("Preset"), classes="group-title"),
-            Horizontal(
-                Select(self._preset_options(), prompt=_("Choose a preset…"), id="preset-select"),
-                Button(_("Save as preset"), id="preset-save"),
-                id="preset-row",
-            ),
-        ]
+        options = []
         for group in GROUPS:
             if group.title:
-                right.append(Static(_(group.title), classes="group-title"))
+                options.append(Static(_(group.title), classes="group-title"))
             for option in group.options:
-                right.append(Checkbox(_(option.label), value=option.key in self.selection, id=f"opt-{option.key}"))
+                options.append(Checkbox(_(option.label), value=option.key in self.selection, id=f"opt-{option.key}"))
                 if option.key == MCP_SELECT:
-                    right.append(Vertical(id="mcp-servers"))
+                    options.append(Vertical(id="mcp-servers"))
                 elif option.key == PLUGINS_SELECT:
-                    right.append(Vertical(id="plugin-list"))
+                    options.append(Vertical(id="plugin-list"))
                 elif option.key == AGENT_SELECT:
-                    right.append(Vertical(id="agent-list"))
+                    options.append(Vertical(id="agent-list"))
                 elif option.key == SESSION_RESUME:
-                    right.append(OptionList(id="resume-sessions"))
+                    options.append(OptionList(id="resume-sessions"))
                 elif option.key == SESSION_FROM_PR:
-                    right.append(Input(placeholder=_("PR number or URL"), id="from-pr-input"))
+                    options.append(Input(placeholder=_("PR number or URL"), id="from-pr-input"))
         # Only when accounts were added (`ccc profile add`): nobody else sees a change.
         if profiles.list_profiles():
-            right.append(Static(_("Claude account"), classes="group-title"))
-            right.append(Select(
+            options.append(Static(_("Claude account"), classes="group-title"))
+            options.append(Select(
                 [(_("(default)"), "")] + [(f"{p.name} (API)" if p.is_command else p.name, p.name) for p in profiles.list_profiles()],
                 allow_blank=False, value="", id="profile-select",
             ))
             if any(p.is_command for p in profiles.list_profiles()):
-                right.append(Static(_(profiles.API_LIMITS_NOTICE), classes="hint"))
-        # Not a `claude` flag: ccc's own behaviour at usage limits.
-        right.append(Static("ccc", classes="group-title"))
-        right.append(Checkbox(_("Auto-continue after usage limit"), value=self._initial.auto_continue, id="auto-continue"))
-        right.append(Checkbox(_("Remote control (phone / claude.ai)"), value=self._initial.remote_control, id="remote-control"))
-        right.append(Checkbox(_("Own git worktree (a separate checkout and branch — to work in parallel)"),
-                              value=False, id="own-worktree"))
+                options.append(Static(_(profiles.API_LIMITS_NOTICE), classes="hint"))
         recent = [Option(Content(p), id=p) for p in self.storage.recent_project_paths()]
+        session_button = Button("", id="nc-session", classes="nc-field")
+        session_button.can_focus = True
+        keys = keymap.current(self.storage)
         box = Container(
-            Horizontal(
+            Horizontal(Static(_("New conversation").upper(), id="nc-title"),
+                       Static(f"{keymap.pretty(keys['window.cancel']).lower()} {_('cancel')}", id="nc-esc"),
+                       id="nc-titlebar"),
+            VerticalScroll(
+                self._label_row(_("Directory"), _("required")),
+                Input(placeholder=_("/path/to/project"), id="launch-path"),
+                self._label_row(_("Recent directories"), "↑↓ " + _("choose")),
+                OptionList(*recent, id="recent-dirs"),
+                self._label_row(_("Options"), _("space toggle")),
+                Horizontal(Button("+ " + _("option"), id="nc-more-button", classes="nc-small"), id="nc-chips"),
                 Vertical(
-                    Static(_("Recent directories"), classes="modal-label"),
-                    OptionList(*recent, id="recent-dirs"),
-                    Static(_("Browse"), classes="modal-label"),
-                    _DirectoriesOnly(str(self.browse_root), id="dir-tree"),
-                    Static(_("Path"), classes="modal-label"),
-                    Input(placeholder=_("/path/to/project"), id="launch-path"),
-                    id="new-conv-left",
+                    Horizontal(
+                        Vertical(
+                            Static(_("Browse"), classes="group-title"),
+                            _DirectoriesOnly(str(self.browse_root), id="dir-tree"),
+                            id="nc-browse",
+                        ),
+                        Vertical(*options, id="new-conv-right"),
+                        id="nc-more-columns",
+                    ),
+                    id="nc-more",
                 ),
-                VerticalScroll(*right, id="new-conv-right"),
-                id="new-conv-columns",
+                Container(
+                    Vertical(self._label_row(_("Name (optional)")),
+                             Input(placeholder=_("defaults to the directory name"), id="launch-name"), classes="nc-cell"),
+                    Vertical(self._label_row(_("Session")), session_button, classes="nc-cell"),
+                    Vertical(self._label_row(_("Preset")),
+                             Horizontal(Select(self._preset_options(), prompt=_("Choose a preset…"), id="preset-select"),
+                                        Button(_("Save…"), id="preset-save"), id="preset-row"),
+                             classes="nc-cell"),
+                    Vertical(self._label_row("ccc", _("space")),
+                             Vertical(
+                                 # Not `claude` flags: ccc's own behaviour.
+                                 Checkbox(_("Auto-continue after usage limit"), value=self._initial.auto_continue,
+                                          id="auto-continue"),
+                                 Checkbox(_("Remote control (phone / claude.ai)"), value=self._initial.remote_control,
+                                          id="remote-control"),
+                                 Checkbox(_("Own git worktree (to work in parallel)"),
+                                          value=False, id="own-worktree"),
+                                 id="nc-ccc"),
+                             classes="nc-cell"),
+                    id="nc-grid",
+                ),
+                id="nc-body",
             ),
-            Static(_("Name (optional)"), classes="modal-label"),
-            Input(placeholder=_("defaults to the directory name"), id="launch-name"),
             Static("", id="launch-error", classes="modal-error"),
             Horizontal(
-                Button(_("Start"), id="launch-start", classes="modal-submit"),
                 Button(_("Cancel"), id="launch-cancel", classes="modal-cancel"),
-                classes="modal-buttons",
+                Button(_("Start") + "  ↵", id="launch-start", classes="modal-submit"),
+                id="nc-buttons",
+            ),
+            Horizontal(
+                Static(Content.assemble(
+                    ("tab", "bold"), " ", _("next"), "   ", ("shift+tab", "bold"), " ", _("prev"), "   ",
+                    ("space", "bold"), " ", _("toggle"), "   ", ("↵", "bold"), " ", _("start")), id="nc-keys-left"),
+                Static(_("Save as preset: {key}").format(key=keymap.pretty(keys["window.save"])), id="nc-keys-right"),
+                id="nc-keys",
             ),
         )
-        box.border_title = _("New conversation")
         yield box
+
+    # --- the chips and "+ option" ---------------------------------------
+
+    def _chips(self) -> list[tuple[str, str]]:
+        """(option key, label) of every chosen option worth a chip: not the
+        session (it has its own field), the default "new session" least of all."""
+        chips = []
+        for group in GROUPS:
+            if group.key in SESSION_GROUP_KEYS:
+                continue
+            for option in group.options:
+                if option.key in self.selection:
+                    chips.append((option.key, _(option.short)))
+        return chips
+
+    def _refresh_chips(self) -> None:
+        chips = self._chips()
+        if chips == self._chips_shown:
+            return
+        self._chips_shown = chips
+        self._chip_generation += 1
+        row = self.query_one("#nc-chips", Horizontal)
+        for chip in list(row.query(".nc-chip")):
+            chip.remove()
+        more = self.query_one("#nc-more-button", Button)
+        for i, (key, label) in enumerate(chips):
+            chip = Static(Content(f"{label}  ×"), id=f"chip-{self._chip_generation}-{i}", classes="nc-chip")
+            chip.option_key = key
+            chip.styles.background = CHIP_COLOURS.get(group_of(key).key, CHIP_OTHER)
+            row.mount(chip, before=more)
+
+    def _refresh_session_field(self) -> None:
+        mode = session_mode(self.selection)
+        label = next((_(o.label) for g in GROUPS for o in g.options if o.key == mode), mode)
+        if FORK in self.selection and mode != SESSION_NEW:
+            label += "  ·  " + _("fork")
+        self.query_one("#nc-session", Button).label = Content.assemble(label, "   ", ("[" + _("change") + "]", "dim"))
+
+    def on_click(self, event) -> None:
+        widget = event.widget
+        key = getattr(widget, "option_key", None)
+        if key is not None:
+            event.stop()
+            # After the click: dropping the option removes this very chip.
+            self.call_after_refresh(self._set_option, key, False)
+
+    def _set_option(self, key: str, value: bool) -> None:
+        checkbox = self.query(f"#opt-{key}")
+        if checkbox:
+            checkbox.first(Checkbox).value = value
+
+    def action_toggle_more(self, show: bool | None = None) -> None:
+        self.set_class(not self.has_class("-more") if show is None else show, "-more")
+
+    def action_save_preset(self) -> None:
+        self.app.push_screen(PresetNameModal(), self._save_preset)
 
     def on_mount(self) -> None:
         self._sync_session_widgets()
         self._refresh_mcp()
         self._refresh_plugins()
         self._refresh_agents()
+        self.query_one("#launch-path", Input).focus()
 
     # --- directory ------------------------------------------------------
 
@@ -387,6 +608,8 @@ class NewConversationModal(ModalScreen):
         self._refresh_agents()
 
     def _sync_session_widgets(self) -> None:
+        self._refresh_chips()
+        self._refresh_session_field()
         mode = session_mode(self.selection)
         self.query_one(f"#opt-{FORK}", Checkbox).disabled = mode == SESSION_NEW
         self.query_one("#from-pr-input", Input).display = mode == SESSION_FROM_PR
@@ -449,6 +672,14 @@ class NewConversationModal(ModalScreen):
         select.value = name
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "nc-more-button":
+            self.action_toggle_more()
+            return
+        if event.button.id == "nc-session":
+            # The session is chosen among all the options (+ option).
+            self.action_toggle_more(True)
+            self.query_one(f"#opt-{session_mode(self.selection)}", Checkbox).focus()
+            return
         if event.button.id == "preset-save":
             self.app.push_screen(PresetNameModal(), self._save_preset)
             return
@@ -488,6 +719,12 @@ class NewConversationModal(ModalScreen):
             return
         save_last(self.storage, self._current_choice())
         self.dismiss(queue.id)
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        # Enter in the folder or the name starts it (as the design's "↵ start").
+        if event.input.id in ("launch-path", "launch-name"):
+            event.stop()
+            self.query_one("#launch-start", Button).press()
 
     def action_cancel(self) -> None:
         self.dismiss(None)

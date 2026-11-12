@@ -66,6 +66,7 @@ async def test_new_conversation_dialog_runs_the_whole_conversation_as_an_agent(t
         app.push_screen(NewConversationModal(Storage(tmp_path / "h.db"), browse_root=tmp_path))
         await pilot.pause()
         dialog = app.screen
+        dialog.action_toggle_more(True)  # every option is behind "+ option" (#250)
         dialog.query_one("#launch-path", Input).value = str(project)
         await pilot.pause()
         assert not dialog.query_one("#agent-list").display  # hidden until the mode is ticked

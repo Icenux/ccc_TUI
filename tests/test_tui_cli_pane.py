@@ -73,7 +73,8 @@ def test_open_splits_next_to_ccc_keeping_the_sidebar(tmux):
     assert ("set-option", "-t", "%0", "mouse", "on") in tmux.calls
     # You can see which pane you type in, and what each one is.
     assert ("set-option", "-w", "-t", "%0", "pane-border-status", "top") in tmux.calls
-    assert ("set-option", "-p", "-t", "%0", "@ccc-title", "ccc") in tmux.calls
+    # No title over ccc itself (#250: no bar at the top).
+    assert ("set-option", "-pu", "-t", "%0", "@ccc-title") in tmux.calls
 
 
 def test_typing_here_only_while_claude_code_is_open():
@@ -327,11 +328,11 @@ def test_publish_waiting_escapes_hashes(monkeypatch):
     assert calls == [("set-option", "-w", "-t", "%0", cli_pane.WAITING_OPTION, "? ##1 ##[fg=red] waits")]
 
 
-def test_whole_frame_is_green():
+def test_whole_frame_is_one_colour():
     options = dict(cli_pane.BORDER_OPTIONS)
-    # Active and inactive borders: the same green in ccc and in Claude Code.
-    assert options["pane-border-style"] == "fg=colour71"
-    assert options["pane-active-border-style"] == "fg=colour71,bold"
+    # Active and inactive borders: the same grey line in ccc and in Claude Code (#250).
+    assert options["pane-border-style"] == "fg=colour235"
+    assert options["pane-active-border-style"] == "fg=colour235,bold"
     assert "colour74" not in options["pane-border-format"]
 
 

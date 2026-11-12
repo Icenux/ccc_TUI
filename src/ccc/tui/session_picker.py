@@ -11,7 +11,7 @@ from ccc.i18n import _
 from ccc.orchestrator import attach_to_session
 from ccc.session_discovery import DiscoveredSession, discover_sessions
 from ccc.storage import Storage
-from ccc.tui.layout import ADD_PROMPT_BUTTON, MODAL_CSS, SidebarButton, SidebarScreen, panel
+from ccc.tui.layout import ADD_PROMPT_BUTTON, MODAL_CSS, SidebarButton, SidebarScreen, panel, set_live_sessions
 
 
 REFRESH_BUTTON = SidebarButton("sidebar-refresh", _("Reload session list ({key})"), "teal", "refresh",
@@ -66,6 +66,8 @@ class SessionPickerScreen(SidebarScreen):
 
     def refresh_sessions(self) -> None:
         self.sessions = discover_sessions()
+        set_live_sessions(len(self.sessions))
+        self.refresh_nav_counts()
         table = self.query_one("#session-picker-table", DataTable)
         table.clear()
         for session in self.sessions:

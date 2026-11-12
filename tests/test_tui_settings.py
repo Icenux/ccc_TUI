@@ -48,7 +48,32 @@ async def test_footer_shows_only_what_the_sidebar_does_not(tmp_path):
         await pilot.pause()
         keys = _footer_keys(app)
         assert not keys & {"d", "c", "s", "a", "n", "r", "escape"}
-        assert "v" in keys  # the conversation's Review is its own action, not a view
+        # The conversation's keys only with a conversation to act on (#308).
+        assert not keys & {"v", "g", "w", "e", "t"}
+
+
+@pytest.mark.asyncio
+async def test_conversation_keys_show_with_a_conversation_and_archive_hides_what_it_cannot_do(tmp_path):
+    from ccc.storage import Storage
+    from ccc.tui.footer_strip import footer_items
+
+    storage = Storage(str(tmp_path / "history.db"))
+    storage.create_queue("live", "/tmp/live", "sess-live")
+    old = storage.create_queue("old", "/tmp/old", "sess-old")
+    storage.set_queue_archived(old.id, True)
+    app = _app(tmp_path)
+    async with app.run_test(size=(140, 45)) as pilot:
+        await pilot.pause()
+        await pilot.press("c")
+        await pilot.pause()
+        keys = _footer_keys(app)
+        assert {"v", "g", "w", "e"} <= keys  # Review is the conversation's own action, not a view
+        assert "p" not in keys  # Approve: nothing waits for approval
+        await pilot.press("h")
+        await pilot.pause()
+        shown = {item[1] for item in footer_items(app)}
+        assert {"Restore", "Delete", "Search"} <= shown
+        assert not shown & {"Routines", "Goal", "Review", "Workflow", "Tasks", "Approve"}
 
 
 @pytest.mark.asyncio

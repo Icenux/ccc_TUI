@@ -170,7 +170,7 @@ psaní nezpomalí.
 | `r` | zastavená chybou: znovu spustí selhaný úkol; pozastavená na limitu: pokračuje — viz [Limity využití](limits.md) |
 | `p` | [schválí nástroj](approvals.md), na který Claude čeká |
 | `x` | [archivuje](archive.md) konverzaci |
-| `/` | hledá ve všech konverzacích (i archivovaných); `Enter` na výsledku ho otevře |
+| `/` | hledá — v Konverzacích, v Archivu nebo všude (vybereš v okně; začne tam, kde jsi); ve zprávách, odpovědích Clauda i v nástrojích, které spouštěl; `Enter` na výsledku ho otevře |
 | `f` | filtruje seznam podle názvu, složky a stavu (viz *Filtr seznamu*) |
 | `m` | dá konverzaci do skupiny / přejmenuje nebo smaže skupinu (viz *Skupiny*) |
 | `e` | exportuje konverzaci jako Markdown (do `conversations/` ve složce pro exporty, viz [Nastavení](settings.md)) |

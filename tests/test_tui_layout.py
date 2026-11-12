@@ -325,3 +325,26 @@ async def test_menu_buttons_are_3d_with_the_edge_rows_shared(tmp_path):
         light_next = BEVEL_COLOURS["nav-conversations"][1]
         assert any(f"{dark} on {light_next}" in str(span.style) for span in edge.spans)
         assert app.screen.query(BevelCap)
+
+
+@pytest.mark.asyncio
+async def test_status_bar_wraps_the_keys_that_do_not_fit(tmp_path):
+    # #305: a narrow window shows every key, on more rows.
+    from textual.widgets._footer import FooterKey
+
+    from ccc.tui.layout import StatusBar
+
+    app = _app(tmp_path)
+    async with app.run_test(size=(70, 30)) as pilot:
+        await pilot.pause()
+        await pilot.press("c")
+        await pilot.pause()
+        bar = app.screen.query_one(StatusBar)
+        keys = list(bar.query(FooterKey))
+        assert bar.region.height >= 2
+        assert all(k.region.right <= bar.region.right for k in keys)
+        assert all(k.region.y >= bar.region.y for k in keys)
+        await pilot.resize_terminal(220, 30)
+        await pilot.pause()
+        await pilot.pause()
+        assert app.screen.query_one(StatusBar).region.height == 1

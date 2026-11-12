@@ -169,7 +169,7 @@ doesn't slow typing down.
 | `r` | stopped on an error: run the failed task again; paused at a limit: carry on — see [Usage limits](limits.md) |
 | `p` | [approve a tool call](approvals.md) Claude is waiting on |
 | `x` | [archive](archive.md) the conversation |
-| `/` | search all conversations (archived too); `Enter` on a hit opens it |
+| `/` | search — in Conversations, the Archive or everywhere (you choose in the window; it starts where you are); messages, Claude's replies and the tools it ran; `Enter` on a hit opens it |
 | `f` | filter the list by name, folder and state (see *Filtering the list*) |
 | `m` | put the conversation into a group / rename or delete the group (see *Groups*) |
 | `e` | export the conversation as Markdown (to `conversations/` in the export folder, see [Settings](settings.md)) |

@@ -183,6 +183,10 @@ CS: dict[str, str] = {
     "Claude is working on '{name}' right now — wait or pause it first (t, p).":
         "Claude právě pracuje na '{name}' — počkej, nebo ji nejdřív pozastav (t, p).",
     "Delete conversation": "Smazat konverzaci",
+    "Delete all {n} conversations of '{name}' with their queued tasks and run history from ccc?\n"
+    "Claude Code's own transcripts stay, so they can still be resumed later.":
+        "Smazat z ccc všech {n} konverzací skupiny „{name}“ i s frontou úloh a historií běhů?\n"
+        "Přepisy v Claude Code zůstanou, takže je půjde později obnovit.",
     "Delete '{name}' with its queued tasks and run history from ccc?\n"
     "Claude Code's own transcript stays, so it can still be resumed later.":
         "Smazat '{name}' z ccc i s úkoly ve frontě a historií běhů?\n"
@@ -304,7 +308,12 @@ CS: dict[str, str] = {
     "No preset prompts — add them in Settings (Ctrl+P)": "Žádné přednastavené prompty — přidej je v Nastavení (Ctrl+P)",
 
     # --- Search / exports -------------------------------------------------------
-    "Search all conversations… (Enter)": "Hledat ve všech konverzacích… (Enter)",
+    "Search… (Enter)": "Hledat… (Enter)",
+    "In conversations": "V konverzacích",
+    "In the archive": "V archivu",
+    "Tool": "Nástroj",
+    "Output": "Výstup",
+    "(archived)": "(v archivu)",
     "Who": "Kdo",
     "Match": "Shoda",
     "{n} matches — ↓ then Enter opens one": "Nalezeno: {n} — ↓ a Enter výsledek otevře",
@@ -476,7 +485,7 @@ CS: dict[str, str] = {
     "✅ ccc: Discord notifications work.": "✅ ccc: notifikace přes Discord fungují.",
 
     # --- Help window and key list (tui/help.py) -------------------------------
-    "Help  ·  ↑↓ topic  ·  Tab text / topics  ·  Esc close": "Nápověda  ·  ↑↓ téma  ·  Tab text / témata  ·  Esc zavřít",
+    "↑↓ topic  ·  Tab text / topics  ·  Esc close": "↑↓ téma  ·  Tab text / témata  ·  Esc zavřít",
     "Keyboard shortcuts": "Klávesové zkratky",
     "Keys without Ctrl or Alt don't work while you're typing in a text field;\n"
     "Ctrl and Alt keys work everywhere. The bar at the bottom of the window\n"
@@ -510,7 +519,7 @@ CS: dict[str, str] = {
         "Přepnout mezi ccc a Claude Code (když je otevřený vedle ccc)",
     "Close Claude Code beside ccc (it keeps running; Enter in the list opens it)":
         "Zavřít Claude Code vedle ccc (běží dál; Enter v seznamu ho otevře)",
-    "Search all conversations": "Hledat ve všech konverzacích",
+    "Search: Conversations, Archive or everywhere": "Hledat: v Konverzacích, v Archivu nebo všude",
     "Export the conversation as Markdown": "Exportovat konverzaci jako Markdown",
     "New line in the message box (Shift+Enter where supported)": "Nový řádek v poli pro zprávu (Shift+Enter, kde funguje)",
     "Preset prompt 1–9 (⏎ sends it, ✎ puts it into the message box; set in Settings)":
@@ -1536,9 +1545,9 @@ CS: dict[str, str] = {
     "⬆️ ccc update available: {version} (installed: {installed}).": "⬆️ Je dostupná aktualizace ccc: {version} (nainstalováno: {installed}).",
     "Update it in ccc (Update window) or from the phone.": "Aktualizuj v ccc (okno Aktualizace) nebo z telefonu.",
     "Look for updates": "Hledat aktualizace",
-    "Every few hours ccc looks for a new release on GitHub and tells you here (the {key} key), "
+    "Every 24 hours ccc looks for a new release on GitHub and tells you here (the {key} key), "
     "on the phone, and in Telegram / Discord. Updating asks first.":
-        "Každých pár hodin ccc hledá na GitHubu nové vydání a dá ti vědět tady (klávesa {key}), "
+        "Každých 24 hodin ccc hledá na GitHubu nové vydání a dá ti vědět tady (klávesa {key}), "
         "v telefonu a v Telegramu / Discordu. Aktualizace se před spuštěním ptá.",
     # --- notification categories (#146) ---------------------------------------
     "{name} must map the notification categories to true or false.":

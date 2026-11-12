@@ -94,7 +94,7 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("conversations.tasks", "t", N_("Tasks editor"), _CONVERSATIONS),
     KeyAction("conversations.archive", "x", N_("Archive / restore the conversation"), _CONVERSATIONS),
     KeyAction("conversations.approve", "p", N_("Approve a tool call"), _CONVERSATIONS),
-    KeyAction("conversations.search", "slash", N_("Search all conversations"), _CONVERSATIONS),
+    KeyAction("conversations.search", "slash", N_("Search: Conversations, Archive or everywhere"), _CONVERSATIONS),
     KeyAction("conversations.filter", "f", N_("Filter the list (name, folder, state)"), _CONVERSATIONS),
     KeyAction("conversations.rename", "f2", N_("Rename the conversation"), _CONVERSATIONS),
     KeyAction("conversations.group", "m", N_("Put the conversation into a group / rename the group"), _CONVERSATIONS),

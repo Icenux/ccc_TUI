@@ -124,6 +124,7 @@ class FooterStrip(App):
         self._laid_out: tuple[str, int, int] | None = None
         self._hovered: Static | None = None
         self._hover_at = 0.0
+        self._rows_needed = 0
 
     def compose(self):
         yield Vertical(id="strip-items")
@@ -156,6 +157,11 @@ class FooterStrip(App):
     async def refresh_items(self) -> None:
         self._shown = _tmux("show-options", "-wqv", "-t", self.main_pane, FOOTER_OPTION).stdout.strip()
         await self.layout_items()
+        # tmux sets the strip back to 1 row (window resized, Claude Code
+        # opened): as tall again as the rows the keys wrap into (#305).
+        pane = os.environ.get("TMUX_PANE")
+        if pane and self._rows_needed and self.size.height and self.size.height != self._rows_needed:
+            _tmux("resize-pane", "-t", pane, "-y", str(self._rows_needed))
 
     async def on_resize(self, event) -> None:
         await self.layout_items()
@@ -180,6 +186,7 @@ class FooterStrip(App):
         )
         # The pane is as tall as the rows the keys wrap into (tmux puts it
         # back to 1 row when the window is resized, which resizes this app).
+        self._rows_needed = len(rows)
         pane = os.environ.get("TMUX_PANE")
         if pane and len(rows) != height:
             _tmux("resize-pane", "-t", pane, "-y", str(len(rows)))

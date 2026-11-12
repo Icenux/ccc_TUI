@@ -161,6 +161,8 @@ class BevelButton(Button):
 class BevelCap(Static):
     """The light top edge of the first 3D button of a group (the lower half of a row)."""
 
+    # Not scoped: its rule for a short window starts at the screen.
+    SCOPED_CSS = False
     DEFAULT_CSS = """
     BevelCap {
         height: 1;
@@ -184,7 +186,9 @@ class NavButton(BevelButton):
     the right edge, whatever the menu's width."""
 
     # Its size also where ccc's app CSS (BUTTON_CSS, the colours) is missing:
-    # a host app in tests; in ccc BUTTON_CSS sets the same.
+    # a host app in tests; in ccc BUTTON_CSS sets the same. Not scoped: the
+    # short-window rule starts at the screen.
+    SCOPED_CSS = False
     DEFAULT_CSS = """
     NavButton {
         width: 100%;
@@ -405,15 +409,17 @@ class ModalTitle(Static):
 
 
 class CccModal(ModalScreen):
-    """Base of every ccc window: the window's box (the screen's first
-    child) gets the New conversation design's frame (#250) — its
+    """Base of every ccc window: the window's box (the screen's child
+    with a border_title) gets the New conversation design's frame (#250) — its
     border_title becomes the red ModalTitle bar at the top, flush with
     the frame whatever the box's padding."""
 
     def on_mount(self) -> None:
         # Textual dispatches on_mount along the MRO: this runs before each window's own.
-        box = next(iter(self.children), None)
-        if box is None or not box.border_title:
+        # The window's box is the child with a title — in a real terminal
+        # Textual's ToastRack and Tooltip come before it.
+        box = next((child for child in self.children if child.border_title), None)
+        if box is None:
             return
         title = str(box.border_title)
         box.border_title = None

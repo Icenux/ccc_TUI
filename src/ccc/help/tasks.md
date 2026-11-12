@@ -50,7 +50,9 @@ under the conversation says when the next task starts (*Next task at
 
 - **Claude Code beside ccc** (conversations started with `n`): ccc waits
   until Claude is idle and pastes the task in, as if you typed it. The
-  reply is right there in Claude Code.
+  reply is right there in Claude Code. Idle means Claude has finished its
+  turn — something it left running in the background (a shell, a monitor)
+  doesn't hold the task back.
 - **Headless conversations:** each task is one `claude -p` run; the reply
   appears in ccc's transcript. In a git repository the result can be committed — see
   [Git](git.md).

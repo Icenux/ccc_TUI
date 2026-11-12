@@ -142,3 +142,60 @@ def test_session_with_only_a_background_shell_is_not_busy(tmp_path, monkeypatch)
         statuses = {s.pid: s.status for s in discover_sessions()}
 
     assert statuses == {11: "idle", 12: "busy", 13: "busy"}
+
+
+def _transcript(tmp_path, monkeypatch, session_id, entries):
+    import ccc.transcript
+
+    monkeypatch.setattr(ccc.transcript, "PROJECTS_ROOT", tmp_path / "projects")
+    monkeypatch.setattr("ccc.profiles.list_profiles", lambda: [])
+    folder = tmp_path / "projects" / "-tmp-proj"
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{session_id}.jsonl"
+    path.write_text("".join(json.dumps(e) + "\n" for e in entries))
+    return path
+
+
+PROMPT = {"type": "user", "message": {"role": "user", "content": "do it"}}
+TOOL_CALL = {"type": "assistant", "message": {"content": [{"type": "tool_use"}], "stop_reason": "tool_use"}}
+TOOL_RESULT = {"type": "user", "message": {"content": [{"type": "tool_result"}]}}
+REPLY = {"type": "assistant", "message": {"content": [{"type": "text"}], "stop_reason": "end_turn"}}
+TURN_END = {"type": "system", "subtype": "turn_duration"}
+
+
+def test_turn_finished_follows_claude_codes_end_of_turn_mark(tmp_path, monkeypatch):
+    from ccc.session_discovery import turn_finished
+
+    assert not turn_finished("nobody")  # no transcript: can't tell, so not finished
+    path = _transcript(tmp_path, monkeypatch, "s1", [PROMPT, TOOL_CALL, TOOL_RESULT])
+    assert not turn_finished("s1")  # mid-turn
+    with path.open("a") as f:
+        f.write(json.dumps(REPLY) + "\n" + json.dumps({"type": "system", "subtype": "stop_hook_summary"}) + "\n")
+    assert not turn_finished("s1")  # the reply, but no end of turn yet
+    with path.open("a") as f:
+        f.write(json.dumps(TURN_END) + "\n")
+    assert turn_finished("s1")
+    with path.open("a") as f:  # a /command typed meanwhile starts no turn
+        f.write(json.dumps({"type": "user", "message": {"content": "<command-name>/model</command-name>"}}) + "\n")
+        f.write(json.dumps({"type": "user", "isMeta": True, "message": {"content": "caveat"}}) + "\n")
+        f.write('{"type": "assist')  # a line still being written
+    assert turn_finished("s1")
+    with path.open("a") as f:
+        f.write("\n" + json.dumps(PROMPT) + "\n")
+    assert not turn_finished("s1")  # a new prompt: working again
+
+
+def test_busy_only_because_of_a_background_task_takes_a_message(tmp_path, monkeypatch):
+    """Claude Code says "busy" while anything of it runs in the background (here a background
+    shell that never ends). Its turn has ended, so ccc must hand it the queued message — it used to
+    wait for "idle" forever."""
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path))
+    _transcript(tmp_path, monkeypatch, "done", [PROMPT, REPLY, TURN_END])
+    _transcript(tmp_path, monkeypatch, "working", [PROMPT, TOOL_CALL])
+    entries = [
+        {"pid": pid, "cwd": "/tmp", "kind": "interactive", "sessionId": sid, "name": sid, "status": "busy"}
+        for pid, sid in ((21, "done"), (22, "working"))
+    ]
+    with patch("subprocess.run", return_value=MagicMock(returncode=0, stdout=json.dumps(entries))):
+        statuses = {s.session_id: s.status for s in discover_sessions()}
+    assert statuses == {"done": "idle", "working": "busy"}

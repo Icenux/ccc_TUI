@@ -57,6 +57,8 @@ MAINTENANCE_INTERVAL_SECONDS = 10.0
 # After pasting a prompt, wait up to this long for Claude to report busy
 # before considering the next one (it flips from idle a moment later).
 DELIVERY_SETTLE_SECONDS = 15.0
+# A queued message still waiting for Claude Code after this long is logged.
+LONG_WAIT_SECONDS = 600.0
 # The folder-trust dialog is only accepted this soon after the daemon
 # started the process, and at most once per start.
 TRUST_CONFIRM_WINDOW_SECONDS = 60.0
@@ -699,7 +701,13 @@ class QueueRuntime:
         """Paste a queued prompt into the conversation's managed interactive
         process once it's idle (it may be busy with a message sent from the
         phone / claude.ai)."""
+        waiting_since = asyncio.get_running_loop().time()
+        reported = False
         while True:
+            if not reported and asyncio.get_running_loop().time() - waiting_since > LONG_WAIT_SECONDS:
+                # Leave a trace: a message that never gets through must not be a silent mystery.
+                logger.info("'%s': a queued message waits for Claude Code to be free (task %s)", queue.name, item.id)
+                reported = True
             current = self.storage.find_queue(queue.id)
             if current is None or current.archived or current.paused:
                 self.storage.set_item_status(item.id, ItemStatus.PENDING)

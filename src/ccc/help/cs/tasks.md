@@ -49,7 +49,8 @@ ním čekají taky. Seznam úkolů má sloupec *Kdy* a řádek pod konverzací
 
 - **Claude Code vedle ccc** (konverzace založené přes `n`): ccc počká,
   až bude Claude nečinný, a úkol do něj vloží, jako bys ho napsal(a).
-  Odpověď je přímo v Claude Code.
+  Odpověď je přímo v Claude Code. Nečinný znamená, že Claude dokončil svůj
+  tah — co nechal běžet na pozadí (shell, monitor), úkol nezdrží.
 - **Konverzace na pozadí:** každý úkol je jeden běh `claude -p`; odpověď
   se objeví v přepisu v ccc.
   V git repozitáři se výsledek může commitnout — viz [Git](git.md).

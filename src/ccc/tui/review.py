@@ -8,14 +8,13 @@ from datetime import datetime
 
 from rich.text import Text
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, DataTable, Input, Static, TextArea
 
 from ccc import keymap, reviews
 from ccc.i18n import _
 from ccc.models import Review, ReviewStatus, Verdict
 from ccc.schedule import format_when
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 REFRESH_SECONDS = 2.0
 VERDICT_STYLES = {Verdict.PASS: "bold green", Verdict.FAIL: "bold red", Verdict.PARTIAL: "bold yellow"}
@@ -28,7 +27,7 @@ def result_text(review: Review) -> Text:
     return Text(_(reviews.STATUS_LABELS[review.status]), style=style)
 
 
-class ReviewModal(ModalScreen):
+class ReviewModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="ReviewModal") + """
     ReviewModal > Container {
         width: 95%;
@@ -59,7 +58,7 @@ class ReviewModal(ModalScreen):
     }
     ReviewModal #review-report-box {
         height: 1fr;
-        border: round $primary;
+        border: solid $ccc-line;
         padding: 0 1;
     }
     ReviewModal .review-actions {

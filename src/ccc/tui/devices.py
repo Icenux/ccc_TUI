@@ -8,17 +8,16 @@ from datetime import datetime
 from rich.text import Text
 from textual import work
 from textual.containers import Container, Horizontal, Vertical
-from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Static
 
 from ccc import api, keymap, pairing
 from ccc.i18n import _
 from ccc.models import REVOKED_BY_COMPUTER
 from ccc.storage import Storage
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 
-class PairModal(ModalScreen):
+class PairModal(CccModal):
     """The QR code of a pairing, in a window of its own (it is tall: beside the
     device list it pushed the list and the buttons off a normal terminal, #131).
     Closes by itself once the phone has used the code; dismisses with the new
@@ -147,7 +146,7 @@ class PairModal(ModalScreen):
         self.dismiss(None)
 
 
-class ActivityModal(ModalScreen):
+class ActivityModal(CccModal):
     """What the devices did (ccc.api_audit): changes, refusals and pairings, the newest first."""
 
     DEFAULT_CSS = MODAL_CSS.format(cls="ActivityModal") + """

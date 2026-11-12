@@ -8,7 +8,6 @@ from pathlib import Path
 from rich.text import Text
 from textual import work
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
-from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Select, SelectionList, Static, TabbedContent, TabPane
 
 from ccc.backup import backup_now, default_backup_dir
@@ -31,7 +30,7 @@ from ccc.orchestrator import DEFAULT_CONTINUE_TEXT, RESERVE_CHOICES, RESERVE_KEY
 from ccc.presets import delete_preset, list_presets
 from ccc.prompt_presets import MAX_PRESETS, load_prompt_presets, save_prompt_presets
 from ccc.tui.devices import DevicesPanel
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 from ccc.tui.prompt_presets import PromptPresetModal, mode_label, preset_key
 
 TEST_MESSAGE = N_("✅ ccc: Telegram notifications work.")
@@ -53,7 +52,7 @@ def _row(label: str, widget) -> Horizontal:
     return Horizontal(Static(label, classes="settings-label"), widget, classes="settings-row")
 
 
-class SettingsModal(ModalScreen):
+class SettingsModal(CccModal):
     """Changes are kept in the form until Save; the theme previews live and
     is put back on Cancel. Test message and backup act immediately."""
 

@@ -3,14 +3,13 @@ every keyboard shortcut."""
 from __future__ import annotations
 
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.screen import ModalScreen
 from textual.widgets import Markdown, OptionList
 from textual.widgets.option_list import Option
 
 from ccc import help as help_topics
 from ccc import keymap
 from ccc.i18n import N_, _
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 # (section, [(ref, description)]): ref is a keymap action id (its key is
 # the user's) or, for keys of lists and text fields that aren't ccc's
@@ -191,7 +190,7 @@ def keys_markdown(keys: dict[str, str] | None = None) -> str:
     return "\n".join(lines) + "\n"
 
 
-class HelpScreen(ModalScreen):
+class HelpScreen(CccModal):
     """The user guide (ccc.help): topics on the left, the selected one on
     the right. Opens on the topic of the screen you came from."""
 

@@ -162,9 +162,7 @@ class CCContinueApp(App):
 
         from ccc.tui.footer_strip import FOOTER_OPTION, encode, footer_items
 
-        # The name of the view (also under a window opened on top of it).
-        title = next((s.SUB_TITLE for s in reversed(self.screen_stack) if getattr(s, "SUB_TITLE", "")), "")
-        value = encode(footer_items(self), title)
+        value = encode(footer_items(self))
         if value != self._published_footer:
             self._published_footer = value
             subprocess.run(tmux.own("set-option", "-w", "-t", os.environ["TMUX_PANE"], FOOTER_OPTION, value),

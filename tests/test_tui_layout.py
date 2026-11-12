@@ -1,5 +1,5 @@
 import pytest
-from textual.widgets import Button, Input, TabbedContent
+from textual.widgets import Button, Input, Static, TabbedContent
 
 from ccc.storage import Storage
 from ccc.tui.analytics import AnalyticsScreen
@@ -282,3 +282,46 @@ async def test_menu_items_are_all_the_same_size_the_open_view_marked_by_an_arrow
             assert len({(b.region.width, b.region.height, b.content_region.width) for b in buttons}) == 1, key
             marked = [b.id for b in buttons if str(b.render()).lstrip().startswith(">")]
             assert marked == [f"nav-{ {'d': 'dashboard', 'a': 'analytics'}[key]}"]
+
+
+@pytest.mark.asyncio
+async def test_windows_get_the_red_title_bar_and_the_status_bar_no_screen_name(tmp_path):
+    # Every window has the New conversation design's red bar (#250), a row and a half high,
+    # flush with the frame; the status bar only lists keys (the menu shows the screen).
+    from ccc.tui.layout import ModalTitle, StatusBar
+
+    app = _app(tmp_path)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        assert "DASHBOARD" not in " ".join(str(w.render()) for w in app.screen.query_one(StatusBar).query(Static))
+        await pilot.press("delete")
+        await pilot.pause()
+        bar = app.screen.query_one(ModalTitle)
+        box = bar.parent
+        assert bar.region.x == box.region.x + 1 and bar.region.width == box.region.width - 2
+        assert bar.region.y == box.region.y + 1 and bar.region.height == 2
+        assert str(bar.render()).splitlines()[0].strip() == "DELETE CONVERSATION"
+        assert not box.border_title
+        await pilot.press("escape")
+        await pilot.press("n")
+        await pilot.pause()
+        title = str(app.screen.query_one(ModalTitle).render())
+        assert "NEW CONVERSATION" in title and "cancel" not in title.lower()
+
+
+@pytest.mark.asyncio
+async def test_menu_buttons_are_3d_with_the_edge_rows_shared(tmp_path):
+    # A label row, then the dark bottom edge over the light top edge of the next button.
+    from ccc.tui.layout import BEVEL_COLOURS, BevelCap
+
+    app = _app(tmp_path)
+    async with app.run_test(size=(140, 50)) as pilot:
+        await pilot.pause()
+        buttons = list(app.screen.query(".nav-button"))
+        assert {b.region.height for b in buttons} == {2}
+        edge = buttons[0].render()
+        assert str(edge).splitlines()[1] == "▀" * buttons[0].content_size.width
+        dark = BEVEL_COLOURS["nav-dashboard"][2]
+        light_next = BEVEL_COLOURS["nav-conversations"][1]
+        assert any(f"{dark} on {light_next}" in str(span.style) for span in edge.spans)
+        assert app.screen.query(BevelCap)

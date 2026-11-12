@@ -4,19 +4,18 @@ out; on an own group's heading, rename or delete the group (ccc.groups)."""
 from __future__ import annotations
 
 from textual.containers import Container, Horizontal
-from textual.screen import ModalScreen
 from textual.widgets import Button, Input, OptionList, Static
 from textual.widgets.option_list import Option
 
 from ccc import groups, keymap
 from ccc.i18n import _
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 # The OptionList entry that takes a conversation out of its own group.
 NO_OWN_GROUP = "\0none"
 
 
-class GroupModal(ModalScreen):
+class GroupModal(CccModal):
     """Dismisses True when something changed."""
 
     DEFAULT_CSS = MODAL_CSS.format(cls="GroupModal") + """

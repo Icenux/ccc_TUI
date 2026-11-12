@@ -3,7 +3,6 @@ from __future__ import annotations
 from rich.text import Text
 from textual.containers import Container, Horizontal
 from textual.content import Content
-from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Static, TextArea
 
 from ccc import keymap
@@ -11,7 +10,7 @@ from ccc.i18n import _
 from ccc.orchestrator import attach_to_session
 from ccc.session_discovery import DiscoveredSession, discover_sessions
 from ccc.storage import Storage
-from ccc.tui.layout import ADD_PROMPT_BUTTON, MODAL_CSS, SidebarButton, SidebarScreen, panel, set_live_sessions
+from ccc.tui.layout import CccModal, ADD_PROMPT_BUTTON, MODAL_CSS, SidebarButton, SidebarScreen, panel, set_live_sessions
 
 
 REFRESH_BUTTON = SidebarButton("sidebar-refresh", _("Reload session list ({key})"), "teal", "refresh",
@@ -89,7 +88,7 @@ class SessionPickerScreen(SidebarScreen):
         self.app.push_screen(AttachSessionModal(self.storage, session))
 
 
-class AttachSessionModal(ModalScreen):
+class AttachSessionModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="AttachSessionModal") + """
     AttachSessionModal .attach-prompt-warning {
         color: $warning;

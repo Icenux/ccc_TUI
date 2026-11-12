@@ -1690,7 +1690,6 @@ CS: dict[str, str] = {
     'toggle': 'přepnout',
     'start': 'spustit',
     'change': 'změnit',
-    'cancel': 'zrušit',
     'option': 'volba',
     'space': 'mezerník',
     'Save as preset: {key}': 'Uložit jako předvolbu: {key}',

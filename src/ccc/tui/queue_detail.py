@@ -5,7 +5,6 @@ import logging
 
 from textual.containers import Container, Horizontal, VerticalScroll
 from textual.content import Content
-from textual.screen import ModalScreen
 from textual.widgets import Button, Input, Static, TextArea
 
 from ccc import keymap, overview
@@ -15,6 +14,7 @@ from ccc.models import DeliveryMode, QueueStatus
 from ccc.orchestrator import enqueue_prompt
 from ccc.storage import Storage
 from ccc.tui.layout import (
+    CccModal,
     ADD_PROMPT_BUTTON,
     MODAL_CSS,
     RETRY_BUTTON,
@@ -37,7 +37,7 @@ def delivery_text(mode: DeliveryMode) -> str:
     }.get(mode, mode.value)
 
 
-class AddPromptModal(ModalScreen):
+class AddPromptModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="AddPromptModal")
 
     BINDINGS = [keymap.binding("window.cancel", "cancel", _("Cancel"))]

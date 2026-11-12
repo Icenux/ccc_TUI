@@ -5,18 +5,17 @@ from __future__ import annotations
 
 from rich.text import Text
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Static
 
 from ccc import keymap
 from ccc.i18n import _
 from ccc.notify import CATEGORIES, category_states, set_category_states
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 SERVICE_NAMES = {"telegram": "Telegram", "discord": "Discord"}
 
 
-class NotifyCategoriesModal(ModalScreen):
+class NotifyCategoriesModal(CccModal):
     """Dismisses with True when saved, None when cancelled."""
 
     DEFAULT_CSS = MODAL_CSS.format(cls="NotifyCategoriesModal") + """

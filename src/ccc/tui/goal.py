@@ -7,14 +7,13 @@ from datetime import datetime
 
 from rich.text import Text
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Static, TextArea
 
 from ccc import goals, keymap
 from ccc.i18n import _
 from ccc.models import Goal, GoalStatus
 from ccc.schedule import format_when
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 REFRESH_SECONDS = 2.0
 STATUS_STYLES = {GoalStatus.RUNNING: "bold yellow", GoalStatus.PASSED: "bold green", GoalStatus.STUCK: "bold red",
@@ -25,7 +24,7 @@ def status_text(goal: Goal) -> Text:
     return Text(_(goals.STATUS_LABELS[goal.status]), style=STATUS_STYLES[goal.status])
 
 
-class GoalModal(ModalScreen):
+class GoalModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="GoalModal") + """
     GoalModal > Container {
         width: 95%;
@@ -60,7 +59,7 @@ class GoalModal(ModalScreen):
     }
     GoalModal #goal-detail-box {
         height: 1fr;
-        border: round $primary;
+        border: solid $ccc-line;
         padding: 0 1;
     }
     GoalModal .goal-actions {

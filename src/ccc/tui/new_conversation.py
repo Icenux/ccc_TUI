@@ -4,7 +4,6 @@ from pathlib import Path
 
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.content import Content
-from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, DirectoryTree, Input, OptionList, Select, Static
 from textual.widgets.option_list import Option
 
@@ -18,7 +17,7 @@ from ccc.orchestrator import start_conversation
 from ccc.presets import LaunchChoice, list_presets, load_last, save_last, save_preset
 from ccc.storage import Storage
 from ccc.transcript import list_sessions_for_directory
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 
 class _DirectoriesOnly(DirectoryTree):
@@ -31,7 +30,7 @@ def default_browse_root() -> Path:
     return dev if dev.is_dir() else Path.home()
 
 
-class PresetNameModal(ModalScreen):
+class PresetNameModal(CccModal):
     """Asks for a preset name. Dismisses with the name, or None."""
 
     DEFAULT_CSS = MODAL_CSS.format(cls="PresetNameModal")
@@ -61,8 +60,8 @@ CHIP_COLOURS = {"permissions": "#af5f5f", "model": "#005fd7", "effort": "#af8700
 CHIP_OTHER = "#3a3a3a"
 
 
-class NewConversationModal(ModalScreen):
-    """The design's window (#250): a red title bar, the folder, the recent
+class NewConversationModal(CccModal):
+    """The design's window (#250) — every window's look (CccModal): a red title bar, the folder, the recent
     ones, the chosen options as chips, name / session / preset / ccc, Start.
     "+ option" opens every option (and the folder tree to browse)."""
 
@@ -73,20 +72,6 @@ class NewConversationModal(ModalScreen):
         height: 90%;
         padding: 0;
         border: solid $ccc-text;
-    }
-    NewConversationModal #nc-titlebar {
-        height: 3;
-        padding: 1 2;
-        background: #af5f5f;
-    }
-    NewConversationModal #nc-title {
-        width: 1fr;
-        color: white;
-        text-style: bold;
-    }
-    NewConversationModal #nc-esc {
-        width: auto;
-        color: white;
     }
     NewConversationModal #nc-body {
         height: 1fr;
@@ -340,9 +325,6 @@ class NewConversationModal(ModalScreen):
         session_button.can_focus = True
         keys = keymap.current(self.storage)
         box = Container(
-            Horizontal(Static(_("New conversation").upper(), id="nc-title"),
-                       Static(f"{keymap.pretty(keys['window.cancel']).lower()} {_('cancel')}", id="nc-esc"),
-                       id="nc-titlebar"),
             VerticalScroll(
                 self._label_row(_("Directory"), _("required")),
                 Input(placeholder=_("/path/to/project"), id="launch-path"),
@@ -399,6 +381,7 @@ class NewConversationModal(ModalScreen):
                 id="nc-keys",
             ),
         )
+        box.border_title = _("New conversation")  # the red bar (CccModal)
         yield box
 
     # --- the chips and "+ option" ---------------------------------------

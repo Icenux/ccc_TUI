@@ -3,8 +3,7 @@
 The frame: on the left the menu — the daemon's state, then the coloured
 3D buttons of the views (and of Agents, Routines and Tasks, which open a
 window), each with its key and a count; on the right the screen's content
-in thin-lined panels; at the bottom one status bar with the screen's name
-and its keys. Every top-level screen subclasses SidebarScreen so they all
+in thin-lined panels; at the bottom one status bar with the screen's keys. Every top-level screen subclasses SidebarScreen so they all
 share that frame, and adds its own sidebar section / main content /
 buttons through the hooks below.
 """
@@ -19,6 +18,7 @@ from rich.markup import escape
 from rich.text import Text
 from textual.css.query import NoMatches
 from textual.containers import Horizontal, Vertical
+from textual.content import Content
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Static
 
@@ -94,7 +94,91 @@ NAV: list[NavItem] = [
 _CONVERSATION_VIEWS = ("conversations", "archive")
 
 
-class NavButton(Button):
+# The 3D buttons of the menu and the sidebar (#250): (face, light top edge, dark bottom edge),
+# the design's colours on the xterm 256-colour cube (#76). The first class a button has wins.
+BEVEL_COLOURS: dict[str, tuple[str, str, str]] = {
+    "nav-dashboard": ("#005fd7", "#5f87ff", "#005f87"),
+    "nav-conversations": ("#875fff", "#af87ff", "#5f00af"),
+    "nav-archive": ("#af8700", "#d7af5f", "#875f00"),
+    "nav-sessions": ("#af5f87", "#d787af", "#87005f"),
+    "nav-agents": ("#0087af", "#5fafd7", "#005f87"),
+    "nav-analytics": ("#00af5f", "#5fd787", "#005f5f"),
+    "nav-routines": ("#d75f00", "#ff875f", "#875f00"),
+    "nav-tasks": ("#5f5f87", "#87afaf", "#005f5f"),
+    "sidebar-button-green": ("#00af5f", "#5fd787", "#005f5f"),
+    "sidebar-button-red": ("#af5f5f", "#d78787", "#5f0000"),
+    "sidebar-button": ("#3a3a3a", "#626262", "#1c1c1c"),
+}
+
+
+def _sidebar_ground() -> str:
+    return theme.VARIABLES["ccc-sidebar"]
+
+
+def _next_bevel(widget) -> "BevelButton | None":
+    """The 3D button right under `widget` (the next shown sibling), if any."""
+    parent = widget.parent
+    if parent is None:
+        return None
+    siblings = list(parent.children)
+    for sibling in siblings[siblings.index(widget) + 1:]:
+        if sibling.display:
+            return sibling if isinstance(sibling, BevelButton) else None
+    return None
+
+
+class BevelButton(Button):
+    """A 3D button of the menu or the sidebar, low as in the design: the
+    label row, then one row split in half — this button's dark bottom
+    edge over the light top edge of the button under it (or the menu's
+    ground under the last one). The first one of a group has a BevelCap
+    above it: its light top edge. In a short window just the label row."""
+
+    def on_mount(self) -> None:
+        # The edge rows go from side to side (CSS refuses "line-pad: 0").
+        self.styles.line_pad = 0
+
+    def colours(self) -> tuple[str, str, str]:
+        return next((c for cls, c in BEVEL_COLOURS.items() if self.has_class(cls)), BEVEL_COLOURS["sidebar-button"])
+
+    def label_line(self, width: int) -> Content:
+        return self.label.first_line.truncate(width, ellipsis=True)
+
+    def render(self):
+        width = self.content_size.width
+        if width <= 0:
+            return self.label
+        line = self.label_line(width)
+        if self.size.height < 2 or self.disabled:
+            return line
+        _face, _light, dark = self.colours()
+        below = _next_bevel(self)
+        ground = below.colours()[1] if below is not None else _sidebar_ground()
+        return Content("\n").join([line, Content.styled("▀" * width, f"{dark} on {ground}")])
+
+
+class BevelCap(Static):
+    """The light top edge of the first 3D button of a group (the lower half of a row)."""
+
+    DEFAULT_CSS = """
+    BevelCap {
+        height: 1;
+        width: 100%;
+    }
+    SidebarScreen.-short BevelCap {
+        display: none;
+    }
+    """
+
+    def render(self):
+        below = _next_bevel(self)
+        width = self.content_size.width
+        if below is None or width <= 0:
+            return ""
+        return Content.styled("▄" * width, f"{below.colours()[1]} on {_sidebar_ground()}")
+
+
+class NavButton(BevelButton):
     """A menu button: "> Label ……… key count", the key and the count at
     the right edge, whatever the menu's width."""
 
@@ -103,17 +187,13 @@ class NavButton(Button):
     DEFAULT_CSS = """
     NavButton {
         width: 100%;
-        height: 3;
-        min-width: 0;
-    }
-    SidebarScreen.-medium NavButton {
         height: 2;
-        border-top: none;
+        min-width: 0;
+        border: none;
+        padding: 0;
     }
     SidebarScreen.-short NavButton {
         height: 1;
-        border-top: none;
-        border-bottom: none;
     }
     """
 
@@ -136,44 +216,26 @@ class NavButton(Button):
             self.count = count
             self.label = self._plain()
 
-    def render(self):
-        from textual.content import Content
-
-        width = self.content_size.width - 2 * self.styles.line_pad  # Button pads each line
+    def label_line(self, width: int) -> Content:
+        width -= 2  # a space at each edge
         left = Text.assemble(("> " if self.has_class("-current") else "  "), self.item.label)
         right = Text.assemble((self.key_text, "dim"))
         if self.count is not None:
             right.append(f" {self.count}", style="bold")
-        gap = width - left.cell_len - right.cell_len
-        if gap < 1:
-            return Content.from_text(Text.assemble(left, " ", right))
-        return Content.from_text(Text.assemble(left, " " * gap, right))
+        gap = max(1, width - left.cell_len - right.cell_len)
+        return Content.from_text(Text.assemble(" ", left, " " * gap, right, " "))
 
 
 class StatusBar(Footer):
-    """The one bar at the bottom: the screen's name in a coloured block,
-    then the screen's keys (Textual's Footer: clickable, kept up to date)."""
+    """The one bar at the bottom: the screen's keys (Textual's Footer:
+    clickable, kept up to date). Which screen is open the menu shows."""
 
-    DEFAULT_CSS = """
-    StatusBar .status-title {
-        width: auto;
-        height: 1;
-        padding: 0 2;
-        background: $ccc-accent;
-        color: $ccc-background;
-        text-style: bold;
-        margin-right: 1;
-    }
-    """
-
-    def __init__(self, title: str):
+    def __init__(self):
         super().__init__(show_command_palette=False, compact=True)
-        self.title = title
 
     def compose(self):
         if not self._bindings_ready:
             return
-        yield Static(self.title.upper(), classes="status-title")
         for widget in super().compose():
             if hasattr(widget, "description") and isinstance(widget.description, str):
                 widget.description = widget.description.lower()
@@ -269,27 +331,91 @@ def queue_label(queue: Queue, unseen: bool, pending: int = 0, needs_approval: bo
     return label
 
 
-class ConfirmModal(ModalScreen):
+MODAL_TITLE_BACKGROUND = "#af5f5f"
+
+
+class ModalTitle(Static):
+    """The red title bar at the top of a window (the New conversation
+    design, #250), a row and a half high: the title row, then the lower
+    edge of the bar in the upper half of the next row."""
+
+    DEFAULT_CSS = """
+    ModalTitle {
+        dock: top;
+        width: 100%;
+        height: 2;
+    }
+    """
+
+    def __init__(self, title: str):
+        super().__init__(id="modal-title")
+        self.title_text = title
+
+    def set_title(self, title: str) -> None:
+        self.title_text = title
+        self.refresh()
+
+    def render(self):
+        width = self.content_size.width
+        if width <= 0:
+            return ""
+        ground = self.parent.styles.background if self.parent is not None else None
+        ground = ground.hex if ground is not None and ground.a > 0 else theme.VARIABLES["ccc-panel"]
+        title = Content(f"  {self.title_text.upper()}").truncate(width, ellipsis=True)
+        title = title.extend_right(width - title.cell_length)
+        return Content("\n").join([
+            title.stylize(f"bold white on {MODAL_TITLE_BACKGROUND}"),
+            Content.styled("▀" * width, f"{MODAL_TITLE_BACKGROUND} on {ground}"),
+        ])
+
+
+class CccModal(ModalScreen):
+    """Base of every ccc window: the window's box (the screen's first
+    child) gets the New conversation design's frame (#250) — its
+    border_title becomes the red ModalTitle bar at the top, flush with
+    the frame whatever the box's padding."""
+
+    def on_mount(self) -> None:
+        # Textual dispatches on_mount along the MRO: this runs before each window's own.
+        box = next(iter(self.children), None)
+        if box is None or not box.border_title:
+            return
+        title = str(box.border_title)
+        box.border_title = None
+        # Textual clips children to the box's padding: the bar reaches the
+        # frame only when the box has none, so its sides move to the content.
+        top, right, bottom, left = box.styles.padding
+        if right or left:
+            for child in box.children:
+                m = child.styles.margin
+                child.styles.margin = (m.top, m.right + right, m.bottom, m.left + left)
+        box.styles.padding = (0, 0, bottom, 0)
+        bar = ModalTitle(title)
+        bar.styles.margin = (0, 0, top, 0)
+        box.mount(bar, before=0)
+
+
+class ConfirmModal(CccModal):
     """Yes/no question. Dismisses True only when confirmed; with
     can_confirm=False it's just a notice (any key closes it, False)."""
 
     DEFAULT_CSS = """
     ConfirmModal {
         align: center middle;
+        background: $ccc-background 60%;
     }
     ConfirmModal > Vertical {
         width: 70;
         height: auto;
         border: solid $ccc-text;
-        border-title-color: white;
-        border-title-background: #af5f5f;
-        border-title-style: bold;
         background: $ccc-panel;
-        padding: 1 2;
+        padding: 1 2 0 2;
     }
     ConfirmModal .confirm-hint {
-        color: $text-muted;
+        color: $ccc-text-muted;
         margin-top: 1;
+        height: 2;
+        border-top: solid $ccc-line;
     }
     """
 
@@ -353,63 +479,40 @@ Button.settings-danger, Button.review-danger, Button.goal-danger,
 Button.routines-danger, Button.workflow-danger, Button.sidebar-button-red {
     background: $ccc-button-danger;
 }
-/* sidebar buttons are 3D (#102): light top edge, dark bottom edge, swapped while pressed */
-Button.sidebar-button {
-    border-top: tall #626262;
-    border-bottom: tall #1c1c1c;
-}
-Button.sidebar-button-green {
-    border-top: tall #5fd787;
-    border-bottom: tall #005f5f;
-}
-Button.sidebar-button-red {
-    border-top: tall #d78787;
-    border-bottom: tall #5f0000;
-}
-Button.sidebar-button.-active {
-    border-top: tall #1c1c1c;
-    border-bottom: tall #626262;
-}
-Button.sidebar-button-green.-active {
-    border-top: tall #005f5f;
-    border-bottom: tall #5fd787;
-}
-Button.sidebar-button-red.-active {
-    border-top: tall #5f0000;
-    border-bottom: tall #d78787;
-}
-/* The menu (#250): 3D buttons, each its own colour (the design's, on the 256 cube), directly
-   under each other: a light top edge, the label, a dark bottom edge. All of the same size; the
-   open view is marked only by ">" (a frame took a column on each side — narrower). A shorter window drops the top edge (SidebarScreen.-medium), a short one both
-   (-short), so the list and the buttons under the menu still fit. */
-Button.nav-button {
+/* The 3D buttons of the menu and the sidebar (#102, #250): BevelButton draws the edges itself —
+   the label row, then a row split in half: its dark bottom edge over the light top edge of the
+   button under it (BEVEL_COLOURS; a BevelCap above the first one). Low, as in the design. The
+   menu's buttons are all the same size; the open view is marked only by ">". A short window
+   (SidebarScreen.-short) keeps just the label rows. */
+Button.nav-button, Button.sidebar-button {
     width: 100%;
-    height: 3;
-    padding: 0 1;
+    height: 2;
+    border: none;
+    padding: 0;
     text-style: bold;
-    text-align: left;
-    content-align: left middle;
     color: white;
+}
+Button.nav-button {
+    text-align: left;
+    content-align: left top;
+}
+Button.sidebar-button {
+    text-align: center;
+    content-align: center top;
 }
 Button.nav-button:hover {
     background-tint: white 10%;
 }
-Button.nav-dashboard { background: #005fd7; border-top: tall #5f87ff; border-bottom: tall #005f87; }
-Button.nav-conversations { background: #875fff; border-top: tall #af87ff; border-bottom: tall #5f00af; }
-Button.nav-archive { background: #af8700; border-top: tall #d7af5f; border-bottom: tall #875f00; }
-Button.nav-sessions { background: #af5f87; border-top: tall #d787af; border-bottom: tall #87005f; }
-Button.nav-agents { background: #0087af; border-top: tall #5fafd7; border-bottom: tall #005f87; }
-Button.nav-analytics { background: #00af5f; border-top: tall #5fd787; border-bottom: tall #005f5f; }
-Button.nav-routines { background: #d75f00; border-top: tall #ff875f; border-bottom: tall #875f00; }
-Button.nav-tasks { background: #5f5f87; border-top: tall #87afaf; border-bottom: tall #005f5f; }
-SidebarScreen.-medium Button.nav-button {
-    height: 2;
-    border-top: none;
-}
-SidebarScreen.-short Button.nav-button {
+Button.nav-dashboard { background: #005fd7; }
+Button.nav-conversations { background: #875fff; }
+Button.nav-archive { background: #af8700; }
+Button.nav-sessions { background: #af5f87; }
+Button.nav-agents { background: #0087af; }
+Button.nav-analytics { background: #00af5f; }
+Button.nav-routines { background: #d75f00; }
+Button.nav-tasks { background: #5f5f87; }
+SidebarScreen.-short Button.nav-button, SidebarScreen.-short Button.sidebar-button {
     height: 1;
-    border-top: none;
-    border-bottom: none;
 }
 /* Filter: a strip like the key list at the bottom (one row, blue, orange key) */
 #sidebar-strip-row {
@@ -456,10 +559,6 @@ Button.nc-field {
 Button.nc-field:focus {
     border: tall $ccc-accent;
     text-style: none;
-}
-Button.sidebar-button:disabled {
-    border-top: tall $panel;
-    border-bottom: tall $panel;
 }
 Button:disabled {
     background: $panel;
@@ -534,9 +633,12 @@ SidebarScreen #sidebar DataTable.sidebar-list > .datatable--cursor {
 }
 SidebarScreen #sidebar Button.sidebar-button {
     width: 100%;
-    height: 3;
+    height: 2;
     border: none;
     text-style: bold;
+}
+SidebarScreen.-short #sidebar Button.sidebar-button {
+    height: 1;
 }
 SidebarScreen #main {
     width: 1fr;
@@ -585,9 +687,10 @@ SidebarScreen .muted {
 }
 """
 
-# Same frame for modal dialogs (#250): a light thin line round a dark box,
-# the title as a red block in the top line, a green Submit and a grey
-# Cancel button.
+# Same frame for every window (#250), the New conversation design's: a light
+# thin line round a dark box, the title in a red bar at the top (CccModal,
+# ModalTitle), fields with a thin line that turns green with the focus,
+# muted labels, a green Submit and a grey Cancel button.
 MODAL_CSS = """
 {cls} {{
     align: center middle;
@@ -597,14 +700,16 @@ MODAL_CSS = """
     width: 84;
     height: auto;
     border: solid $ccc-text;
-    border-title-color: white;
-    border-title-background: #af5f5f;
-    border-title-style: bold;
     background: $ccc-panel;
     padding: 1 2;
 }}
 {cls} Input {{
     margin-bottom: 1;
+    background: $ccc-background;
+    border: tall $ccc-line;
+}}
+{cls} Input:focus {{
+    border: tall $ccc-accent;
 }}
 {cls} TextArea {{
     height: 8;
@@ -637,7 +742,7 @@ def panel(*children, title: str, id: str | None = None, fill: bool = False) -> V
 
 class SidebarScreen(Screen):
     """Base for all top-level screens. Subclasses set VIEW (which sidebar
-    nav item is highlighted), SUB_TITLE (the name in the status bar), and
+    nav item is highlighted), SUB_TITLE (its name), and
     override compose_main() and optionally compose_sidebar_section() /
     sidebar_buttons()."""
 
@@ -694,14 +799,15 @@ class SidebarScreen(Screen):
                 Static("", id="daemon-state"),
                 Static("", id="restart-state"),
                 Static("", id="update-state"),
-                Vertical(*nav_items, id="sidebar-nav"),
+                Vertical(BevelCap(), *nav_items, id="sidebar-nav"),
                 Vertical(*self.compose_sidebar_section(), id="sidebar-section"),
+                *([BevelCap()] if self.sidebar_buttons() else []),
                 *[self._make_button(b) for b in self.sidebar_buttons()],
                 id="sidebar",
             ),
             Vertical(*self.compose_main(), id="main"),
         )
-        yield StatusBar(self.SUB_TITLE)
+        yield StatusBar()
 
     def on_screen_resume(self) -> None:
         self.refresh_daemon_state()
@@ -720,7 +826,12 @@ class SidebarScreen(Screen):
             # The DB is locked by another process: keep the button as it is
             # instead of crashing the whole TUI; the next refresh retries.
             return
-        button.display = target is not None and target.status in RETRYABLE
+        shown = target is not None and target.status in RETRYABLE
+        if button.display != shown:
+            button.display = shown
+            # The button above it draws the edge between them.
+            for sibling in button.parent.children:
+                sibling.refresh()
 
     def on_mount(self) -> None:
         # Textual dispatches on_mount along the MRO, so this runs in
@@ -847,7 +958,8 @@ class SidebarScreen(Screen):
                 button.label = spec.text(keys)
 
     def _make_button(self, spec: SidebarButton) -> Button:
-        button = Button(spec.text(self._keys()), id=spec.id, classes=f"sidebar-button sidebar-button-{spec.color}")
+        kind = Button if spec.color == "strip" else BevelButton
+        button = kind(spec.text(self._keys()), id=spec.id, classes=f"sidebar-button sidebar-button-{spec.color}")
         # Every button has its own hotkey; keeping them out of the focus
         # chain means initial focus (and Enter) lands on the screen's list,
         # not on whichever button happens to come first in the sidebar.

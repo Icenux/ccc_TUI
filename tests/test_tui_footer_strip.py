@@ -118,14 +118,16 @@ async def test_hover_goes_away_when_the_mouse_stops_reporting(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_strip_starts_with_the_screens_name(monkeypatch):
+async def test_strip_shows_only_the_keys_not_the_screens_name(monkeypatch):
+    # The menu shows which screen is open; the strip used to repeat it (#250).
     import subprocess
 
-    value = footer_strip.encode([["?", "Help", "?"]], "Dashboard")
+    value = footer_strip.encode([["?", "Help", "?"]])
     assert footer_strip.decode(value) == [["?", "Help", "?"]]
-    assert footer_strip.decode_title(value) == "Dashboard"
+    # What an older ccc published (with the name) still gives the keys.
+    assert footer_strip.decode('{"title": "Dashboard", "items": [["?", "Help", "?"]]}') == [["?", "Help", "?"]]
     monkeypatch.setattr(footer_strip, "_tmux", lambda *a: subprocess.CompletedProcess(a, 0, value, ""))
     app = footer_strip.FooterStrip("%0")
     async with app.run_test(size=(100, 1)) as pilot:
         await pilot.pause()
-        assert str(app.query_one(".strip-title").render()) == "DASHBOARD"
+        assert [str(w.render()) for w in app.query(".strip-row Static")] == ["? help"]

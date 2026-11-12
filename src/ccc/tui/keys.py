@@ -9,13 +9,12 @@ from __future__ import annotations
 from rich.text import Text
 from textual import events
 from textual.containers import Container, Horizontal
-from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Static
 
 from ccc import keymap
 from ccc.export_paths import export_folder
 from ccc.i18n import _
-from ccc.tui.layout import MODAL_CSS
+from ccc.tui.layout import CccModal, MODAL_CSS
 
 
 def _section(action_id: str) -> str:
@@ -27,7 +26,7 @@ def _section(action_id: str) -> str:
     return _(section) if section else ""
 
 
-class KeysModal(ModalScreen):
+class KeysModal(CccModal):
     DEFAULT_CSS = MODAL_CSS.format(cls="KeysModal") + """
     KeysModal > Container {
         width: 95%;

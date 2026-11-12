@@ -86,6 +86,7 @@ async def test_pane_follows_the_selected_conversation(storage, pane):
         await app.screen._show_queue(ids["headless"])
         assert pane.shown is None and not app.screen.has_class("-cli-open")
         await app.screen._show_queue(ids["cli"])
+        await pilot.pause()  # the pane opens after the repaint (_sync_cli_pane's call_after_refresh)
         assert pane.shown == ids["cli"]
     assert pane.shown is None  # leaving the screen closes it
 

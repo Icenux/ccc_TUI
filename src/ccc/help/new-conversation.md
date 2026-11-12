@@ -1,14 +1,24 @@
 # Starting a conversation
 
 Press `n` anywhere (or the green **New conversation** button in
-Conversations). The window has two halves.
+Conversations, or `[n] new conversation` on the Dashboard). From the top:
+the folder, the recent folders, the chosen options as coloured chips,
+then name, session, preset and ccc's own switches; **Start** at the bottom
+(or `Enter` in the folder or name field).
+
+- A **chip** shows a chosen option (red: permissions, blue: model,
+  yellow: effort, grey: the rest); a click on it drops the option.
+- **+ option** opens every option below (in the groups of the table
+  below) together with the folder tree to browse; the **Session** field
+  opens them too, on the session's choice.
+- `Ctrl+S` saves the choice as a preset (or **Save…** next to Preset).
 
 ![New conversation](../../../docs/screenshots/new_conversation.png)
 
 ## Directory
 
-The project folder Claude will work in: pick one of the recent folders,
-browse the folder tree, or type a path.
+The project folder Claude will work in: pick one of the recent folders
+(↑↓, Enter), type a path, or browse the folder tree (under **+ option**).
 
 ## Options
 

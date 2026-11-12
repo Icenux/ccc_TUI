@@ -21,6 +21,7 @@ uvádějí výchozí klávesy.
 | `?` | Tato nápověda |
 | `o` | Routiny: prompty podle plánu |
 | `A` | Agenti: pomocníci, které Claude Code umí zavolat |
+| `t` | Úkoly vybrané konverzace (v Konverzacích a Archivu jejich vlastní t) |
 | `U` | Aktualizovat ccc — jen když je nová verze |
 | `Ctrl+P` | Nastavení (jazyk, Telegram, fronty, předvolby, zkratky, záloha) |
 | `Alt+S` | Snímek obrazovky ccc (SVG do složky exportů, viz Nastavení) |
@@ -38,6 +39,7 @@ uvádějí výchozí klávesy.
 | `q` | Zavřít ccc (stejně jako Ctrl+Q) |
 | `x` | Archivovat vybranou konverzaci (dlouhé podržení řádku nabídne Archivovat / Smazat) |
 | `Del` | Smazat vybranou konverzaci z ccc (nejdřív se zeptá) |
+| `/` | Filtr tabulky: vše, běžící, s čekajícími úkoly, zablokované (i kliknutím na řádek filtrů) |
 
 ## Živé relace
 

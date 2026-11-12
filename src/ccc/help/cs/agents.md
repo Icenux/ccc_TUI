@@ -6,8 +6,9 @@ používá“, „zkontroluj diff“. Claude mu zadá úkol, pomocník pracuje v
 vlastním kontextu a Claude dostane zpět jen shrnutí. Konverzace tak zůstane
 krátká a spotřeba nízká.
 
-Klávesa `A` kdekoli otevře **Agenty**: pomocníky, které Claude Code
-najde pro vybranou konverzaci.
+Klávesa `A` kdekoli (nebo **Agenti** v levém menu pod Živými relacemi)
+otevře **Agenty**: pomocníky, které Claude Code najde pro vybranou
+konverzaci.
 
 | Klávesa | |
 |---|---|

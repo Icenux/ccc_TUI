@@ -98,6 +98,25 @@ class NavButton(Button):
     """A menu button: "> Label ……… key count", the key and the count at
     the right edge, whatever the menu's width."""
 
+    # Its size also where ccc's app CSS (BUTTON_CSS, the colours) is missing:
+    # a host app in tests; in ccc BUTTON_CSS sets the same.
+    DEFAULT_CSS = """
+    NavButton {
+        width: 100%;
+        height: 3;
+        min-width: 0;
+    }
+    SidebarScreen.-medium NavButton {
+        height: 2;
+        border-top: none;
+    }
+    SidebarScreen.-short NavButton {
+        height: 1;
+        border-top: none;
+        border-bottom: none;
+    }
+    """
+
     def __init__(self, item: NavItem, key: str, current: bool):
         self.item, self.key_text, self.count = item, key, None
         super().__init__(self._plain(), id=f"nav-{item.key}", classes=f"nav-button nav-{item.key}")

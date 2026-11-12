@@ -1,14 +1,25 @@
 # Zahájení konverzace
 
 Kdekoli stiskni `n` (nebo zelené tlačítko **Nová konverzace**
-v Konverzacích). Okno má dvě poloviny.
+v Konverzacích, případně `[n] nová konverzace` na Přehledu). Odshora:
+složka, nedávné složky, zvolené volby jako barevné čipy, potom název,
+relace, předvolba a vlastní přepínače ccc; dole **Spustit** (nebo `Enter`
+v poli složky či názvu).
+
+- **Čip** ukazuje zvolenou volbu (červeně oprávnění, modře model, žlutě
+  úsilí, šedě ostatní); kliknutím na něj volbu zrušíš.
+- **+ volba** otevře všechny volby níže (ve skupinách z tabulky) i se
+  stromem složek k procházení; otevře je i pole **Relace**, rovnou na
+  volbě relace.
+- `Ctrl+S` uloží volbu jako předvolbu (nebo **Uložit…** vedle Předvolby).
 
 ![Nová konverzace](../../../../docs/screenshots/new_conversation.png)
 
 ## Složka
 
 Složka projektu, ve které bude Claude pracovat: vyber některou
-z nedávných, projdi strom složek, nebo napiš cestu.
+z nedávných (↑↓, Enter), napiš cestu, nebo projdi strom složek (pod
+**+ volba**).
 
 ## Volby
 

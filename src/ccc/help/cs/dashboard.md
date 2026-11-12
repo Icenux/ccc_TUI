@@ -5,30 +5,46 @@ jen k dívání — s konverzací pracuješ v [Konverzacích](conversations.md).
 
 ![Přehled](../../../../docs/screenshots/dashboard.png)
 
-## Souhrn
+## Záhlaví a filtr
 
-Horní řádek sčítá všechny konverzace: na kolika Claude pracuje
-(**běží**), kolik úkolů čeká v jejich frontách (**čeká**), kolik se jich
-zastavilo chybou (**zablokované**, červeně), kolik jich **čeká na tebe**
-(žlutě: schválení nástroje, chyba, limit, dokončená odpověď, na kterou ses
-ještě nepodíval(a) — stejné, na které skáče klávesa Alt+N) a kolik tokenů
-dnes spotřebovaly.
+Panel začíná nápisem **PŘEHLED** a počtem konverzací; vpravo
+`[n] nová konverzace` (kliknutím nebo `n` ji otevřeš).
+
+Řádek pod ním filtruje tabulku: **vše** · **běží** (Claude na nich
+pracuje) · **čeká** (úkoly čekající ve frontách) · **zablokováno**
+(zastavené chybou). Klikni na jeden, nebo je projdi klávesou `/`; vybraný
+je zelený. Vedle nich: dnes spotřebované tokeny a žlutě, kolik konverzací
+**čeká na tebe** (schválení nástroje, chyba, limit, dokončená odpověď, na
+kterou ses ještě nepodíval(a) — stejné, na které skáče klávesa Alt+N).
 
 ## Tabulka
 
-Jeden řádek na konverzaci (archivované jsou v [Archivu](archive.md)):
+Jeden řádek na konverzaci (archivované jsou v [Archivu](archive.md));
+vybraná je zelená a má před sebou `>`:
 
 | Sloupec | |
 |---|---|
-| Projekt | název konverzace se značkou (viz níže) |
+| Projekt | název konverzace se značkou (viz níže) a pod ním složka projektu, ve které Claude pracuje (*Cesta*), zkrácená zepředu — poslední složka je vidět vždy |
+| Větev | větev, neuložené řádky (`+12−3`) a commity před `↑` / za `↓` základní větví; `–` mimo git a u konverzace, kde Claude nesmí sám spouštět příkazy (ccc spouští git jen tam, viz [Git](git.md)) |
+| Ve frontě | úkoly čekající v její [frontě](tasks.md) |
+| Kontext | jak plný je její kontext (žlutě od 80 %, červeně od 90 %) |
 | Stav | co dělá — viz tabulka níže |
 | Cíl | její poslední [smyčka k cíli](goal.md): `◎ 3/5` (kolo / kol) za běhu, den po skončení `✅ splněno 3/5` / `⛔ zaseknuto 4/5` / `⛔ došla kola 5/5` / `✖ selhalo` / `■ zastaveno`; jinak `–` |
-| Čeká | úkoly čekající v její [frontě](tasks.md) |
-| Tokeny dnes | tokeny, které dnes spotřebovala |
-| Git | větev, neuložené řádky (`+12−3`) a commity před `↑` / za `↓` základní větví; `–` mimo git a u konverzace, kde Claude nesmí sám spouštět příkazy (ccc spouští git jen tam, viz [Git](git.md)) |
-| Cesta | složka projektu, ve které Claude pracuje, zkrácená zepředu — poslední složka je vidět vždy |
+| Tokeny | tokeny, které dnes spotřebovala |
 
-**Které sloupce** — Nastavení → Přehled: jedna volba pro terminálovou
+Pod tabulkou: kolik řádků je vidět z kolika a klávesy.
+
+**Vybraná konverzace** je popsaná pod tabulkou: její složka, volby Claude
+Code a automatické pokračování; kolik úkolů čeká, jak plný je kontext,
+dnešní tokeny, větev; vpravo její nejnovější commit (ve složkách s gitem,
+kde Claude smí spouštět příkazy) a klávesy `[↵] otevřít` a `[t] úkoly`.
+
+**Aktivita** dole je to, co se v konverzacích stalo naposledy, od
+nejnovějšího: `task` (dokončený úkol i s commitem), `queue` (čekající
+úkoly), `limit` (limit spotřeby), `approve` (nástroj čeká na tebe),
+`error` a `review`.
+
+**Které sloupce** (*Cesta* je složka pod názvem) — Nastavení → Přehled: jedna volba pro terminálovou
 verzi ccc (aplikace pro Android má vlastní). Název je vidět vždy;
 výchozí je ukázat i všechno ostatní.
 
@@ -49,11 +65,11 @@ V seznamu Konverzací znamená `·3` za názvem tři úkoly ve frontě.
 
 | Stav | |
 |---|---|
-| `nečinná` | nemá co dělat; další úkol začne, jakmile nějaký přidáš |
-| `běží` | Claude pracuje na úkolu |
-| `čeká na opakování` | čeká na obnovení limitu využití; pak sama pokračuje |
-| `pauza na limitu` | zastavila se na limitu využití s vypnutým automatickým pokračováním — čeká na tebe |
-| `zablokovaná chybou` | zastavila se chybou — čeká na tebe |
+| `NEČINNÁ` | nemá co dělat; další úkol začne, jakmile nějaký přidáš |
+| `BĚŽÍ` | Claude pracuje na úkolu |
+| `ČEKÁ` | čeká na obnovení limitu využití; pak sama pokračuje |
+| `LIMIT` | zastavila se na limitu využití s vypnutým automatickým pokračováním — čeká na tebe |
+| `ZABLOKOVÁNO` | zastavila se chybou — čeká na tebe |
 
 Co s posledními dvěma: [Limity využití a zablokované fronty](limits.md).
 

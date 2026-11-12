@@ -379,8 +379,8 @@ Button.sidebar-button-red.-active {
     border-bottom: tall #d78787;
 }
 /* The menu (#250): 3D buttons, each its own colour (the design's, on the 256 cube), directly
-   under each other: a light top edge, the label, a dark bottom edge. The open view has a white
-   frame and ">". A shorter window drops the top edge (SidebarScreen.-medium), a short one both
+   under each other: a light top edge, the label, a dark bottom edge. All of the same size; the
+   open view is marked only by ">" (a frame took a column on each side — narrower). A shorter window drops the top edge (SidebarScreen.-medium), a short one both
    (-short), so the list and the buttons under the menu still fit. */
 Button.nav-button {
     width: 100%;
@@ -394,11 +394,6 @@ Button.nav-button {
 Button.nav-button:hover {
     background-tint: white 10%;
 }
-Button.nav-button.-current {
-    text-style: bold;
-    border-left: tall white;
-    border-right: tall white;
-}
 Button.nav-dashboard { background: #005fd7; border-top: tall #5f87ff; border-bottom: tall #005f87; }
 Button.nav-conversations { background: #875fff; border-top: tall #af87ff; border-bottom: tall #5f00af; }
 Button.nav-archive { background: #af8700; border-top: tall #d7af5f; border-bottom: tall #875f00; }
@@ -407,10 +402,6 @@ Button.nav-agents { background: #0087af; border-top: tall #5fafd7; border-bottom
 Button.nav-analytics { background: #00af5f; border-top: tall #5fd787; border-bottom: tall #005f5f; }
 Button.nav-routines { background: #d75f00; border-top: tall #ff875f; border-bottom: tall #875f00; }
 Button.nav-tasks { background: #5f5f87; border-top: tall #87afaf; border-bottom: tall #005f5f; }
-Button.nav-button.-current {
-    border-top: tall white;
-    border-bottom: tall white;
-}
 SidebarScreen.-medium Button.nav-button {
     height: 2;
     border-top: none;
@@ -419,13 +410,6 @@ SidebarScreen.-short Button.nav-button {
     height: 1;
     border-top: none;
     border-bottom: none;
-}
-SidebarScreen.-short Button.nav-button.-current, SidebarScreen.-medium Button.nav-button.-current {
-    border-left: tall white;
-    border-right: tall white;
-}
-SidebarScreen.-medium Button.nav-button.-current {
-    border-bottom: tall white;
 }
 /* Filter: a strip like the key list at the bottom (one row, blue, orange key) */
 #sidebar-strip-row {

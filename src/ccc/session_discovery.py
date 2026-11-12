@@ -48,6 +48,62 @@ def _own_status(pid: int | None, env: dict[str, str] | None) -> str | None:
     return status if isinstance(status, str) else None
 
 
+# How much of a transcript's end is read to see whether the last turn ended.
+TAIL_BYTES = 256 * 1024
+
+
+def turn_finished(session_id: str) -> bool:
+    """True when the session's last turn has ended: after the newest prompt the transcript
+    has Claude Code's own end-of-turn mark (a `system` entry `turn_duration`).
+
+    Claude Code reports "busy" not only while it works on a prompt but also while anything of
+    it runs in the background (a background shell, a monitor, a sub-agent — `isLoading ||
+    delegatedActive`), and it has no state of its own for "the prompt is done, something still
+    runs in the background". A background task that never ends kept a conversation "busy"
+    for good, so ccc never handed it a queued message. Typing into Claude Code works while
+    background tasks run, so a finished turn is what matters."""
+    from ccc.transcript import find_transcript_path
+
+    path = find_transcript_path(session_id)
+    if path is None:
+        return False
+    try:
+        with open(path, "rb") as f:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            f.seek(max(0, size - TAIL_BYTES))
+            tail = f.read().decode("utf-8", errors="replace")
+    except OSError:
+        return False
+    for line in reversed(tail.splitlines()):
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            continue  # the first, cut line of the tail, or one being written
+        if not isinstance(entry, dict):
+            continue
+        kind = entry.get("type")
+        if kind == "system":
+            if entry.get("subtype") == "turn_duration":
+                return True
+            continue
+        if kind == "assistant":
+            return False  # the turn goes on
+        if kind == "user":
+            if entry.get("isMeta") or _is_local_command(entry):
+                continue  # a /command typed while idle starts no turn
+            return False  # a prompt (or a tool's result) after the last end: working
+    return False
+
+
+def _is_local_command(entry: dict) -> bool:
+    content = (entry.get("message") or {}).get("content")
+    if isinstance(content, list):
+        content = " ".join(c.get("text", "") for c in content if isinstance(c, dict))
+    return isinstance(content, str) and content.lstrip().startswith(
+        ("<local-command", "<command-name>", "<command-message>"))
+
+
 def _discover(profile: str) -> list[DiscoveredSession]:
     """Live Claude Code sessions of one account (interactive + background),
     via `claude agents --json`. Returns [] on any failure (claude not on
@@ -82,9 +138,12 @@ def _discover(profile: str) -> list[DiscoveredSession]:
         if not session_id or not cwd:
             continue
         status = entry.get("status")
-        if status == "busy" and entry.get("kind", "interactive") == "interactive" \
-                and _own_status(entry.get("pid"), profiles.env_for(profile)) == "shell":
-            status = "idle"  # only a background shell runs: the conversation isn't working
+        if status == "busy" and entry.get("kind", "interactive") == "interactive" and (
+                _own_status(entry.get("pid"), profiles.env_for(profile)) == "shell"
+                or turn_finished(session_id)):
+            # Only something in the background runs (see turn_finished): the conversation isn't
+            # working and takes a message.
+            status = "idle"
         sessions.append(
             DiscoveredSession(
                 session_id=session_id,

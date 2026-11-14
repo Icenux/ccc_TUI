@@ -17,7 +17,10 @@ token.
 
 1. Install its service: `bin/install.sh --api` (with the other options
    you use). The API then runs as `ccc-api.service` and listens on
-   `127.0.0.1:8737` — on this computer only.
+   `127.0.0.1:8737` — on this computer only. While the unit is enabled the
+   daemon keeps it running: should it be down (not started after a boot,
+   killed), the daemon starts it again within half a minute. To turn the API
+   off for good: `systemctl --user disable --now ccc-api.service`.
 2. Put it on your tailnet with HTTPS: `tailscale serve --bg 8737`. It's
    then at `https://<computer>.<tailnet>.ts.net/api/v1/` — `tailscale
    serve status` prints the address. The proxy sits on this computer, so

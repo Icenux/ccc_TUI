@@ -8,8 +8,8 @@ CS: dict[str, str] = {
     "Dashboard": "Přehled",
     "Archive the conversation (Dashboard)": "Archivovat konverzaci (Přehled)",
     "Delete the conversation (Dashboard)": "Smazat konverzaci (Přehled)",
-    "Archive the selected conversation (a long press on a row offers Archive / Delete)":
-        "Archivovat vybranou konverzaci (dlouhé podržení řádku nabídne Archivovat / Smazat)",
+    "Archive the selected conversation (asks first; a long press on a row offers Archive / Delete)":
+        "Archivovat vybranou konverzaci (nejdřív se zeptá; dlouhé podržení řádku nabídne Archivovat / Smazat)",
     "Delete the selected conversation from ccc (asks first)": "Smazat vybranou konverzaci z ccc (nejdřív se zeptá)",
     "Send the message right away, past the queue (Ctrl+Enter where supported)":
         "Odeslat zprávu ihned, mimo frontu (Ctrl+Enter, kde to terminál umí)",
@@ -505,7 +505,7 @@ CS: dict[str, str] = {
     "Tasks editor (queue, schedule, pause, auto-continue)":
         "Editor úkolů (fronta, plánování, pauza, automatické pokračování)",
     "Approve a tool call Claude is waiting on": "Schválit nástroj, na který Claude čeká",
-    "Archive (moves it to Archive, h)": "Archivovat (přesune do Archivu, h)",
+    "Archive (asks first; moves it to Archive, h)": "Archivovat (nejdřív se zeptá; přesune do Archivu, h)",
     "Switch between ccc and Claude Code (while it's open beside ccc)":
         "Přepnout mezi ccc a Claude Code (když je otevřený vedle ccc)",
     "Close Claude Code beside ccc (it keeps running; Enter in the list opens it)":
@@ -1695,4 +1695,18 @@ CS: dict[str, str] = {
     'Save as preset: {key}': 'Uložit jako předvolbu: {key}',
     'Save…': 'Uložit…',
     'Own git worktree (to work in parallel)': 'Vlastní git worktree (pro práci souběžně)',
+    "End Claude Code of the conversation (asks first)": "Ukončit Claude Code konverzace (nejdřív se zeptá)",
+    "End Claude Code of the conversation (asks first; Enter in the list or a new message starts it again)":
+        "Ukončit Claude Code konverzace (nejdřív se zeptá; Enter v seznamu nebo nová zpráva ho znovu spustí)",
+    "End Claude": "Ukončit Claude",
+    "End Claude Code": "Ukončit Claude Code",
+    "End Claude Code of '{name}'? It gets /exit; what it is working on right now is lost.\n"
+    "The conversation stays. Enter in the list (or a new message) starts it again.":
+        "Ukončit Claude Code konverzace '{name}'? Dostane /exit; co právě dělá, se ztratí.\n"
+        "Konverzace zůstane. Enter v seznamu (nebo nová zpráva) ho znovu spustí.",
+    "Archive conversation": "Archivovat konverzaci",
+    "Archive '{name}'? Its Claude Code is stopped and no task of it runs.\n"
+    "Restore it from the Archive (h) with x.":
+        "Archivovat '{name}'? Její Claude Code se zastaví a žádný její úkol nepoběží.\n"
+        "Obnovíš ji v Archivu (h) klávesou x.",
 }

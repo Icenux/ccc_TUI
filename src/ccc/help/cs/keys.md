@@ -37,7 +37,7 @@ uvádějí výchozí klávesy.
 |---|---|
 | `Enter` | Otevřít detail fronty |
 | `q` | Zavřít ccc (stejně jako Ctrl+Q) |
-| `x` | Archivovat vybranou konverzaci (dlouhé podržení řádku nabídne Archivovat / Smazat) |
+| `x` | Archivovat vybranou konverzaci (nejdřív se zeptá; dlouhé podržení řádku nabídne Archivovat / Smazat) |
 | `Del` | Smazat vybranou konverzaci z ccc (nejdřív se zeptá) |
 | `/` | Filtr tabulky: vše, běžící, s čekajícími úkoly, zablokované (i kliknutím na řádek filtrů) |
 
@@ -57,9 +57,10 @@ uvádějí výchozí klávesy.
 | `r` | Zablokovaná: znovu spustit selhaný úkol / pokračovat po pauze na limitu |
 | `t` | Editor úkolů (fronta, plánování, pauza, automatické pokračování) |
 | `p` | Schválit nástroj, na který Claude čeká |
-| `x` | Archivovat (přesune do Archivu, h) |
+| `x` | Archivovat (nejdřív se zeptá; přesune do Archivu, h) |
 | `Alt+0` | Přepnout mezi ccc a Claude Code (když je otevřený vedle ccc) |
 | `Ctrl+]` | Zavřít Claude Code vedle ccc (běží dál; Enter v seznamu ho otevře) |
+| `Ctrl+X` | Ukončit Claude Code konverzace (nejdřív se zeptá; Enter v seznamu nebo nová zpráva ho znovu spustí) |
 | `/` | Hledat ve všech konverzacích |
 | `f` | Filtrovat seznam: název nebo složka; ! pracuje, ? schválení, x chyba, * nové (Esc zruší) |
 | `F2` | Přejmenovat vybranou konverzaci |

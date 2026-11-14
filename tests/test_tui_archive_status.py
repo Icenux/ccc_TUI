@@ -98,6 +98,9 @@ async def test_archive_moves_it_to_the_archive_view_and_x_restores(storage):
         app.screen.query_one("#conversation-queue-list").focus()
         await pilot.press("x")
         await pilot.pause()
+        assert storage.get_queue(b.id).archived is False  # asks first
+        await pilot.press("y")
+        await pilot.pause()
         assert storage.get_queue(b.id).archived is True
         table = app.screen.query_one("#conversation-queue-list", DataTable)
         assert [n.strip() for n in _names(table)] == ["○ a"]

@@ -37,7 +37,7 @@ name the default keys.
 |---|---|
 | `Enter` | Open the queue detail |
 | `q` | Close ccc (same as Ctrl+Q) |
-| `x` | Archive the selected conversation (a long press on a row offers Archive / Delete) |
+| `x` | Archive the selected conversation (asks first; a long press on a row offers Archive / Delete) |
 | `Del` | Delete the selected conversation from ccc (asks first) |
 | `/` | Filter the table: all, running, with pending tasks, blocked (also a click on the filter row) |
 
@@ -57,9 +57,10 @@ name the default keys.
 | `r` | Blocked: run the failed task again / resume one paused at a limit |
 | `t` | Tasks editor (queue, schedule, pause, auto-continue) |
 | `p` | Approve a tool call Claude is waiting on |
-| `x` | Archive (moves it to Archive, h) |
+| `x` | Archive (asks first; moves it to Archive, h) |
 | `Alt+0` | Switch between ccc and Claude Code (while it's open beside ccc) |
 | `Ctrl+]` | Close Claude Code beside ccc (it keeps running; Enter in the list opens it) |
+| `Ctrl+X` | End Claude Code of the conversation (asks first; Enter in the list or a new message starts it again) |
 | `/` | Search all conversations |
 | `f` | Filter the list: name or folder; ! working, ? approval, x error, * new (Esc cancels) |
 | `F2` | Rename the selected conversation |

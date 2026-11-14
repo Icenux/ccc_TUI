@@ -104,6 +104,8 @@ class Queue:
     context_percent: float | None = None
     context_tokens: int | None = None
     context_window: int | None = None
+    # The model Claude Code works with in it, as its status line names it ("Opus 4.7").
+    context_model: str | None = None
 
 
 @dataclass

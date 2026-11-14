@@ -28,8 +28,8 @@ V Archivu:
 |---|---|
 | `x` | obnoví konverzaci — vrátí se do Konverzací |
 | `Enter` | obnoví ji a otevře v Konverzacích |
-| `Delete` | smaže ji z ccc (nejdřív se zeptá) |
-| `/` | hledá ve všech konverzacích |
+| `Delete` | smaže ji z ccc (nejdřív se zeptá); na nadpisu všechny konverzace té skupiny nebo složky projektu |
+| `/` | hledá — nejdřív v Archivu; v okně přepneš na Konverzace nebo všude |
 | `f` | [filtruje seznam](conversations.md#filtr-seznamu); `Enter` ukáže první výsledek (neobnoví ho) |
 | `m` | [skupiny](conversations.md#skupiny) jako v Konverzacích; `Enter` na nadpisu ho sbalí (nic neobnoví) |
 | `e` | exportuje ji jako Markdown |
@@ -39,8 +39,9 @@ s celou historií (`--resume`) a čekající úkoly jdou dál.
 
 ## Mazání
 
-Konverzaci jde smazat jen z Archivu — nejdřív ji archivuj. ccc se před
-smazáním zeptá. Co zmizí a co zůstane:
+Konverzaci jde smazat jen z Archivu — nejdřív ji archivuj. `Delete` na
+nadpisu smaže celou skupinu (nebo složku projektu) se všemi jejími
+konverzacemi. ccc se před smazáním zeptá. Co zmizí a co zůstane:
 
 - **Zmizí:** konverzace v ccc, její úkoly ve frontě a texty jejích běhů.
 - **Zůstane:** její počty tokenů v [Analytice](analytics.md) (jako

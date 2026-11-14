@@ -57,7 +57,8 @@ CREATE TABLE IF NOT EXISTS queues (
     profile TEXT NOT NULL DEFAULT '',
     context_percent REAL,
     context_tokens INTEGER,
-    context_window INTEGER
+    context_window INTEGER,
+    context_model TEXT
 );
 
 CREATE TABLE IF NOT EXISTS queue_items (
@@ -445,6 +446,9 @@ class Storage:
             conn.execute("ALTER TABLE queues ADD COLUMN context_percent REAL")
             conn.execute("ALTER TABLE queues ADD COLUMN context_tokens INTEGER")
             conn.execute("ALTER TABLE queues ADD COLUMN context_window INTEGER")
+            conn.commit()
+        if "context_model" not in columns:
+            conn.execute("ALTER TABLE queues ADD COLUMN context_model TEXT")
             conn.commit()
 
     def _connect(self) -> sqlite3.Connection:
@@ -1260,14 +1264,16 @@ class Storage:
                              (datetime.now().isoformat(), queue_id))
             conn.commit()
 
-    def set_context(self, session_id: str, percent: float, tokens: int | None, window: int | None) -> bool:
+    def set_context(self, session_id: str, percent: float, tokens: int | None, window: int | None,
+                    model: str | None = None) -> bool:
         """How full the context window of the conversation with this session
-        is (reported by Claude Code's status line). False when no conversation
-        has the session."""
+        is, and which model works on it (reported by Claude Code's status
+        line). False when no conversation has the session."""
         with closing(self._connect()) as conn:
             cursor = conn.execute(
-                "UPDATE queues SET context_percent = ?, context_tokens = ?, context_window = ? WHERE session_id = ?",
-                (percent, tokens, window, session_id),
+                "UPDATE queues SET context_percent = ?, context_tokens = ?, context_window = ?, "
+                "context_model = COALESCE(?, context_model) WHERE session_id = ?",
+                (percent, tokens, window, model, session_id),
             )
             conn.commit()
             return cursor.rowcount > 0
@@ -1733,6 +1739,7 @@ class Storage:
             context_percent=row["context_percent"],
             context_tokens=row["context_tokens"],
             context_window=row["context_window"],
+            context_model=row["context_model"],
             profile=row["profile"] or "",
         )
 

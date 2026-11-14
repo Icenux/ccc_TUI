@@ -559,7 +559,7 @@ async def test_list_and_header_show_the_git_status(tmp_path, monkeypatch):
 
     monkeypatch.setattr(gitops, "work_status", fake)
     storage = Storage(tmp_path / "history.db")
-    wt = storage.create_queue("wt", "/tmp/wt", "s1")  # legacy = skip permissions: git allowed
+    wt = storage.create_queue("wt", "/tmp/wt", "s1")  # legacy = bypass permissions: git allowed
     storage.create_queue("limited", "/tmp/limited", "s2", launch_flags=["--permission-mode", "acceptEdits"])
 
     class _HostApp(App):
@@ -816,3 +816,41 @@ async def test_alt_enter_types_into_running_claude_instead_of_queueing(tmp_path,
         assert sent == [(q.id, "hi", True)]
         assert storage.list_pending_items(q.id) == []
         assert box.text == ""
+
+
+@pytest.mark.asyncio
+async def test_delete_on_a_heading_in_the_archive_deletes_that_group_not_the_last_shown(tmp_path, monkeypatch):
+    # #307: Delete on a group heading deleted the conversation selected before it.
+    from ccc.storage import Storage
+    from ccc.tui.app import CCContinueApp
+    from ccc.tui.archive import ArchiveScreen
+    from ccc.tui.layout import ConfirmModal
+
+    from ccc import groups
+
+    monkeypatch.setattr("ccc.groups.mode", lambda storage: groups.BY_PROJECT)  # conftest turns grouping off
+    storage = Storage(str(tmp_path / "history.db"))
+    ids = {}
+    for name, folder in (("a1", "/tmp/proj-a"), ("a2", "/tmp/proj-a"), ("b1", "/tmp/proj-b")):
+        ids[name] = storage.create_queue(name, folder, f"s-{name}").id
+        storage.set_queue_archived(ids[name], True)
+    app = CCContinueApp(str(tmp_path / "history.db"))
+    async with app.run_test(size=(140, 45)) as pilot:
+        await pilot.pause()
+        await pilot.press("h")
+        await pilot.pause()
+        screen = app.screen
+        assert isinstance(screen, ArchiveScreen)
+        b_heading = next(row for row in screen._rows if isinstance(row, str) and screen._group_titles[row].endswith("proj-b"))
+        a_heading = next(row for row in screen._rows if isinstance(row, str) and row != b_heading)
+        screen._current_queue_id = ids["b1"]  # shown before the cursor went to a heading
+        table = screen.query_one("#conversation-queue-list")
+        table.move_cursor(row=screen._rows.index(a_heading))
+        await pilot.pause()
+        await pilot.press("delete")
+        await pilot.pause()
+        assert isinstance(app.screen, ConfirmModal)
+        await pilot.press("y")
+        await pilot.pause(0.3)
+        left = {q.name for q in storage.list_queues()}
+        assert left == {"b1"}

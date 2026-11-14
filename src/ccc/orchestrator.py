@@ -163,7 +163,7 @@ def start_conversation(
         # ccc runs git (here: the checkout) only where Claude may run any
         # command anyway — see gitops.
         if not gitops.claude_can_run_commands(SimpleNamespace(launch_flags=flags)):
-            raise ValueError(_("An own worktree needs “Skip all permission checks” (ccc runs git only there)."))
+            raise ValueError(_("An own worktree needs “Bypass permissions” (ccc runs git only there)."))
         project_path = gitops.create_worktree(project_path, name)
     if remote_control:
         delivery = DeliveryMode.REMOTE_CONTROL
@@ -512,7 +512,7 @@ class QueueRuntime:
         finished_at = datetime.now()
         git_commit = git_note = None
         if not git_allowed and result.status == RunStatus.SUCCESS and _inside_git_repo(queue.project_path):
-            git_note = _("not committed: auto-commit only runs in 'Skip all permission checks' conversations")
+            git_note = _("not committed: auto-commit only runs in 'Bypass permissions' conversations")
         busy = None
         if before is not None and result.status == RunStatus.SUCCESS:
             # Never sweep another conversation's half-written work into this commit.

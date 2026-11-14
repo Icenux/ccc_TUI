@@ -61,7 +61,7 @@ uvádějí výchozí klávesy.
 | `Alt+0` | Přepnout mezi ccc a Claude Code (když je otevřený vedle ccc) |
 | `Ctrl+]` | Zavřít Claude Code vedle ccc (běží dál; Enter v seznamu ho otevře) |
 | `Ctrl+X` | Ukončit Claude Code konverzace (nejdřív se zeptá; Enter v seznamu nebo nová zpráva ho znovu spustí) |
-| `/` | Hledat ve všech konverzacích |
+| `/` | Hledat: v Konverzacích, v Archivu nebo všude |
 | `f` | Filtrovat seznam: název nebo složka; ! pracuje, ? schválení, x chyba, * nové (Esc zruší) |
 | `F2` | Přejmenovat vybranou konverzaci |
 | `m` | Skupiny: dát konverzaci do vlastní skupiny; na nadpisu skupiny ji přejmenovat / smazat |
@@ -90,7 +90,7 @@ uvádějí výchozí klávesy.
 | `x` | Obnovit konverzaci |
 | `Enter` | Obnovit ji a otevřít v Konverzacích |
 | `Del` | Smazat konverzaci z ccc (nejdřív se zeptá; přepis Claude Code zůstane) |
-| `/` | Hledat ve všech konverzacích |
+| `/` | Hledat: v Konverzacích, v Archivu nebo všude |
 | `f` | Filtrovat seznam: název nebo složka; ! pracuje, ? schválení, x chyba, * nové (Esc zruší) |
 | `F2` | Přejmenovat vybranou konverzaci |
 | `m` | Skupiny: dát konverzaci do vlastní skupiny; na nadpisu skupiny ji přejmenovat / smazat |

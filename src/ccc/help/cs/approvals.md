@@ -6,10 +6,10 @@ pokud jsi mu to předem nepovolil(a). Kde odpovídáš, záleží na konverzaci:
 - **Claude Code vedle ccc:** Claude se ptá přímo ve svém panelu jako
   v každém terminálu. Odpověz tam. (Konverzacím se vzdáleným ovládáním
   můžeš odpovídat i z telefonu.)
-- **Konverzace na pozadí** založené s *Automaticky přijímat úpravy*, *Ptát se na vše*
-  nebo *Jen plán*: není tu terminál, kde by se ptal, takže se zeptá ccc.
+- **Konverzace na pozadí** založené s *Accept edits*, *Manual*
+  nebo *Plan*: není tu terminál, kde by se ptal, takže se zeptá ccc.
   Claudova žádost čeká — bez časového limitu — dokud nerozhodneš.
-- *Přeskočit všechny kontroly oprávnění*: nic se neptá, Claude dělá
+- *Bypass permissions*: nic se neptá, Claude dělá
   všechno.
 
 ## Odpověď v ccc

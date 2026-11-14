@@ -43,7 +43,7 @@ STATE_KEY = "update_state"
 CHECK_KEY = "update_check"  # "" = on, "off"
 BRANCH = "main"
 REMOTE = "origin"
-CHECK_SECONDS = 6 * 3600.0
+CHECK_SECONDS = 24 * 3600.0  # once a day (#306)
 FETCH_TIMEOUT = 40
 UNITS = ("ccc.service", "ccc-tui.service", "ccc-api.service")
 PROJECT_DIR = Path(__file__).resolve().parents[2]
@@ -91,6 +91,19 @@ def load(storage) -> UpdateState:
         return UpdateState(**{k: v for k, v in stored.items() if k in known})
     except (ValueError, TypeError, AttributeError):
         return UpdateState()
+
+
+def seconds_until_next_check(storage, now: datetime | None = None) -> float:
+    """How long until the daily look is due: CHECK_SECONDS after the last
+    one (also across daemon restarts), 0 when there was none."""
+    checked_at = load(storage).checked_at
+    if not checked_at:
+        return 0.0
+    try:
+        elapsed = ((now or datetime.now()) - datetime.fromisoformat(checked_at)).total_seconds()
+    except ValueError:
+        return 0.0
+    return max(0.0, CHECK_SECONDS - elapsed)
 
 
 def save(storage, state: UpdateState) -> None:

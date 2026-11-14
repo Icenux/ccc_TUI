@@ -61,7 +61,7 @@ name the default keys.
 | `Alt+0` | Switch between ccc and Claude Code (while it's open beside ccc) |
 | `Ctrl+]` | Close Claude Code beside ccc (it keeps running; Enter in the list opens it) |
 | `Ctrl+X` | End Claude Code of the conversation (asks first; Enter in the list or a new message starts it again) |
-| `/` | Search all conversations |
+| `/` | Search: Conversations, Archive or everywhere |
 | `f` | Filter the list: name or folder; ! working, ? approval, x error, * new (Esc cancels) |
 | `F2` | Rename the selected conversation |
 | `m` | Groups: put the conversation into one of your own; on a group's heading, rename / delete it |
@@ -90,7 +90,7 @@ name the default keys.
 | `x` | Restore the conversation |
 | `Enter` | Restore it and open it in Conversations |
 | `Del` | Delete the conversation from ccc (asks first; Claude Code's transcript stays) |
-| `/` | Search all conversations |
+| `/` | Search: Conversations, Archive or everywhere |
 | `f` | Filter the list: name or folder; ! working, ? approval, x error, * new (Esc cancels) |
 | `F2` | Rename the selected conversation |
 | `m` | Groups: put the conversation into one of your own; on a group's heading, rename / delete it |

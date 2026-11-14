@@ -271,3 +271,33 @@ def test_target_is_an_exact_match_not_a_prefix():
     """tmux treats a plain `-t q1` as a prefix: q12 would get q1's keys (#259)."""
     assert ms.target(1) == "q1"
     assert ms.exact(1) == "=q1:"
+
+
+def test_end_types_exit_and_leaves_a_session_that_closed(monkeypatch):
+    sent, running = [], iter([True, True, False])
+    monkeypatch.setattr(ms, "is_running", lambda queue_id: next(running))
+    monkeypatch.setattr(ms, "paste_and_submit", lambda queue_id, text, submit=True: sent.append(text))
+    stopped = []
+    monkeypatch.setattr(ms, "stop", lambda queue_id: stopped.append(queue_id))
+    ms.end(7, sleep=lambda s: None)
+    assert sent == ["/exit"] and stopped == []
+
+
+def test_end_stops_one_that_does_not_leave(monkeypatch):
+    now = {"t": 0.0}
+    monkeypatch.setattr(ms, "is_running", lambda queue_id: True)
+    monkeypatch.setattr(ms, "paste_and_submit", lambda *a, **k: None)
+    stopped = []
+    monkeypatch.setattr(ms, "stop", lambda queue_id: stopped.append(queue_id))
+
+    def sleep(seconds):
+        now["t"] += seconds
+
+    ms.end(7, sleep=sleep, clock=lambda: now["t"])
+    assert stopped == [7]
+
+
+def test_end_does_nothing_without_a_session(monkeypatch):
+    monkeypatch.setattr(ms, "is_running", lambda queue_id: False)
+    monkeypatch.setattr(ms, "paste_and_submit", lambda *a, **k: pytest.fail("typed into nothing"))
+    ms.end(7)

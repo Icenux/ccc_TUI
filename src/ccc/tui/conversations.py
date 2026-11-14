@@ -152,6 +152,7 @@ class ConversationsScreen(SidebarScreen):
         # (CCContinueApp.get_key_display).
         keymap.binding("conversations.focus_claude", "focus_claude", "Claude ↔ ccc", key_display="Alt+0"),
         keymap.binding("conversations.close_claude", "close_claude", _("Close Claude"), key_display="Ctrl+]"),
+        keymap.binding("conversations.stop_claude", "stop_claude", _("End Claude"), show=False),
         # Preset prompts (Settings); priority so they work while typing.
         *[keymap.binding(f"conversations.preset{n}", f"prompt_preset({n})", _("Preset {n}").format(n=n), show=False,
                          priority=True) for n in range(1, 10)],
@@ -596,7 +597,7 @@ class ConversationsScreen(SidebarScreen):
         if not cli_pane.available():
             return
         queue = self._cli_queue()
-        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for
+        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for and not queue.claude_stopped
         shown = cli_pane.find()
         if want and shown is None and self._cli_open_for == queue.id:
             if managed_sessions.is_running(queue.id):
@@ -642,7 +643,7 @@ class ConversationsScreen(SidebarScreen):
         The pane is therefore remembered at once (self._embedded_pane), and
         there is never more than one for the selected conversation."""
         queue = self._cli_queue()
-        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for
+        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for and not queue.claude_stopped
         keep = self._embedded_pane
         if not (want and keep is not None and keep.queue_id == queue.id):
             keep = None
@@ -678,6 +679,9 @@ class ConversationsScreen(SidebarScreen):
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         if action in ("focus_claude", "close_claude"):
             return self.has_class("-cli-open")
+        if action == "stop_claude":
+            queue = self._cli_queue()
+            return queue is not None and not queue.claude_stopped
         if action in self.CONVERSATION_ACTIONS and self._current_queue_id is None:
             return False
         if action == "approve" and self._current_queue_id not in self._waiting:
@@ -699,12 +703,42 @@ class ConversationsScreen(SidebarScreen):
         self._cli_closed_for = self._cli_open_for
         self._sync_cli_pane()
 
+    def action_stop_claude(self) -> None:
+        """Ctrl+X: end the conversation's Claude Code (`/exit`), after asking.
+        The daemon leaves it stopped until Enter or a new message."""
+        queue = self._cli_queue()
+        if queue is None or queue.claude_stopped:
+            return
+
+        def answered(yes: bool) -> None:
+            if not yes:
+                return
+            self.storage.set_claude_stopped(queue.id, True)  # first: the daemon must not start it again
+            self.run_worker(self._end_claude(queue.id), exclusive=True, group="end-claude")
+
+        self.app.push_screen(
+            ConfirmModal(
+                _("End Claude Code"),
+                _("End Claude Code of '{name}'? It gets /exit; what it is working on right now is lost.\n"
+                  "The conversation stays. Enter in the list (or a new message) starts it again.").format(name=queue.name),
+            ),
+            answered,
+        )
+
+    async def _end_claude(self, queue_id: int) -> None:
+        await asyncio.to_thread(managed_sessions.end, queue_id)
+        self._sync_cli_pane()
+        self.refresh_bindings()
+        await self._refresh_current()
+
     def _focus_cli(self) -> bool:
         """Put the keyboard into the selected conversation's Claude Code
         (the pane, or full screen outside tmux). False if it isn't one."""
         queue = self._cli_queue()
         if queue is None:
             return False
+        if queue.claude_stopped:
+            self.storage.set_claude_stopped(queue.id, False)  # opened: the daemon starts it
         self._cli_closed_for = None
         if cli_pane.embedded():
             self._sync_cli_pane()
@@ -1184,6 +1218,22 @@ class ConversationsScreen(SidebarScreen):
         if self._current_queue_id is None:
             return
         queue = self.storage.get_queue(self._current_queue_id)
+        if queue.archived:  # restoring needs no question
+            self._toggle_archived(queue.id)
+            return
+        self.app.push_screen(
+            ConfirmModal(
+                _("Archive conversation"),
+                _("Archive '{name}'? Its Claude Code is stopped and no task of it runs.\n"
+                  "Restore it from the Archive (h) with x.").format(name=queue.name),
+            ),
+            lambda yes: self._toggle_archived(queue.id) if yes else None,
+        )
+
+    def _toggle_archived(self, queue_id: int) -> None:
+        queue = self.storage.find_queue(queue_id)
+        if queue is None:
+            return
         self.storage.set_queue_archived(queue.id, not queue.archived)
         # It moved to the other view's list.
         self._select_neighbour()

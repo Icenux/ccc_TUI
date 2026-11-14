@@ -105,6 +105,10 @@ ACTIONS: tuple[KeyAction, ...] = (
               (*_CONVERSATIONS, CLAUDE), tmux=True),
     KeyAction("conversations.close_claude", "ctrl+right_square_bracket", N_("Close Claude Code beside ccc"),
               (*_CONVERSATIONS, CLAUDE), tmux=True),
+    # Not in tmux: Ctrl+X is Claude Code's own key (Ctrl+X Ctrl+E / Ctrl+K), so it works
+    # while ccc has the keyboard (Alt+0 from Claude Code's pane).
+    KeyAction("conversations.stop_claude", "ctrl+x", N_("End Claude Code of the conversation (asks first)"),
+              ("conversations",)),
     *[KeyAction(f"conversations.preset{n}", f"alt+{n}", N_("Preset prompt {n}"), (*_CONVERSATIONS, CLAUDE), tmux=True)
       for n in range(1, 10)],
     KeyAction("archive.delete", "delete", N_("Delete the conversation (Archive)"), ("archive",)),

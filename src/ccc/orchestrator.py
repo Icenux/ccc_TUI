@@ -347,7 +347,7 @@ class QueueRuntime:
                 await self._wait_for_wake_or_poll(POLL_INTERVAL_SECONDS)
                 continue
 
-            if queue.delivery_mode.managed:
+            if queue.delivery_mode.managed and not queue.claude_stopped:
                 await self._maintain_managed_session(queue)
                 queue = self.storage.find_queue(queue.id)
                 if queue is None:
@@ -648,6 +648,8 @@ class QueueRuntime:
             has_transcript = find_transcript_path(queue.session_id) is not None
             command = managed_sessions.build_interactive_command(queue, has_transcript)
             logger.info("Starting interactive session for '%s'", queue.name)
+            if queue.claude_stopped:
+                self.storage.set_claude_stopped(queue.id, False)  # started again (a task is waiting)
             await asyncio.to_thread(managed_sessions.start, queue, command)
             self._managed_was_blocked = False
             self._managed_started_at = asyncio.get_running_loop().time()

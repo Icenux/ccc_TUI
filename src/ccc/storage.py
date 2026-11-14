@@ -397,7 +397,7 @@ class Storage:
         if "profile" not in columns:
             conn.execute("ALTER TABLE queues ADD COLUMN profile TEXT NOT NULL DEFAULT ''")
             conn.commit()
-        for column, default in (("auto_continue", 1), ("paused", 0), ("archived", 0)):
+        for column, default in (("auto_continue", 1), ("paused", 0), ("archived", 0), ("claude_stopped", 0)):
             if column not in columns:
                 conn.execute(f"ALTER TABLE queues ADD COLUMN {column} INTEGER NOT NULL DEFAULT {default}")
                 conn.commit()
@@ -627,6 +627,7 @@ class Storage:
                 (queue_id, prompt_text, max_pos + 1, ItemStatus.PENDING.value, now,
                  not_before.isoformat() if not_before else None, routine_id, model),
             )
+            conn.execute("UPDATE queues SET claude_stopped = 0 WHERE id = ?", (queue_id,))  # work for it: start again
             conn.commit()
             item_id = cur.lastrowid
             row = conn.execute("SELECT * FROM queue_items WHERE id = ?", (item_id,)).fetchone()
@@ -732,6 +733,11 @@ class Storage:
     def set_queue_archived(self, queue_id: int, value: bool) -> None:
         self._set_queue_flag(queue_id, "archived", value)
 
+    def set_claude_stopped(self, queue_id: int, value: bool) -> None:
+        """The user ended the conversation's Claude Code (True): the daemon
+        leaves it stopped until it's opened or a message / task arrives."""
+        self._set_queue_flag(queue_id, "claude_stopped", value)
+
     def set_remote_control_url(self, queue_id: int, url: str | None) -> None:
         with closing(self._connect()) as conn:
             conn.execute("UPDATE queues SET remote_control_url = ? WHERE id = ?", (url, queue_id))
@@ -748,6 +754,7 @@ class Storage:
                 "INSERT INTO queue_items (queue_id, prompt_text, position, status, added_at) VALUES (?, ?, ?, ?, ?)",
                 (queue_id, prompt_text, min_pos - 1, ItemStatus.PENDING.value, datetime.now().isoformat()),
             )
+            conn.execute("UPDATE queues SET claude_stopped = 0 WHERE id = ?", (queue_id,))
             conn.commit()
             row = conn.execute("SELECT * FROM queue_items WHERE id = ?", (cur.lastrowid,)).fetchone()
             return self._row_to_item(row)
@@ -1724,6 +1731,7 @@ class Storage:
             auto_continue=bool(row["auto_continue"]),
             paused=bool(row["paused"]),
             archived=bool(row["archived"]),
+            claude_stopped=bool(row["claude_stopped"]),
             last_seen_at=datetime.fromisoformat(row["last_seen_at"]) if row["last_seen_at"] else None,
             remote_control_url=row["remote_control_url"],
             routine_id=row["routine_id"],

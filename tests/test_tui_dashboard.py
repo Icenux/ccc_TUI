@@ -266,6 +266,9 @@ async def test_x_archives_the_selected_conversation(tmp_path):
         app.screen.query_one("#dashboard-table").move_cursor(row=0)
         await pilot.press("x")
         await pilot.pause()
+        assert not any(q.archived for q in __import__("ccc.storage").storage.Storage(db_path).list_queues())  # asks first
+        await pilot.press("y")
+        await pilot.pause()
         assert all(q.archived for q in app.screen.storage.list_queues())
         assert app.screen.query_one("#dashboard-table").row_count == 0
 

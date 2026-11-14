@@ -87,6 +87,9 @@ class Queue:
     paused: bool = False
     # Hidden from the TUI lists (still processed by the daemon).
     archived: bool = False
+    # The user ended its Claude Code (Ctrl+X, #302): the daemon doesn't start
+    # it again until the conversation is opened or a message / task arrives.
+    claude_stopped: bool = False
     # When the conversation was last shown in the TUI ("new reply" marker).
     last_seen_at: datetime | None = None
     # Remote-control link printed by the managed interactive session.

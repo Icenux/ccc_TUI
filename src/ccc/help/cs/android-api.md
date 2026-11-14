@@ -15,7 +15,10 @@ požadavek potřebuje token.
 
 1. Nainstaluj jeho službu: `bin/install.sh --api` (s ostatními volbami,
    které používáš). API pak běží jako `ccc-api.service` a poslouchá na
-   `127.0.0.1:8737` — jen na tomto počítači.
+   `127.0.0.1:8737` — jen na tomto počítači. Dokud je služba zapnutá
+   (enabled), daemon ji udržuje běžící: když spadne (nenastartovala po
+   spuštění počítače, byla zabita), do půl minuty ji spustí znovu. API
+   natrvalo vypneš: `systemctl --user disable --now ccc-api.service`.
 2. Vystav ho do tailnetu s HTTPS: `tailscale serve --bg 8737`. Pak je na
    `https://<počítač>.<tailnet>.ts.net/api/v1/` — adresu vypíše
    `tailscale serve status`. Proxy běží na tomto počítači, proto ccc

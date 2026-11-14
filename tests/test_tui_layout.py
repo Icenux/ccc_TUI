@@ -386,3 +386,16 @@ async def test_the_title_bar_finds_the_window_box_after_textuals_own_layers(tmp_
         box = app.screen.query_one(Container)
         assert not box.border_title
         assert isinstance(box.children[0], ModalTitle)
+
+
+def test_the_finished_dot_is_a_fixed_green_not_the_terminals_light_lime():
+    # "bold green" is the terminal's palette colour (a light lime that reads as yellow beside the gold
+    # "working" dot); the finished marker is a fixed green of the 256 cube, distinct from the other states.
+    from rich.color import Color, ColorSystem
+
+    from ccc.tui.layout import ATTENTION_STYLE, DONE_STYLE, ERROR_STYLE, WORKING_STYLE
+
+    colours = [style.split()[-1] for style in (DONE_STYLE, WORKING_STYLE, ERROR_STYLE, ATTENTION_STYLE)]
+    assert DONE_STYLE == "bold #00af00"
+    seen = {Color.parse(c).downgrade(ColorSystem.EIGHT_BIT).number for c in colours}
+    assert len(seen) == 4

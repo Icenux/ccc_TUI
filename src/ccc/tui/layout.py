@@ -332,7 +332,9 @@ _RING = (0x01, 0x08, 0x10, 0x20, 0x80, 0x40, 0x04, 0x02)  # braille dots clockwi
 WORKING_FRAMES = tuple(chr(0x2800 + 0xFF - dot) for dot in _RING)
 WORKING_STYLE = "bold #ffd700"
 FRAME_SECONDS = 0.2
-DONE_STYLE, ERROR_STYLE, ATTENTION_STYLE = "bold green", "bold red", "bold dodger_blue1"
+# Finished = a fixed green of the 256 cube. "bold green" is the terminal's own palette colour, and bold makes it
+# a light lime that looks yellow next to the gold "working" dot.
+DONE_STYLE, ERROR_STYLE, ATTENTION_STYLE = "bold #00af00", "bold red", "bold dodger_blue1"
 
 
 def working_frame(now: float | None = None) -> str:

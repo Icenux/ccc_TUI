@@ -306,6 +306,32 @@ def test_context_is_in_the_list_and_detail_and_is_a_change(storage, tmp_path):
     assert endpoint.changes(before, endpoint.snapshot()) == {"conversations": [q.id], "removed": []}
 
 
+def test_model_is_in_the_list_and_detail_and_is_a_change(storage, tmp_path):
+    q = _queue(storage, tmp_path)
+    endpoint = api.Api(storage)
+    assert endpoint.conversation(q.id)["model"] is None
+    before = endpoint.snapshot()
+
+    storage.set_context(q.session_id, 42.5, 85000, 200000, "Opus 4.7")
+
+    assert endpoint.conversations()[0]["model"] == "Opus 4.7"
+    assert endpoint.conversation(q.id)["model"] == "Opus 4.7"
+    assert endpoint.changes(before, endpoint.snapshot()) == {"conversations": [q.id], "removed": []}
+    storage.set_context(q.session_id, 50.0, 90000, 200000)  # a status line without a model keeps the last one
+    assert endpoint.conversation(q.id)["model"] == "Opus 4.7"
+
+
+def test_rename_changes_the_name_and_needs_one(storage, tmp_path):
+    q = _queue(storage, tmp_path)
+    endpoint = api.Api(storage)
+    assert endpoint.rename(q.id, {"name": "  New   name "})["name"] == "New name"
+    assert storage.get_queue(q.id).name == "New name"
+    with pytest.raises(api.ApiError):
+        endpoint.rename(q.id, {"name": "  "})
+    with pytest.raises(api.ApiError):
+        endpoint.rename(9999, {"name": "x"})
+
+
 # --- over HTTP ------------------------------------------------------------------
 
 

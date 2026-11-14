@@ -59,12 +59,12 @@ GROUPS: tuple[OptionGroup, ...] = (
         LaunchOption(FORK, N_("As a copy (fork)"), ("--fork-session",), N_("fork")),
     ), exclusive=False, required=False),
     OptionGroup("permissions", N_("Permissions"), (
-        LaunchOption("perm_skip", N_("Skip all permission checks"), ("--dangerously-skip-permissions",), N_("skip permissions")),
-        LaunchOption("perm_accept_edits", N_("Auto-accept edits"), ("--permission-mode", "acceptEdits"), N_("accept edits")),
-        LaunchOption("perm_manual", N_("Ask for everything"), ("--permission-mode", "manual"), N_("ask for everything")),
-        LaunchOption("perm_dont_ask", N_("Only what is allowed"), ("--permission-mode", "dontAsk"), N_("only allowed")),
-        LaunchOption("perm_auto", N_("Auto mode"), ("--permission-mode", "auto"), N_("auto mode")),
-        LaunchOption("perm_plan", N_("Plan only"), ("--permission-mode", "plan"), N_("plan only")),
+        LaunchOption("perm_skip", N_("Bypass permissions"), ("--dangerously-skip-permissions",), N_("bypass permissions")),
+        LaunchOption("perm_accept_edits", N_("Accept edits"), ("--permission-mode", "acceptEdits"), N_("accept edits")),
+        LaunchOption("perm_manual", N_("Manual"), ("--permission-mode", "manual"), N_("manual")),
+        LaunchOption("perm_dont_ask", N_("Don't ask"), ("--permission-mode", "dontAsk"), N_("don't ask")),
+        LaunchOption("perm_auto", N_("Auto"), ("--permission-mode", "auto"), N_("auto")),
+        LaunchOption("perm_plan", N_("Plan"), ("--permission-mode", "plan"), N_("plan mode")),
     ), exclusive=True, required=True),
     OptionGroup("model", N_("Model"), (
         LaunchOption("model_opus", N_("Opus"), ("--model", "opus"), N_("Opus")),
@@ -197,7 +197,7 @@ def persistent_flags(selection: frozenset[str]) -> list[str]:
 def describe_flags(flags: list[str] | None) -> str:
     """Compact human summary of a queue's persistent flags."""
     if flags is None:
-        return _("legacy (skip permissions)")
+        return _("legacy (bypass permissions)")
     remaining = [f for f in flags if not f.startswith((mcp_servers.MARKER, plugins.MARKER))]
     parts: list[str] = []
     for group in GROUPS:

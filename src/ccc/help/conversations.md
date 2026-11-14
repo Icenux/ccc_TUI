@@ -155,7 +155,7 @@ the list and the `@` stays a plain character; so does an `@` inside a
 word (`me@example.com`).
 
 The files come from `git ls-files` (tracked and new, not ignored) where
-Claude may run commands anyway (*Skip all permission checks*); elsewhere
+Claude may run commands anyway (*Bypass permissions*); elsewhere
 ccc walks the folder without running anything — up to 20,000 files,
 skipping `.git`, `node_modules`, `.venv`, `build` and the like. The list
 is read in the background and kept for 30 seconds, so a big repository

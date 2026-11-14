@@ -235,18 +235,18 @@ CS: dict[str, str] = {
     "As a copy (fork)": "Jako kopie (fork)",
     "fork": "fork",
     "Permissions": "Oprávnění",
-    "Skip all permission checks": "Přeskočit všechny kontroly oprávnění",
-    "skip permissions": "bez kontrol oprávnění",
-    "Auto-accept edits": "Automaticky přijímat úpravy",
-    "accept edits": "přijímat úpravy",
-    "Ask for everything": "Ptát se na vše",
-    "ask for everything": "ptát se na vše",
-    "Only what is allowed": "Jen povolené",
-    "only allowed": "jen povolené",
-    "Auto mode": "Automatický režim",
-    "auto mode": "automatický režim",
-    "Plan only": "Jen plán",
-    "plan only": "jen plán",
+    "Bypass permissions": "Bypass permissions",
+    "bypass permissions": "bypass permissions",
+    "Accept edits": "Accept edits",
+    "accept edits": "accept edits",
+    "Manual": "Manual",
+    "manual": "manual",
+    "Don't ask": "Don't ask",
+    "don't ask": "don't ask",
+    "Auto": "Auto",
+    "auto": "auto",
+    "Plan": "Plan",
+    "plan mode": "plan mode",
     "Opus": "Opus",
     "Sonnet": "Sonnet",
     "Haiku": "Haiku",
@@ -269,7 +269,7 @@ CS: dict[str, str] = {
     "Chrome": "Chrome",
     "Safe mode (no customizations)": "Bezpečný režim (bez přizpůsobení)",
     "safe mode": "bezpečný režim",
-    "legacy (skip permissions)": "starší (bez kontrol oprávnění)",
+    "legacy (bypass permissions)": "starší (bypass permissions)",
     "Plugins": "Pluginy",
     "Only selected plugins (predictable behaviour)": "Jen vybrané pluginy (předvídatelné chování)",
     "plugins": "pluginy",
@@ -566,8 +566,8 @@ CS: dict[str, str] = {
     "Press r or send a message in ccc to continue.":
         "✋ {name} tě potřebuje: pozastaveno na limitu využití (obnoví se v {time}). "
         "Pro pokračování stiskni r nebo pošli zprávu v ccc.",
-    "not committed: auto-commit only runs in 'Skip all permission checks' conversations":
-        "necommitnuto: automatický commit běží jen v konverzacích s 'Přeskočit všechny kontroly oprávnění'",
+    "not committed: auto-commit only runs in 'Bypass permissions' conversations":
+        "necommitnuto: automatický commit běží jen v konverzacích s 'Bypass permissions'",
     # Sent to Claude as a tool result when an approval is denied (permission_mcp.DENY_MESSAGE); the API shows it translated.
     "Denied by the user in ccc.": "Zamítnuto uživatelem v ccc.",
     "✅ {name}: queue finished.": "✅ {name}: fronta doběhla.",
@@ -1152,8 +1152,8 @@ CS: dict[str, str] = {
     "No worktree: {path} is a symbolic link.": "Worktree nevznikl: {path} je symbolický odkaz.",
     "No worktree: {path} isn't a folder.": "Worktree nevznikl: {path} není složka.",
     "No worktree: {path} leads outside the repository.": "Worktree nevznikl: {path} vede mimo repozitář.",
-    "An own worktree needs “Skip all permission checks” (ccc runs git only there).":
-        "Vlastní worktree potřebuje „Přeskočit všechny kontroly oprávnění“ (ccc spouští git jen tam).",
+    "An own worktree needs “Bypass permissions” (ccc runs git only there).":
+        "Vlastní worktree potřebuje „Bypass permissions“ (ccc spouští git jen tam).",
 
     # Workflows (ccc.workflows, Workflow window, ccc workflow)
     "(back to build at most {n}×)": "(zpět ke stavbě nejvýš {n}×)",
@@ -1504,6 +1504,7 @@ CS: dict[str, str] = {
     "No such device.": "Takové zařízení neexistuje.",
     "Signed out.": "Odhlášeno.",
     "The device needs a name.": "Zařízení potřebuje jméno.",
+    "The conversation needs a name.": "Konverzace potřebuje název.",
     "address to listen on (default {host}: reach it through tailscale serve)":
         "adresa, na které poslouchat (výchozí {host}: zvenku přes tailscale serve)",
 
@@ -1626,7 +1627,7 @@ CS: dict[str, str] = {
     "Branch: ": "Větev: ",
     "binary": "binární",
     "No activity yet.": "Zatím žádná aktivita.",
-    "Not shown: ccc reads git only in a git folder, in conversations started with “Skip all permission checks”.": "Nezobrazeno: ccc čte git jen ve složce s gitem a v konverzacích spuštěných s „Přeskočit všechny kontroly oprávnění“.",
+    "Not shown: ccc reads git only in a git folder, in conversations started with “Bypass permissions”.": "Nezobrazeno: ccc čte git jen ve složce s gitem a v konverzacích spuštěných s „Bypass permissions“.",
     "No uncommitted changes.": "Žádné necommitnuté změny.",
     "… and more files": "… a další soubory",
     "Today: {today} tokens   ·   All time: {total} tokens": "Dnes: {today} tokenů   ·   Celkem: {total} tokenů",

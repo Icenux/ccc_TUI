@@ -96,9 +96,9 @@ a jak volně ji smí appka založit, rozhoduje počítač — ne telefon:
   jen složky, ve kterých už ccc konverzace má — nedojde do `~` ani `/` (konverzace kdysi založená v `~` nic dalšího neotevře).
   Kontrola sleduje symlinky. Týká se zakládání konverzace, prompt do živé relace, `GET /sessions`
   a `GET /mcp-servers`; složka mimo dostane `403`.
-- **Přeskočit všechny kontroly oprávnění:** z appky se odmítne (`403`), dokud
+- **Bypass permissions:** z appky se odmítne (`403`), dokud
   nespustíš `ccc api skip-permissions on` (`off` to vrátí). Do té doby je
-  výchozí volba v appce *Ptát se na všechno*: schvaluješ v appce.
+  výchozí volba v appce *Manual*: schvaluješ v appce.
 
 ## Záznamy a poplachy
 

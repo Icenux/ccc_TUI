@@ -30,8 +30,8 @@ from ccc.storage import Storage
 THEN_TIMEOUT_SECONDS = 5
 
 
-def parse(raw: str) -> tuple[str, float, int | None, int | None] | None:
-    """(session id, percent, tokens, window) of a status line input, None when it carries no context fill."""
+def parse(raw: str) -> tuple[str, float, int | None, int | None, str | None] | None:
+    """(session id, percent, tokens, window, model) of a status line input, None when it carries no context fill."""
     try:
         data = json.loads(raw)
         session_id = data["session_id"]
@@ -41,7 +41,18 @@ def parse(raw: str) -> tuple[str, float, int | None, int | None] | None:
         return None
     if not isinstance(session_id, str) or isinstance(percent, bool) or not isinstance(percent, (int, float)):
         return None
-    return session_id, float(percent), _count(context.get("total_input_tokens")), _count(context.get("context_window_size"))
+    return (session_id, float(percent), _count(context.get("total_input_tokens")), _count(context.get("context_window_size")),
+            _model_name(data.get("model")))
+
+
+def _model_name(model) -> str | None:
+    """The model's display name ("Opus 4.7"), else its id; None when the input names none."""
+    if isinstance(model, dict):
+        for key in ("display_name", "id"):
+            value = model.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()[:80]
+    return None
 
 
 def _count(value) -> int | None:

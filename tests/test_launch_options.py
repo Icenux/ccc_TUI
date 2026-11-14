@@ -43,8 +43,8 @@ def test_persistent_flags_in_group_order_without_session_flags():
 
 
 def test_describe_flags():
-    assert describe_flags(None) == "legacy (skip permissions)"
-    assert describe_flags(["--permission-mode", "plan", "--model", "haiku"]) == "plan only · Haiku"
+    assert describe_flags(None) == "legacy (bypass permissions)"
+    assert describe_flags(["--permission-mode", "plan", "--model", "haiku"]) == "plan mode · Haiku"
     assert describe_flags(["--weird"]) == "--weird"
 
 
@@ -71,7 +71,7 @@ def test_effort_levels_match_installed_claude():
 
 def test_permission_modes_match_installed_claude():
     """Every `--permission-mode` claude accepts is offered (issue #99);
-    bypassPermissions is the "Skip all permission checks" flag."""
+    bypassPermissions is the "Bypass permissions" flag."""
     import re
     import shutil
     import subprocess

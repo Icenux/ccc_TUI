@@ -109,6 +109,6 @@ async def test_queue_detail_shows_now_changes_usage_and_errors(tmp_path):
         text = {name: app.screen.query_one(f"#overview-{name}", Static).render().plain
                 for name in ("now", "changes", "usage", "errors")}
         assert "Idle" in text["now"] and "Queued messages: 0" in text["now"]
-        assert "Skip all permission checks" in text["changes"]
+        assert "Bypass permissions" in text["changes"]
         assert "Today: 7 tokens" in text["usage"]
         assert "boom" in text["errors"]

@@ -88,7 +88,7 @@ What to do with the last two: [Usage limits & blocked queues](limits.md).
   in the conversation;
 - **Changes**: the folder's branch and the files with uncommitted
   changes, with the lines added and removed (only in a git folder and in
-  conversations started with *Skip all permission checks*, as ccc runs
+  conversations started with *Bypass permissions*, as ccc runs
   git only there);
 - **Usage**: the tokens of the last 14 days and the models used;
 - **Errors**: the latest runs that failed, and what blocks the

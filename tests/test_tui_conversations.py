@@ -559,7 +559,7 @@ async def test_list_and_header_show_the_git_status(tmp_path, monkeypatch):
 
     monkeypatch.setattr(gitops, "work_status", fake)
     storage = Storage(tmp_path / "history.db")
-    wt = storage.create_queue("wt", "/tmp/wt", "s1")  # legacy = skip permissions: git allowed
+    wt = storage.create_queue("wt", "/tmp/wt", "s1")  # legacy = bypass permissions: git allowed
     storage.create_queue("limited", "/tmp/limited", "s2", launch_flags=["--permission-mode", "acceptEdits"])
 
     class _HostApp(App):

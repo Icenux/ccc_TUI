@@ -43,6 +43,7 @@ GET  /api/v1/prompt-presets               the preset prompts (Alt+1 … 9)
 POST /api/v1/pair                         {"code", "name"}: the one request without a token — trades a pairing code (ccc.pairing) for a device and its token
 GET  /api/v1/audit                        what the devices did (admin): the newest first, ?limit= (100); changes, refusals and pairings only — see ccc.api_audit
 GET  /api/v1/devices                      the devices signed in; "current" marks the caller; ?all=1 adds the signed-out ones (history, with revoked_at / revoked_by)
+POST /api/v1/conversations/{id}/rename   {"name"}: rename a conversation
 POST /api/v1/devices/{id}                 {"name"}: rename a device
 DELETE /api/v1/devices/{id}               sign a device out (the caller too); the row stays as history
 GET  /api/v1/launch-presets               New conversation presets and the last choice
@@ -207,6 +208,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             ok(r"/conversations/(\d+)/messages", lambda ids, q, b: self.send(*ids, b), "POST", HTTPStatus.CREATED),
             ok(r"/conversations/(\d+)/retry", lambda ids, q, b: self.retry(*ids), "POST"),
             ok(r"/conversations/(\d+)/seen", lambda ids, q, b: self.seen(*ids), "POST"),
+            ok(r"/conversations/(\d+)/rename", lambda ids, q, b: self.rename(*ids, b), "POST"),
             ok(r"/conversations/(\d+)/archive", lambda ids, q, b: self.archive(*ids, b), "POST"),
             ok(r"/conversations/(\d+)/group", lambda ids, q, b: self.set_group(*ids, b), "POST"),
             ok(r"/conversations/(\d+)/export", lambda ids, q, b: self.export(*ids)),
@@ -355,6 +357,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             "status": q.status.value,
             "live_busy": q.live_busy,
             "context": self._context_of(q),
+            "model": self._model_of(q),
             "delivery_mode": q.delivery_mode.value,
             "archived": q.archived,
             "paused": q.paused,
@@ -377,6 +380,11 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
         if q.context_percent is None:
             return None
         return {"percent": q.context_percent, "tokens": q.context_tokens, "window": q.context_window}
+
+    @staticmethod
+    def _model_of(q) -> str | None:
+        """The model Claude Code works with (as its status line named it), null: not reported."""
+        return q.context_model
 
     @staticmethod
     def _goal_of(goal) -> dict | None:
@@ -477,6 +485,15 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
         self._queue(queue_id)
         self.storage.mark_seen(queue_id)
         return {"ok": True}
+
+    def rename(self, queue_id: int, body: dict) -> dict:
+        """{"name"}: the conversation's new name in ccc (as F2 in the TUI)."""
+        self._queue(queue_id)
+        name = " ".join(text_of(body, "name").split())
+        if not name:
+            raise ApiError(HTTPStatus.BAD_REQUEST, _("The conversation needs a name."))
+        self.storage.rename_queue(queue_id, name[:200])
+        return self.conversation(queue_id)
 
     def archive(self, queue_id: int, body: dict) -> dict:
         """{"archived": true} into the Archive, false back (as x in the TUI)."""
@@ -852,7 +869,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             result[q.id] = (
                 q.name, q.status.value, q.archived, q.paused, q.last_error, own.get(q.id),
                 self.storage.count_pending_items(q.id), q.id in waiting, q.id in unseen, size, q.live_busy,
-                q.context_percent, q.context_tokens, q.context_window,
+                q.context_percent, q.context_tokens, q.context_window, q.context_model,
             )
         # Not a conversation: a new ccc version (updates) — told to the app as "update".
         state = updates.load(self.storage)

@@ -27,7 +27,7 @@ open the **Workflow** window of the selected conversation.
 | plan | a planner reads the code and writes a plan with the **acceptance criteria** the work will be judged by |
 | your approval | the run waits: read the plan, **Approve** (with an optional note for the next step) or **Reject** (the run stops). You're notified on Telegram / Discord |
 | build | the task (with the plan, and in later rounds the findings) goes into the conversation's [task queue](tasks.md) |
-| check | ccc runs the check command; a failure goes straight back to the build. Only in conversations with *Skip all permission checks*, as for the [goal loop](goal.md) |
+| check | ccc runs the check command; a failure goes straight back to the build. Only in conversations with *Bypass permissions*, as for the [goal loop](goal.md) |
 | review | 1–4 reviewers **in parallel**, each with its own brief (e.g. correctness, security) and model |
 | arbiter | compares the reviewers' reports, checks what they disagree on in the code itself and gives the verdict |
 

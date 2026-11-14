@@ -70,7 +70,7 @@ phone via Remote Control.
 - **Remote Control** — conversations can run as a live
   `claude --remote-control` session you can also drive from the Claude
   mobile app / claude.ai.
-- **Approvals** — restricted conversations (*Auto-accept edits*, *Plan
+- **Approvals** — restricted conversations (*Accept edits*, *Plan
   only*) ask you in the TUI instead of silently failing.
 - **Telegram / Discord** — notifications when a queue finishes, needs you, fails or
   hits a limit, a device is paired or signed out…; you choose which kinds each service gets.

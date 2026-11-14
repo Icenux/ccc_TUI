@@ -7,10 +7,10 @@ conversation:
 - **Claude Code beside ccc:** Claude asks right there in its pane, as in
   any terminal. Answer it there. (Remote-control conversations can also be
   answered from your phone.)
-- **Headless conversations** started with *Auto-accept edits*, *Ask for everything* or
-  *Plan only*: there's no terminal to ask in, so ccc asks for it. Claude's
+- **Headless conversations** started with *Accept edits*, *Manual* or
+  *Plan*: there's no terminal to ask in, so ccc asks for it. Claude's
   request waits — with no time limit — until you decide.
-- *Skip all permission checks*: nothing is asked, Claude does everything.
+- *Bypass permissions*: nothing is asked, Claude does everything.
 
 ## Answering in ccc
 

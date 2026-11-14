@@ -176,7 +176,8 @@ async def update_loop(storage: Storage, notifier: Notifier, interval: float = No
     what was found from the settings."""
     from ccc import updates
 
-    await asyncio.sleep(UPDATE_FIRST_CHECK_SECONDS)
+    # Every 24 hours (#306), counted from the last look — a restart doesn't look again sooner.
+    await asyncio.sleep(max(UPDATE_FIRST_CHECK_SECONDS, updates.seconds_until_next_check(storage)))
     while True:
         try:
             await asyncio.to_thread(update_tick, storage, notifier)

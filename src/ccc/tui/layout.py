@@ -14,6 +14,7 @@ import time
 import sqlite3
 from dataclasses import dataclass
 
+from rich.cells import cell_len
 from rich.markup import escape
 from rich.text import Text
 from textual.css.query import NoMatches
@@ -160,6 +161,8 @@ class BevelButton(Button):
 class BevelCap(Static):
     """The light top edge of the first 3D button of a group (the lower half of a row)."""
 
+    # Not scoped: its rule for a short window starts at the screen.
+    SCOPED_CSS = False
     DEFAULT_CSS = """
     BevelCap {
         height: 1;
@@ -183,7 +186,9 @@ class NavButton(BevelButton):
     the right edge, whatever the menu's width."""
 
     # Its size also where ccc's app CSS (BUTTON_CSS, the colours) is missing:
-    # a host app in tests; in ccc BUTTON_CSS sets the same.
+    # a host app in tests; in ccc BUTTON_CSS sets the same. Not scoped: the
+    # short-window rule starts at the screen.
+    SCOPED_CSS = False
     DEFAULT_CSS = """
     NavButton {
         width: 100%;
@@ -230,16 +235,50 @@ class StatusBar(Footer):
     """The one bar at the bottom: the screen's keys (Textual's Footer:
     clickable, kept up to date). Which screen is open the menu shows."""
 
+    # The keys wrap into more rows when they don't fit (#305).
+    DEFAULT_CSS = """
+    StatusBar {
+        layout: vertical;
+        height: auto;
+        max-height: 6;
+    }
+    StatusBar .status-row {
+        height: 1;
+        width: 100%;
+        layout: horizontal;
+    }
+    """
+
     def __init__(self):
         super().__init__(show_command_palette=False, compact=True)
+        self._wrapped_width = 0
+
+    @staticmethod
+    def key_width(widget) -> int:
+        """Cells a key takes in the bar: its key, a space, its description, a gap."""
+        return cell_len(str(widget.key_display)) + 1 + cell_len(str(widget.description)) + 1
 
     def compose(self):
         if not self._bindings_ready:
             return
+        width = self.size.width or self.app.size.width
+        self._wrapped_width = width
+        row, used = [], 0
         for widget in super().compose():
             if hasattr(widget, "description") and isinstance(widget.description, str):
                 widget.description = widget.description.lower()
-            yield widget
+            cost = self.key_width(widget)
+            if row and used + cost > width:
+                yield Horizontal(*row, classes="status-row")
+                row, used = [], 0
+            row.append(widget)
+            used += cost
+        if row:
+            yield Horizontal(*row, classes="status-row")
+
+    def on_resize(self, event) -> None:
+        if event.size.width != self._wrapped_width:
+            self.call_after_refresh(self.recompose)
 
 ADD_PROMPT_BUTTON = SidebarButton("sidebar-add-prompt", _("Add prompt ({key})"), "green", "add_prompt",
                                   "screen.add_prompt")
@@ -370,15 +409,17 @@ class ModalTitle(Static):
 
 
 class CccModal(ModalScreen):
-    """Base of every ccc window: the window's box (the screen's first
-    child) gets the New conversation design's frame (#250) — its
+    """Base of every ccc window: the window's box (the screen's child
+    with a border_title) gets the New conversation design's frame (#250) — its
     border_title becomes the red ModalTitle bar at the top, flush with
     the frame whatever the box's padding."""
 
     def on_mount(self) -> None:
         # Textual dispatches on_mount along the MRO: this runs before each window's own.
-        box = next(iter(self.children), None)
-        if box is None or not box.border_title:
+        # The window's box is the child with a title — in a real terminal
+        # Textual's ToastRack and Tooltip come before it.
+        box = next((child for child in self.children if child.border_title), None)
+        if box is None:
             return
         title = str(box.border_title)
         box.border_title = None

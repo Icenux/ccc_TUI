@@ -2,14 +2,86 @@
 every keyboard shortcut."""
 from __future__ import annotations
 
+import re
+
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.widgets import Markdown, OptionList
+from textual.content import Content, Span
+from textual.widgets import Markdown, OptionList, Static
 from textual.widgets.option_list import Option
 
 from ccc import help as help_topics
 from ccc import keymap
 from ccc.i18n import N_, _
-from ccc.tui.layout import CccModal, MODAL_CSS
+from ccc.tui.layout import ATTENTION_STYLE, DONE_STYLE, ERROR_STYLE, WORKING_STYLE, CccModal, MODAL_CSS
+
+# The conversation markers in the guide are written "blue `●`" (GitHub shows
+# no colours); here the marker itself is in its colour and the word goes (#303).
+MARKER_COLOURS = {
+    "gold": WORKING_STYLE, "zlatá": WORKING_STYLE,
+    "red": ERROR_STYLE, "červená": ERROR_STYLE,
+    # ATTENTION_STYLE's colour by name is Rich's; Textual's Content needs it as hex.
+    "blue": ATTENTION_STYLE.replace("dodger_blue1", "#0087ff"),
+    "modrá": ATTENTION_STYLE.replace("dodger_blue1", "#0087ff"),
+    "green": DONE_STYLE, "zelená": DONE_STYLE,
+}
+# Markers written without a colour word: their own colour, as in the list.
+MARKER_OWN = {"‖": "bold magenta", "○": "dim"}
+_COLOUR_WORD = re.compile(r"(?:^|(?<=\s))(" + "|".join(MARKER_COLOURS) + r") $")
+_MARKER_GLYPHS = re.compile(r"^[●○‖\u2800-\u28ff]+$")
+
+
+def colour_markers(content: Content) -> Content:
+    """Inline code that is only a marker glyph gets the marker's colour
+    (from the colour word before it, which is dropped); the turning dot
+    shows one frame."""
+    plain = content.plain
+    removed: list[tuple[int, int]] = []
+    restyled: dict[int, tuple[str, str]] = {}  # span index -> (style, new text)
+    for index, span in enumerate(content.spans):
+        if span.style != ".code_inline":
+            continue
+        glyphs = plain[span.start:span.end]
+        if not _MARKER_GLYPHS.match(glyphs):
+            continue
+        word = _COLOUR_WORD.search(plain, 0, span.start)
+        if word is not None and word.end() == span.start:
+            style = MARKER_COLOURS[word.group(1)]
+            removed.append((word.start(), span.start))
+        elif glyphs in MARKER_OWN:
+            style = MARKER_OWN[glyphs]
+        else:
+            continue
+        restyled[index] = (style, glyphs[0])
+    if not restyled:
+        return content
+    # Rebuild: drop the colour words, shorten the turning dot to one frame.
+    cuts = sorted(removed + [(content.spans[i].start + 1, content.spans[i].end) for i in restyled])
+
+    def shift(position: int) -> int:
+        return position - sum(max(0, min(end, position) - start) for start, end in cuts)
+
+    text = "".join(ch for pos, ch in enumerate(plain) if not any(start <= pos < end for start, end in cuts))
+    spans = []
+    for index, span in enumerate(content.spans):
+        style = restyled[index][0] if index in restyled else span.style
+        start, end = shift(span.start), shift(span.end)
+        if end > start:
+            spans.append(Span(start, end, style))
+    return Content(text, spans=spans)
+
+
+def _marker_block(block_class):
+    """block_class whose text has the markers coloured; same name, so its CSS still applies."""
+    def _token_to_content(self, token):
+        return colour_markers(block_class._token_to_content(self, token))
+
+    return type(block_class.__name__, (block_class,), {"_token_to_content": _token_to_content})
+
+
+class HelpMarkdown(Markdown):
+    """The guide: Markdown with the markers in their colours."""
+
+    BLOCKS = {name: _marker_block(cls) for name, cls in Markdown.BLOCKS.items()}
 
 # (section, [(ref, description)]): ref is a keymap action id (its key is
 # the user's) or, for keys of lists and text fields that aren't ccc's
@@ -57,7 +129,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("conversations.focus_claude", N_("Switch between ccc and Claude Code (while it's open beside ccc)")),
         ("conversations.close_claude",
          N_("Close Claude Code beside ccc (it keeps running; Enter in the list opens it)")),
-        ("conversations.search", N_("Search all conversations")),
+        ("conversations.search", N_("Search: Conversations, Archive or everywhere")),
         ("conversations.filter", N_("Filter the list: name or folder; ! working, ? approval, x error, * new (Esc cancels)")),
         ("conversations.rename", N_("Rename the selected conversation")),
         ("conversations.group", N_("Groups: put the conversation into one of your own; on a group's heading, rename / delete it")),
@@ -76,7 +148,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("conversations.archive", N_("Restore the conversation")),
         ("enter", N_("Restore it and open it in Conversations")),
         ("archive.delete", N_("Delete the conversation from ccc (asks first; Claude Code's transcript stays)")),
-        ("conversations.search", N_("Search all conversations")),
+        ("conversations.search", N_("Search: Conversations, Archive or everywhere")),
         ("conversations.filter", N_("Filter the list: name or folder; ! working, ? approval, x error, * new (Esc cancels)")),
         ("conversations.rename", N_("Rename the selected conversation")),
         ("conversations.group", N_("Groups: put the conversation into one of your own; on a group's heading, rename / delete it")),
@@ -218,6 +290,19 @@ class HelpScreen(CccModal):
     HelpScreen #help-text {
         margin: 0;
     }
+    /* No empty rows where nothing is (#303): one blank row above a heading
+       (Textual: two), none under it. */
+    HelpScreen MarkdownHeader {
+        margin: 1 0 0 0;
+    }
+    HelpScreen MarkdownH1 {
+        margin: 0 0 1 0;
+    }
+    HelpScreen #help-keys {
+        height: 2;
+        border-top: solid $ccc-line;
+        color: $ccc-text-muted;
+    }
     """
 
     BINDINGS = [keymap.binding("window.cancel", "close", _("Close")), keymap.binding("views.help", "close", _("Close"))]
@@ -232,10 +317,11 @@ class HelpScreen(CccModal):
         box = Container(
             Horizontal(
                 topics,
-                VerticalScroll(Markdown(id="help-text", open_links=False), id="help-scroll"),
-            )
+                VerticalScroll(HelpMarkdown(id="help-text", open_links=False), id="help-scroll"),
+            ),
+            Static(_("↑↓ topic  ·  Tab text / topics  ·  Esc close"), id="help-keys"),
         )
-        box.border_title = _("Help  ·  ↑↓ topic  ·  Tab text / topics  ·  Esc close")
+        box.border_title = _("Help")
         yield box
 
     def on_mount(self) -> None:

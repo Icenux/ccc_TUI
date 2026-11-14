@@ -49,9 +49,10 @@ Každá obrazovka vypadá stejně:
   Konverzace, `h` Archiv, `s` Živé relace, `a` Analytika; dají se
   i kliknout), vlastní seznam obrazovky a její tlačítka.
 - **Vpravo:** samotná obrazovka.
-- **Spodní lišta:** klávesy obrazovky, na které jsi, a k tomu `?`
-  Nápověda, `Ctrl+Q` Zavřít a `Ctrl+P` Nastavení. Kliknutím klávesu
-  stiskneš.
+- **Spodní lišta:** klávesy obrazovky, na které jsi — jen ty, které tam
+  něco dělají — a k tomu `?` Nápověda, `Ctrl+Q` Zavřít a `Ctrl+P`
+  Nastavení; když se nevejdou, pokračují na druhém řádku. Kliknutím
+  klávesu stiskneš.
 
 Klávesy bez `Ctrl` nebo `Alt` (třeba `n`, `t`) nefungují, když píšeš do
 textového pole — nejdřív klikni do seznamu vlevo.

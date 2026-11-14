@@ -325,3 +325,64 @@ async def test_menu_buttons_are_3d_with_the_edge_rows_shared(tmp_path):
         light_next = BEVEL_COLOURS["nav-conversations"][1]
         assert any(f"{dark} on {light_next}" in str(span.style) for span in edge.spans)
         assert app.screen.query(BevelCap)
+
+
+@pytest.mark.asyncio
+async def test_status_bar_wraps_the_keys_that_do_not_fit(tmp_path):
+    # #305: a narrow window shows every key, on more rows.
+    from textual.widgets._footer import FooterKey
+
+    from ccc.tui.layout import StatusBar
+
+    app = _app(tmp_path)
+    async with app.run_test(size=(70, 30)) as pilot:
+        await pilot.pause()
+        await pilot.press("c")
+        await pilot.pause()
+        bar = app.screen.query_one(StatusBar)
+        keys = list(bar.query(FooterKey))
+        assert bar.region.height >= 2
+        assert all(k.region.right <= bar.region.right for k in keys)
+        assert all(k.region.y >= bar.region.y for k in keys)
+        await pilot.resize_terminal(220, 30)
+        await pilot.pause()
+        await pilot.pause()
+        assert app.screen.query_one(StatusBar).region.height == 1
+
+
+@pytest.mark.asyncio
+async def test_a_short_window_keeps_only_the_label_rows_of_the_menu(tmp_path):
+    # The light top edge (BevelCap) went with the edge rows — its rule was scoped away.
+    from ccc.tui.layout import BevelCap
+
+    app = _app(tmp_path)
+    async with app.run_test(size=(140, 30)) as pilot:
+        await pilot.pause()
+        assert app.screen.has_class("-short")
+        assert {b.region.height for b in app.screen.query(".nav-button")} == {1}
+        assert all(not cap.display or cap.region.height == 0 for cap in app.screen.query(BevelCap))
+
+
+@pytest.mark.asyncio
+async def test_the_title_bar_finds_the_window_box_after_textuals_own_layers(tmp_path):
+    # In a real terminal a screen's first children are Textual's ToastRack and Tooltip:
+    # the bar went to them, the window kept its title in the frame line.
+    from textual.containers import Container
+
+    from ccc.tui.layout import CccModal, ModalTitle
+
+    class Window(CccModal):
+        def compose(self):
+            yield Static("a layer before the box")
+            box = Container(Static("text"))
+            box.border_title = "Window"
+            yield box
+
+    app = _app(tmp_path)
+    async with app.run_test(size=(100, 30)) as pilot:
+        await pilot.pause()
+        app.push_screen(Window())
+        await pilot.pause()
+        box = app.screen.query_one(Container)
+        assert not box.border_title
+        assert isinstance(box.children[0], ModalTitle)

@@ -77,6 +77,20 @@ async def test_clicking_nav_item_switches_view(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_sidebar_buttons_do_not_light_up_on_hover(tmp_path):
+    # The hover tint lit only the label row of the 3D menu / Filter / Rename buttons.
+    app = _app(tmp_path)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        ids = ["#nav-analytics"] + [f"#{b.id}" for b in app.screen.query("Button.sidebar-button") if b.id]
+        for sel in ids:
+            button = app.screen.query_one(sel)
+            await pilot.hover(sel)
+            await pilot.pause()
+            assert button.styles.background_tint.a == 0, sel
+
+
+@pytest.mark.asyncio
 async def test_escape_returns_to_dashboard_but_never_leaves_it(tmp_path):
     app = _app(tmp_path)
     async with app.run_test() as pilot:

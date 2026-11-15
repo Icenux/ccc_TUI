@@ -542,8 +542,9 @@ Button.sidebar-button {
     text-align: center;
     content-align: center top;
 }
-Button.nav-button:hover {
-    background-tint: white 10%;
+/* No hover highlight: the tint would light up only the label row, not the edge row under it. */
+Button.nav-button:hover, Button.sidebar-button:hover, Button.sidebar-button-strip:hover {
+    background-tint: transparent;
 }
 Button.nav-dashboard { background: #005fd7; }
 Button.nav-conversations { background: #875fff; }

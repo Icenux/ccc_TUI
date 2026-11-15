@@ -25,6 +25,7 @@ from ccc.tui import cli_pane
 from ccc.tui.claude_pane import ClaudePane
 from ccc.tui.layout import (
     ARCHIVE_BUTTON,
+    DELETE_BUTTON,
     FILTER_BUTTON,
     RENAME_BUTTON,
     NEW_CONVERSATION_BUTTON,
@@ -131,7 +132,8 @@ class ConversationsScreen(SidebarScreen):
         keymap.binding("conversations.tasks", "tasks", _("Tasks")),
         # Its button is in the sidebar (ARCHIVE_BUTTON), not in the footer.
         keymap.binding("conversations.archive", "toggle_archive", _("Archive"), show=False),
-        # No Ctrl+D (delete): it exits Claude Code (#31).
+        # Delete, not Ctrl+D: that exits Claude Code (#31). Its button is in the sidebar (DELETE_BUTTON).
+        keymap.binding("archive.delete", "delete_conversation", _("Delete"), show=False),
         keymap.binding("conversations.search", "search", _("Search")),
         # Its button is above the list (FILTER_BUTTON), not in the footer.
         keymap.binding("conversations.filter", "filter", _("Filter"), show=False),
@@ -347,7 +349,7 @@ class ConversationsScreen(SidebarScreen):
         self._filter_kept: int | None = None
 
     def sidebar_buttons(self):
-        return [NEW_CONVERSATION_BUTTON, ARCHIVE_BUTTON, RETRY_BUTTON]
+        return [NEW_CONVERSATION_BUTTON, ARCHIVE_BUTTON, DELETE_BUTTON, RETRY_BUTTON]
 
     def retry_target(self):
         return self.storage.find_queue(self._current_queue_id) if self._current_queue_id is not None else None

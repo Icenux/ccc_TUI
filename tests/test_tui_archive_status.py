@@ -231,8 +231,8 @@ async def test_delete_key_in_archive_asks_then_deletes(storage):
 
 
 @pytest.mark.asyncio
-async def test_no_delete_key_in_conversations(storage):
-    # Claude Code runs next to it there; deleting stays in the Archive.
+async def test_delete_key_in_conversations_asks_first(storage):
+    # #324: Delete (not Ctrl+D, Claude Code's exit) deletes the conversation there too, after asking.
     b = storage.create_queue("b", "/tmp/b", "sb")
     app = _host(ConversationsScreen(storage, select_queue_id=b.id))
     async with app.run_test() as pilot:
@@ -240,7 +240,9 @@ async def test_no_delete_key_in_conversations(storage):
         app.screen.query_one("#conversation-queue-list").focus()
         await pilot.press("delete")
         await pilot.pause()
-        assert not isinstance(app.screen, ConfirmModal)
+        assert isinstance(app.screen, ConfirmModal)
+        await pilot.press("n")
+        await pilot.pause()
         assert storage.find_queue(b.id) is not None
 
 

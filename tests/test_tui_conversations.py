@@ -854,3 +854,29 @@ async def test_delete_on_a_heading_in_the_archive_deletes_that_group_not_the_las
         await pilot.pause(0.3)
         left = {q.name for q in storage.list_queues()}
         assert left == {"b1"}
+
+
+@pytest.mark.asyncio
+async def test_conversations_has_a_red_delete_button_under_archive_and_the_delete_key_asks_first(tmp_path):
+    # #324: Delete in the sidebar under Archive, red; the key is Delete.
+    from ccc.storage import Storage
+    from ccc.tui.app import CCContinueApp
+    from ccc.tui.layout import ConfirmModal
+
+    storage = Storage(str(tmp_path / "history.db"))
+    q = storage.create_queue("doomed", "/tmp/proj", "s-doomed")
+    app = CCContinueApp(str(tmp_path / "history.db"))
+    async with app.run_test(size=(140, 45)) as pilot:
+        await pilot.pause()
+        await pilot.press("c")
+        await pilot.pause()
+        archive = app.screen.query_one("#sidebar-archive")
+        delete = app.screen.query_one("#sidebar-delete")
+        assert delete.region.y > archive.region.y
+        assert delete.has_class("sidebar-button-red")
+        await pilot.click("#sidebar-delete")
+        await pilot.pause()
+        assert isinstance(app.screen, ConfirmModal)
+        await pilot.press("y")
+        await pilot.pause(0.3)
+        assert storage.list_queues() == []

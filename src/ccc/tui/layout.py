@@ -293,6 +293,8 @@ RENAME_BUTTON = SidebarButton("sidebar-rename", _("{key} Rename"), "strip", "ren
 # Under New conversation: archives the selected conversation (x).
 ARCHIVE_BUTTON = SidebarButton("sidebar-archive", _("Archive ({key})"), "teal", "toggle_archive",
                                "conversations.archive")
+# Under Archive: deletes the selected conversation from ccc (Delete), red.
+DELETE_BUTTON = SidebarButton("sidebar-delete", _("Delete ({key})"), "red", "delete_conversation", "archive.delete")
 
 STATUS_STYLES = {
     QueueStatus.IDLE: "dim",

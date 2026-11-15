@@ -109,7 +109,7 @@ ACTIONS: tuple[KeyAction, ...] = (
               ("conversations",)),
     *[KeyAction(f"conversations.preset{n}", f"alt+{n}", N_("Preset prompt {n}"), (*_CONVERSATIONS, CLAUDE), tmux=True)
       for n in range(1, 10)],
-    KeyAction("archive.delete", "delete", N_("Delete the conversation (Archive)"), ("archive",)),
+    KeyAction("archive.delete", "delete", N_("Delete the conversation (asks first)"), _CONVERSATIONS),
     KeyAction("tasks.add", "a", N_("Add a task"), ("tasks",)),
     KeyAction("tasks.edit", "e", N_("Edit the task"), ("tasks",)),
     KeyAction("tasks.remove", "delete", N_("Remove the task"), ("tasks",)),

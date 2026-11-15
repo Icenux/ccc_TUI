@@ -21,7 +21,7 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Static
 
 from ccc import keymap, tmux
-from ccc.tui.theme import ACCENT
+from ccc.tui.theme import ACCENT, KEY_TEXT
 
 FOOTER_OPTION = "@ccc-footer"
 POLL_SECONDS = 0.3
@@ -72,7 +72,7 @@ def wrap(items: list[list[str]], width: int) -> list[list[list[str]]]:
     rows: list[list[list[str]]] = [[]]
     used = 0
     for item in items:
-        cost = cell_len(f"{item[0]} {item[1]}") + 2
+        cost = cell_len(f" {item[0]}  {item[1]}") + 2  # the key's box has a space either side
         if rows[-1] and used + cost > width:
             rows.append([])
             used = 0
@@ -84,6 +84,19 @@ def wrap(items: list[list[str]], width: int) -> list[list[list[str]]]:
 def _tmux(*args: str) -> subprocess.CompletedProcess:
     # $TMUX points at ccc's server (this runs in its pane); ccc's tmux binary.
     return subprocess.run(tmux.own(*args), capture_output=True, text=True, timeout=5)
+
+
+def item_text(shown: str, description: str, hover: bool = False) -> Text:
+    """One key: black on a box in the accent colour (lighter under the
+    pointer), then what it does."""
+    box = "#d7ffe3" if hover else ACCENT
+    return Text.assemble((f" {shown} ", f"bold {KEY_TEXT} on {box}"), " ", description.lower())
+
+
+class StripItem(Static):
+    def __init__(self, shown: str, description: str, key: str):
+        super().__init__(item_text(shown, description), classes="strip-item", name=key)
+        self.item = (shown, description)
 
 
 class FooterStrip(App):
@@ -105,10 +118,6 @@ class FooterStrip(App):
     .strip-item {
         width: auto;
         padding: 0 1;
-    }
-    .strip-item.-hover {
-        background: $footer-item-background;
-        text-style: reverse;
     }
     """
     ENABLE_COMMAND_PALETTE = False
@@ -138,8 +147,10 @@ class FooterStrip(App):
         if widget is not self._hovered:
             if self._hovered is not None:
                 self._hovered.remove_class("-hover")
+                self._hovered.update(item_text(*self._hovered.item, hover=False))
             if widget is not None:
                 widget.add_class("-hover")
+                widget.update(item_text(*widget.item, hover=True))
             self._hovered = widget
         self._hover_at = monotonic()
 
@@ -178,8 +189,7 @@ class FooterStrip(App):
         await column.mount_all(
             Horizontal(
                 *(
-                    Static(Text.assemble((shown, f"bold {ACCENT}"), " ", description.lower()),
-                           classes="strip-item", name=key)
+                    StripItem(shown, description, key)
                     for shown, description, key in row
                 ), classes="strip-row")
             for row in rows

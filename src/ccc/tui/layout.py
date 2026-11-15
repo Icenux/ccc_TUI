@@ -53,7 +53,7 @@ class SidebarButton:
     def text(self, keys: dict[str, str]) -> str:
         key = keymap.pretty(keys[self.key_id])
         if self.color == "strip":  # like the key list at the bottom: the key in its colour
-            key = f"[b $footer-key-foreground]{escape(key)}[/]"
+            key = f"[b $footer-key-foreground on $footer-key-background] {escape(key)} [/]"
         return self.label.format(key=key)
 
 

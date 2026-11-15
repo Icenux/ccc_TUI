@@ -60,5 +60,5 @@ async def test_menu_is_a_framed_block_without_tmux_and_gives_way_to_its_frame(tm
 def test_status_bar_is_the_designs_dark_bar_with_the_accent_keys():
     variables = theme.THEME.to_color_system().generate()
     assert variables["footer-background"] == theme.PANEL
-    assert variables["footer-key-foreground"] == theme.ACCENT
+    assert variables["footer-key-background"] == theme.ACCENT and variables["footer-key-foreground"] == theme.KEY_TEXT
     assert variables["background"] == "#000000"

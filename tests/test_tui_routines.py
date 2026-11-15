@@ -6,7 +6,8 @@ from ccc.models import RoutineTarget
 from ccc.storage import Storage
 from ccc.tui.app import CCContinueApp
 from ccc.tui.dashboard import DashboardScreen
-from ccc.tui.routines import RoutineEditModal, RoutinesModal
+from ccc.tui.routines import RoutineEditModal
+from ccc.tui.tasks_page import TasksRoutinesScreen
 
 
 @pytest.fixture(autouse=True)
@@ -23,8 +24,8 @@ def _app(tmp_path):
     return CCContinueApp(str(db_path)), queue
 
 
-def _cells(modal):
-    table = modal.query_one("#routines-table", DataTable)
+def _cells(screen):
+    table = screen.query_one("#tr-routines-table", DataTable)
     return [[str(c) for c in table.get_row_at(n)] for n in range(table.row_count)]
 
 
@@ -33,10 +34,11 @@ async def test_add_a_routine_from_the_window(tmp_path):
     app, queue = _app(tmp_path)
     async with app.run_test(size=(140, 45)) as pilot:
         await pilot.pause()
-        await pilot.press("o")
+        await pilot.press("t")
         await pilot.pause()
-        assert isinstance(app.screen, RoutinesModal)
-        await pilot.press("a")
+        assert isinstance(app.screen, TasksRoutinesScreen)
+        await pilot.press("tab")  # to the routines table
+        await pilot.press("plus")
         await pilot.pause()
         editor = app.screen
         assert isinstance(editor, RoutineEditModal)
@@ -49,11 +51,11 @@ async def test_add_a_routine_from_the_window(tmp_path):
         editor.query_one("#routine-prompt", TextArea).text = "Review today's changes"
         await pilot.press("ctrl+s")
         await pilot.pause()
-        assert isinstance(app.screen, RoutinesModal)
+        assert isinstance(app.screen, TasksRoutinesScreen)
         [routine] = app.storage.list_routines()
         assert (routine.name, routine.cron, routine.queue_id, routine.target) == \
             ("Nightly review", "30 18 * * 1-5", queue.id, RoutineTarget.SAME)
-        assert _cells(app.screen)[0][1:4] == ["Nightly review", "shop", "Mon–Fri at 18:30"]
+        assert _cells(app.screen)[0][2:5] == ["Nightly review", "shop", "Mon–Fri at 18:30"]
         await pilot.press("escape")
         await pilot.pause()
         assert isinstance(app.screen, DashboardScreen)
@@ -84,8 +86,9 @@ async def test_toggle_and_run_now(tmp_path):
     routine = routines.add(app.storage, queue.id, "hourly", "check", routines.HOURS, "1")
     async with app.run_test(size=(140, 45)) as pilot:
         await pilot.pause()
-        await pilot.press("o")
+        await pilot.press("t")
         await pilot.pause()
+        await pilot.press("tab")
         await pilot.press("space")
         await pilot.pause()
         assert not app.storage.get_routine(routine.id).enabled

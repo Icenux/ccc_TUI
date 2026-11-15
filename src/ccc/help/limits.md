@@ -55,5 +55,5 @@ What to do: look at the error (Conversations, or the last error in the
 queue detail — `Enter` on the Dashboard), fix the cause, then press `r`.
 **`r` runs the task that failed again**, before the rest of the queue.
 
-To drop the failed task instead: pause the queue (`t`, `p`), press `r`,
+To drop the failed task instead: pause the queue (`T`, `p`), press `r`,
 delete the task in the queue (`Delete`) and resume it (`p`).

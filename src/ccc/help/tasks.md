@@ -5,8 +5,11 @@ Claude one after another, in the same conversation. The next one goes as
 soon as Claude has finished the previous one, whether you're watching or
 not: you can queue an evening's work and close ccc.
 
-Press `t` in [Conversations](conversations.md) to open the queue of the
-selected conversation.
+Press `T` (Shift+T) in [Conversations](conversations.md) to open the queue of the
+selected conversation. Press `t` anywhere for **Tasks & Routines**: every task
+still waiting in any conversation (the upper table; finished ones aren't kept
+there) above the [routines](routines.md). `+` adds, `e` / `Enter` edits, `Delete`
+removes, `Ctrl+↑` / `Ctrl+↓` reorders — in the table that has the cursor.
 
 ![Task queue](../../../docs/screenshots/tasks.png)
 

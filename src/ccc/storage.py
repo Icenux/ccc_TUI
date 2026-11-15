@@ -696,6 +696,18 @@ class Storage:
             ).fetchall()
             return [self._row_to_item(r) for r in rows]
 
+    def list_open_items(self) -> list[QueueItem]:
+        """Every task that hasn't finished — pending, or the one being delivered now — of the conversations
+        that aren't archived, by conversation then queue position (the Tasks & Routines page). Done
+        ones aren't kept for it: a finished task is history, the page shows what is still to do."""
+        with closing(self._connect()) as conn:
+            rows = conn.execute(
+                "SELECT i.* FROM queue_items i JOIN queues q ON q.id = i.queue_id "
+                "WHERE i.status IN (?, ?) AND NOT q.archived ORDER BY q.id, i.position",
+                (ItemStatus.PENDING.value, ItemStatus.RUNNING.value),
+            ).fetchall()
+            return [self._row_to_item(r) for r in rows]
+
     def list_pending_items(self, queue_id: int) -> list[QueueItem]:
         with closing(self._connect()) as conn:
             rows = conn.execute(

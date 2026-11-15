@@ -42,6 +42,7 @@ VIEW_TOPICS = {
     "archive": "archive",
     "sessions": "live-sessions",
     "analytics": "analytics",
+    "tasks": "tasks",
 }
 
 _IMAGE_LINE = re.compile(r"^\s*(!\[[^\]]*\]\([^)]*\)|<img\b[^>]*>)\s*$")

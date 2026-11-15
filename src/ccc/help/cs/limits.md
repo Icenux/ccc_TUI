@@ -55,5 +55,5 @@ Co dělat: podívej se na chybu (Konverzace, nebo poslední chyba v detailu
 fronty — `Enter` na Přehledu), odstraň příčinu a stiskni `r`.
 **`r` znovu spustí úkol, který selhal**, ještě před zbytkem fronty.
 
-Pokud chceš selhaný úkol radši zahodit: pozastav frontu (`t`, `p`),
+Pokud chceš selhaný úkol radši zahodit: pozastav frontu (`T`, `p`),
 stiskni `r`, smaž úkol ve frontě (`Delete`) a frontu obnov (`p`).

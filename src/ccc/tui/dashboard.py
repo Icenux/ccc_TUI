@@ -42,7 +42,7 @@ GETTING_STARTED = _("""\
   [b cyan]1.[/]  Press [b]n[/b] (or New conversation in Conversations), pick a project folder,
       tick the Claude Code options you want, Start.
   [b cyan]2.[/]  Claude Code opens beside ccc in Conversations — talk to it as in a terminal.
-  [b cyan]3.[/]  Queue more work with [b]t[/b]. ccc carries on when you close it (Ctrl+Q)
+  [b cyan]3.[/]  Queue more work with [b]T[/b]. ccc carries on when you close it (Ctrl+Q)
       and waits out usage limits by itself.
 
 Press [b]?[/b] for the guide — every screen, every key.""")
@@ -519,7 +519,7 @@ class DashboardScreen(SidebarScreen):
             (f"{_home(queue.project_path)}  ·  {describe_flags(queue.launch_flags)}  ·  {auto}", theme.TEXT_MUTED)))
         keys = self._keys()
         self.query_one("#dashboard-detail-keys", Static).update(
-            Text(f"[↵] {_('open')}   [{keymap.pretty(keys['views.tasks'])}] {_('tasks')}"))
+            Text(f"[↵] {_('open')}   [{keymap.pretty(keys['conversations.tasks'])}] {_('tasks')}"))
         pending = self.storage.count_pending_items(queue.id)
         tokens = self.storage.queue_token_total(queue.id, day=date.today())
         stats = Text.assemble(

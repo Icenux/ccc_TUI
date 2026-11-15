@@ -166,7 +166,7 @@ psaní nezpomalí.
 
 | Klávesa | |
 |---|---|
-| `t` | [fronta úkolů](tasks.md) této konverzace |
+| `T` | [fronta úkolů](tasks.md) této konverzace |
 | `r` | zastavená chybou: znovu spustí selhaný úkol; pozastavená na limitu: pokračuje — viz [Limity využití](limits.md) |
 | `p` | [schválí nástroj](approvals.md), na který Claude čeká |
 | `x` | [archivuje](archive.md) konverzaci |

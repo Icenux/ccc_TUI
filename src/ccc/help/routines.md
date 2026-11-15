@@ -5,12 +5,13 @@ the day's changes, a check every hour, a summary on weekdays at six. The
 daemon runs routines, so they run **with ccc closed** too, as long as
 the computer is on.
 
-Press `o` anywhere to open **Routines**: every routine with its
-schedule, its next and last run.
+Press `t` anywhere to open **Tasks & Routines**: the routines are the
+lower table, with their schedule, next and last run (`Tab` moves to it).
+A routine stays until you delete it.
 
 | Key | |
 |---|---|
-| `a` | add a routine |
+| `+` | add a routine |
 | `e` / `Enter` | edit it |
 | `Space` | turn it on / off |
 | `r` | run it now (its next time stays) |

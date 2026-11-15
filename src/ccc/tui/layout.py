@@ -1,7 +1,7 @@
 """Shared look for every ccc screen (#250).
 
 The frame: on the left the menu — the daemon's state, then the coloured
-3D buttons of the views (and of Agents, Routines and Tasks, which open a
+3D buttons of the views (and of Agents, which opens a
 window), each with its key and a count; on the right the screen's content
 in thin-lined panels; at the bottom one status bar with the screen's keys. Every top-level screen subclasses SidebarScreen so they all
 share that frame, and adds its own sidebar section / main content /
@@ -65,6 +65,7 @@ VIEWS: list[tuple[str, str]] = [
     ("archive", _("Archive")),
     ("sessions", _("Live sessions")),
     ("analytics", _("Analytics")),
+    ("tasks", _("Tasks & Routines")),
 ]
 
 
@@ -88,11 +89,8 @@ NAV: list[NavItem] = [
     NavItem("sessions", _("Live sessions"), "goto('sessions')", "views.sessions", view=True),
     NavItem("agents", _("Agents"), "agents", "views.agents"),
     NavItem("analytics", _("Analytics"), "goto('analytics')", "views.analytics", view=True),
-    NavItem("routines", _("Routines"), "routines", "views.routines"),
-    NavItem("tasks", _("Tasks"), "tasks", "views.tasks"),
+    NavItem("tasks", _("Tasks & Routines"), "goto('tasks')", "views.tasks", view=True),
 ]
-# Where Tasks has the conversation's own key (keymap conversations.tasks).
-_CONVERSATION_VIEWS = ("conversations", "archive")
 
 
 # The 3D buttons of the menu and the sidebar (#250): (face, light top edge, dark bottom edge),
@@ -104,7 +102,6 @@ BEVEL_COLOURS: dict[str, tuple[str, str, str]] = {
     "nav-sessions": ("#af5f87", "#d787af", "#87005f"),
     "nav-agents": ("#0087af", "#5fafd7", "#005f87"),
     "nav-analytics": ("#00af5f", "#5fd787", "#005f5f"),
-    "nav-routines": ("#d75f00", "#ff875f", "#875f00"),
     "nav-tasks": ("#5f5f87", "#87afaf", "#005f5f"),
     "sidebar-button-green": ("#00af5f", "#5fd787", "#005f5f"),
     "sidebar-button-red": ("#af5f5f", "#d78787", "#5f0000"),
@@ -552,7 +549,6 @@ Button.nav-archive { background: #af8700; }
 Button.nav-sessions { background: #af5f87; }
 Button.nav-agents { background: #0087af; }
 Button.nav-analytics { background: #00af5f; }
-Button.nav-routines { background: #d75f00; }
 Button.nav-tasks { background: #5f5f87; }
 SidebarScreen.-short Button.nav-button, SidebarScreen.-short Button.sidebar-button {
     height: 1;
@@ -795,17 +791,16 @@ class SidebarScreen(Screen):
 
     SUB_TITLE: str = ""
 
-    # The status bar only shows what the menu doesn't: the views, Agents and
-    # Tasks have their key printed on their menu button (Routines is in both,
-    # as in the design), the sidebar buttons next to them. A view's own keys
+    # The status bar only shows what the menu doesn't: the views and Agents
+    # have their key printed on their menu button, the sidebar buttons next to them. A view's own keys
     # (like "+" for its Add prompt button) live in that view only.
     BINDINGS = [
         *[keymap.binding(f"views.{view}", f"goto('{view}')", label, show=False) for view, label in VIEWS],
         keymap.binding("views.new_conversation", "new_conversation", _("New conversation"), show=False),
         keymap.binding("views.help", "key_help", _("Help")),
-        keymap.binding("views.routines", "routines", _("Routines")),
         keymap.binding("views.agents", "agents", _("Agents"), show=False),
-        keymap.binding("views.tasks", "tasks", _("Tasks"), show=False),
+        # One conversation's tasks window (Conversations has its own, shown in its footer).
+        keymap.binding("conversations.tasks", "tasks", _("Tasks of the conversation"), show=False),
         keymap.binding("views.update", "update", _("Update"), show=False),
     ]
 
@@ -905,13 +900,12 @@ class SidebarScreen(Screen):
 
     def refresh_nav_counts(self) -> None:
         """The counts on the menu's buttons: active conversations, live
-        sessions (once known), routines, waiting tasks."""
+        sessions (once known), waiting tasks."""
         try:
             queues = [q for q in self.storage.list_queues() if not q.archived]
             counts = {
                 "conversations": len(queues),
                 "sessions": _LIVE_SESSIONS.get("count"),
-                "routines": len(self.storage.list_routines()),
                 "tasks": self.storage.count_all_pending_items(),
             }
         except sqlite3.OperationalError:
@@ -985,10 +979,7 @@ class SidebarScreen(Screen):
         return keymap.current(self.storage)
 
     def _nav_key(self, item: NavItem, keys: dict[str, str] | None = None) -> str:
-        key_id = item.key_id
-        if item.key == "tasks" and self.VIEW in _CONVERSATION_VIEWS:
-            key_id = "conversations.tasks"
-        return keymap.pretty((keys or self._keys())[key_id])
+        return keymap.pretty((keys or self._keys())[item.key_id])
 
     def refresh_key_labels(self) -> None:
         """The nav list's and buttons' keys again (shortcuts changed)."""
@@ -1052,6 +1043,10 @@ class SidebarScreen(Screen):
             from ccc.tui.analytics import AnalyticsScreen
 
             return AnalyticsScreen(self.storage)
+        if view == "tasks":
+            from ccc.tui.tasks_page import TasksRoutinesScreen
+
+            return TasksRoutinesScreen(self.storage)
         raise ValueError(f"unknown view: {view}")
 
     def action_goto(self, view: str) -> None:
@@ -1134,13 +1129,8 @@ class SidebarScreen(Screen):
             return
         self.app.push_screen(WorkflowModal(self.storage, queue_id))
 
-    def action_routines(self) -> None:
-        from ccc.tui.routines import RoutinesModal
-
-        self.app.push_screen(RoutinesModal(self.storage, self.selected_queue_id()))
-
     def action_tasks(self) -> None:
-        """The task queue of the conversation this screen is about (the menu's Tasks)."""
+        """The task queue of the conversation this screen is about (T)."""
         from ccc.tui.tasks import TasksModal
 
         queue_id = self.selected_queue_id()

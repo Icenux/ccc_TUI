@@ -36,7 +36,7 @@ says *daemon not running*, nothing gets done — see
 2. You're in **Conversations**: the real Claude Code opens to the right
    of ccc's menu. Talk to it exactly as in a terminal. `Alt+0` switches
    the keyboard between ccc and Claude. See [Conversations](conversations.md).
-3. Want Claude to do more after this? Press `t` and add **tasks**: they
+3. Want Claude to do more after this? Press `T` and add **tasks**: they
    run one after another, each as soon as Claude finishes the previous
    one — also at night, also after a usage limit resets. See
    [Task queue](tasks.md).

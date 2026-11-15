@@ -34,14 +34,14 @@ FORMAT = "ccc-keys"
 # Where a key works. The sidebar views; the windows on top of them (a
 # window's keys work only while it's open); "claude": the Claude Code
 # pane beside ccc (only the keys ccc binds in tmux reach ccc from there).
-VIEWS = ("dashboard", "conversations", "archive", "sessions", "analytics", "queue_detail")
+VIEWS = ("dashboard", "conversations", "archive", "sessions", "analytics", "tasks_page", "queue_detail")
 WINDOWS = ("help", "confirm", "approval", "tasks", "task_edit", "preset_edit", "settings", "keys",
-           "new_conversation", "preset_name", "add_prompt", "search", "attach", "routines", "routine_edit", "agents", "agent_new", "agent_edit",
+           "new_conversation", "preset_name", "add_prompt", "search", "attach", "routine_edit", "agents", "agent_new", "agent_edit",
            "review", "goal", "workflow", "group", "rename", "update")
 CLAUDE = "claude"
 EVERYWHERE = (*VIEWS, *WINDOWS, CLAUDE)
 _CONVERSATIONS = ("conversations", "archive")
-_BACK = ("conversations", "archive", "sessions", "analytics", "queue_detail")
+_BACK = ("conversations", "archive", "sessions", "analytics", "tasks_page", "queue_detail")
 _EDITORS = ("task_edit", "preset_edit", "settings", "keys", "routine_edit", "review", "goal", "workflow", "agent_new", "agent_edit",
             "new_conversation")
 
@@ -63,11 +63,8 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("views.analytics", "a", N_("Analytics"), VIEWS),
     KeyAction("views.new_conversation", "n", N_("New conversation"), VIEWS),
     KeyAction("views.help", "question_mark", N_("This help"), (*VIEWS, "help")),
-    KeyAction("views.routines", "o", N_("Routines (prompts on a schedule)"), VIEWS),
     KeyAction("views.agents", "A", N_("Agents (helpers Claude Code can call)"), VIEWS),
-    # In Conversations and Archive t is conversations.tasks (same window).
-    KeyAction("views.tasks", "t", N_("Tasks of the selected conversation"),
-              tuple(v for v in VIEWS if v not in _CONVERSATIONS)),
+    KeyAction("views.tasks", "t", N_("Tasks & Routines (every task waiting, every routine)"), VIEWS),
     KeyAction("views.update", "U", N_("Update ccc (when there is a new version)"), VIEWS),
     KeyAction("app.settings", "ctrl+p", N_("Settings"), EVERYWHERE, tmux=True),
     KeyAction("app.screenshot", "alt+s", N_("Screenshot of ccc"), EVERYWHERE, tmux=True),
@@ -91,7 +88,8 @@ ACTIONS: tuple[KeyAction, ...] = (
               (*_CONVERSATIONS, "queue_detail")),
     KeyAction("screen.workflow", "w", N_("Workflow: a chain of agents (plan, build, reviews, arbiter)"),
               (*_CONVERSATIONS, "queue_detail")),
-    KeyAction("conversations.tasks", "t", N_("Tasks editor"), _CONVERSATIONS),
+    # The id is older than the key's reach: it opens one conversation's tasks window from any view.
+    KeyAction("conversations.tasks", "T", N_("Tasks editor of the selected conversation"), VIEWS),
     KeyAction("conversations.archive", "x", N_("Archive / restore the conversation"), _CONVERSATIONS),
     KeyAction("conversations.approve", "p", N_("Approve a tool call"), _CONVERSATIONS),
     KeyAction("conversations.search", "slash", N_("Search: Conversations, Archive or everywhere"), _CONVERSATIONS),
@@ -119,11 +117,13 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("tasks.down", "ctrl+down", N_("Move down"), ("tasks",)),
     KeyAction("tasks.pause", "p", N_("Pause / resume the queue"), ("tasks",)),
     KeyAction("tasks.auto", "o", N_("Toggle auto-continue"), ("tasks",)),
-    KeyAction("routines.add", "a", N_("Add a routine"), ("routines",)),
-    KeyAction("routines.edit", "e", N_("Edit the routine"), ("routines",)),
-    KeyAction("routines.toggle", "space", N_("Turn the routine on / off"), ("routines",)),
-    KeyAction("routines.run", "r", N_("Run the routine now"), ("routines",)),
-    KeyAction("routines.delete", "delete", N_("Delete the routine"), ("routines",)),
+    KeyAction("tasks_page.add", "plus", N_("Add a task / a routine (in the table that has the cursor)"), ("tasks_page",)),
+    KeyAction("tasks_page.edit", "e", N_("Edit the task / the routine"), ("tasks_page",)),
+    KeyAction("tasks_page.delete", "delete", N_("Delete the task / the routine"), ("tasks_page",)),
+    KeyAction("tasks_page.up", "ctrl+up", N_("Move the task up in its queue"), ("tasks_page",)),
+    KeyAction("tasks_page.down", "ctrl+down", N_("Move the task down in its queue"), ("tasks_page",)),
+    KeyAction("tasks_page.toggle", "space", N_("Turn the routine on / off"), ("tasks_page",)),
+    KeyAction("tasks_page.run", "r", N_("Run the routine now"), ("tasks_page",)),
     KeyAction("agents.add", "a", N_("Add an agent from a template"), ("agents",)),
     KeyAction("agents.edit", "e", N_("Edit the agent"), ("agents",)),
     KeyAction("agents.delete", "delete", N_("Delete the agent"), ("agents",)),

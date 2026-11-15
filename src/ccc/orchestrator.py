@@ -329,6 +329,18 @@ class QueueRuntime:
                 pass
 
     async def _loop(self) -> None:
+        # A locked database (slow disk under load) is transient: wait and go
+        # on instead of ending the runtime; anything else ends it (see
+        # _on_task_done / crashed).
+        while True:
+            try:
+                await self._run()
+                return
+            except sqlite3.OperationalError as exc:
+                logger.warning("Queue runtime for %s: %s, retrying", self.queue.project_path, exc)
+                await asyncio.sleep(POLL_INTERVAL_SECONDS)
+
+    async def _run(self) -> None:
         while True:
             queue = self.storage.find_queue(self.queue.id)
             if queue is None:

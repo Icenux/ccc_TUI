@@ -10,7 +10,9 @@ from ccc.storage import Storage
 HEARTBEAT_KEY = "daemon_heartbeat"
 VERSION_KEY = "daemon_version"  # the version of the code the daemon runs (ccc.updates.restart_needed)
 HEARTBEAT_SECONDS = 10.0
-STALE_AFTER = timedelta(seconds=30)
+# Longer than one SQLite lock wait (30 s): a single slow commit on a busy disk
+# must not look like a dead daemon.
+STALE_AFTER = timedelta(seconds=90)
 
 
 def beat(storage: Storage, now: datetime | None = None) -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sqlite3
 from contextlib import closing
@@ -292,6 +293,9 @@ def make_private(db_path: str | Path) -> None:
             pass  # not there (or not ours): nothing to tighten
 
 
+logger = logging.getLogger(__name__)
+
+
 class ArchivedConversationError(ValueError):
     """A task or message was meant for a conversation that sits in the Archive."""
 
@@ -455,13 +459,22 @@ class Storage:
         # timeout: wait for another process's write lock instead of raising
         # "database is locked" immediately — needed once the daemon and a
         # TUI instance can both be writing to the same file concurrently.
-        conn = sqlite3.connect(self.db_path, timeout=10.0)
+        # 30 s: on a slow disk under heavy I/O a single commit can take longer
+        # than the former 10 s, and the lock error then crashed callers.
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
         conn.row_factory = sqlite3.Row
         # WAL: readers (the TUI redrawing) no longer block on a writer and
         # vice versa. The mode is stored in the file, so this is a no-op once
         # set; if another process holds the lock right now, keep the old mode.
         try:
             conn.execute("PRAGMA journal_mode=WAL")
+        except sqlite3.OperationalError:
+            pass
+        # WAL + NORMAL: a commit no longer waits for an fsync of the log (the
+        # slow part on a spinning disk). A power cut can lose the last few
+        # commits, but never corrupts the database.
+        try:
+            conn.execute("PRAGMA synchronous=NORMAL")
         except sqlite3.OperationalError:
             pass
         return conn
@@ -1257,9 +1270,15 @@ class Storage:
 
     def mark_seen(self, queue_id: int) -> None:
         # Not updated_at: viewing isn't activity (recent_project_paths).
-        with closing(self._connect()) as conn:
-            conn.execute("UPDATE queues SET last_seen_at = ? WHERE id = ?", (datetime.now().isoformat(), queue_id))
-            conn.commit()
+        try:
+            with closing(self._connect()) as conn:
+                conn.execute("UPDATE queues SET last_seen_at = ? WHERE id = ?", (datetime.now().isoformat(), queue_id))
+                conn.commit()
+        except sqlite3.OperationalError:
+            # Only a "seen" marker, written from the TUI's event handlers: a
+            # locked database must not crash the whole TUI over it; the next
+            # refresh marks it again.
+            logger.warning("mark_seen(%s) skipped: database is locked", queue_id)
 
     def set_live_busy(self, queue_id: int, busy: bool) -> None:
         """What an interactive conversation's Claude Code is doing right now

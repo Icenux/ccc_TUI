@@ -987,3 +987,25 @@ async def test_live_busy_is_cleared_when_the_session_is_not_listed_any_more(stor
     await QueueRuntime(storage, queue)._maintain_managed_session(queue, force=True)
 
     assert not storage.get_queue(queue.id).live_busy
+
+
+async def test_runtime_survives_a_locked_database(tmp_path, monkeypatch):
+    import sqlite3
+
+    from ccc import orchestrator as orch
+    from ccc.storage import Storage
+
+    monkeypatch.setattr(orch, "POLL_INTERVAL_SECONDS", 0.01)
+    storage = Storage(tmp_path / "h.db")
+    queue = storage.create_queue("a", "/tmp", "s1")
+    runtime = orch.QueueRuntime(storage, queue, None)
+    calls = {"n": 0}
+
+    async def run():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise sqlite3.OperationalError("database is locked")
+
+    runtime._run = run
+    await runtime._loop()
+    assert calls["n"] == 2

@@ -57,6 +57,7 @@ uvádějí výchozí klávesy.
 | `r` | Zablokovaná: znovu spustit selhaný úkol / pokračovat po pauze na limitu |
 | `p` | Schválit nástroj, na který Claude čeká |
 | `x` | Archivovat (nejdřív se zeptá; přesune do Archivu, h) |
+| `Del` | Smazat konverzaci z ccc (nejdřív se zeptá; přepis Claude Code zůstane) |
 | `Alt+0` | Přepnout mezi ccc a Claude Code (když je otevřený vedle ccc) |
 | `Ctrl+]` | Zavřít Claude Code vedle ccc (běží dál; Enter v seznamu ho otevře) |
 | `Ctrl+X` | Ukončit Claude Code konverzace (nejdřív se zeptá; Enter v seznamu nebo nová zpráva ho znovu spustí) |

@@ -57,6 +57,7 @@ name the default keys.
 | `r` | Blocked: run the failed task again / resume one paused at a limit |
 | `p` | Approve a tool call Claude is waiting on |
 | `x` | Archive (asks first; moves it to Archive, h) |
+| `Del` | Delete the conversation from ccc (asks first; Claude Code's transcript stays) |
 | `Alt+0` | Switch between ccc and Claude Code (while it's open beside ccc) |
 | `Ctrl+]` | Close Claude Code beside ccc (it keeps running; Enter in the list opens it) |
 | `Ctrl+X` | End Claude Code of the conversation (asks first; Enter in the list or a new message starts it again) |

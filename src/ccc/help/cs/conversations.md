@@ -170,6 +170,7 @@ psaní nezpomalí.
 | `r` | zastavená chybou: znovu spustí selhaný úkol; pozastavená na limitu: pokračuje — viz [Limity využití](limits.md) |
 | `p` | [schválí nástroj](approvals.md), na který Claude čeká |
 | `x` | [archivuje](archive.md) konverzaci |
+| `Del` | smaže konverzaci z ccc (nejdřív se zeptá; přepis Claude Code zůstane) |
 | `/` | hledá — v Konverzacích, v Archivu nebo všude (vybereš v okně; začne tam, kde jsi); ve zprávách, odpovědích Clauda i v nástrojích, které spouštěl; `Enter` na výsledku ho otevře |
 | `f` | filtruje seznam podle názvu, složky a stavu (viz *Filtr seznamu*) |
 | `m` | dá konverzaci do skupiny / přejmenuje nebo smaže skupinu (viz *Skupiny*) |

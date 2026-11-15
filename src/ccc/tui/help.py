@@ -125,6 +125,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("screen.retry", N_("Blocked: run the failed task again / resume one paused at a limit")),
         ("conversations.approve", N_("Approve a tool call Claude is waiting on")),
         ("conversations.archive", N_("Archive (asks first; moves it to Archive, h)")),
+        ("archive.delete", N_("Delete the conversation from ccc (asks first; Claude Code's transcript stays)")),
         ("conversations.focus_claude", N_("Switch between ccc and Claude Code (while it's open beside ccc)")),
         ("conversations.close_claude",
          N_("Close Claude Code beside ccc (it keeps running; Enter in the list opens it)")),

@@ -310,8 +310,8 @@ async def test_windows_get_the_red_title_bar_and_the_status_bar_no_screen_name(t
 
 
 @pytest.mark.asyncio
-async def test_menu_buttons_are_3d_with_the_edge_rows_shared(tmp_path):
-    # A label row, then the dark bottom edge over the light top edge of the next button.
+async def test_menu_buttons_are_3d_with_a_thin_dark_edge(tmp_path):
+    # A label row, then the face with the dark bottom edge as its lower quarter (#317).
     from ccc.tui.layout import BEVEL_COLOURS, BevelCap
 
     app = _app(tmp_path)
@@ -320,10 +320,9 @@ async def test_menu_buttons_are_3d_with_the_edge_rows_shared(tmp_path):
         buttons = list(app.screen.query(".nav-button"))
         assert {b.region.height for b in buttons} == {2}
         edge = buttons[0].render()
-        assert str(edge).splitlines()[1] == "▀" * buttons[0].content_size.width
-        dark = BEVEL_COLOURS["nav-dashboard"][2]
-        light_next = BEVEL_COLOURS["nav-conversations"][1]
-        assert any(f"{dark} on {light_next}" in str(span.style) for span in edge.spans)
+        assert str(edge).splitlines()[1] == "▂" * buttons[0].content_size.width
+        face, _light, dark = BEVEL_COLOURS["nav-dashboard"]
+        assert any(f"{dark} on {face}" in str(span.style) for span in edge.spans)
         assert app.screen.query(BevelCap)
 
 

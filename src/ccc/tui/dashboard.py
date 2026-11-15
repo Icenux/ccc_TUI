@@ -179,11 +179,13 @@ class DashboardScreen(SidebarScreen):
         height: 1;
     }
     DashboardScreen #dashboard-head {
-        height: 3;
+        height: auto;
+        min-height: 3;
         padding: 1 0;
     }
     DashboardScreen #dashboard-title {
         width: 1fr;
+        height: auto;
     }
     DashboardScreen .dash-right {
         width: auto;
@@ -269,7 +271,7 @@ class DashboardScreen(SidebarScreen):
 
     def compose_main(self):
         yield Vertical(
-            Horizontal(Static(id="dashboard-title"), Static(id="dashboard-new", classes="dash-right"),
+            Horizontal(Vertical(*self.status_widgets(), id="dashboard-title"), Static(id="dashboard-new", classes="dash-right"),
                        id="dashboard-head"),
             Horizontal(
                 Static(_("all"), id="filter-all", classes="dash-filter"),
@@ -461,9 +463,6 @@ class DashboardScreen(SidebarScreen):
         # Archived ones count too: by then you know your way around.
         self.query_one("#dashboard-welcome").display = not self.storage.list_queues()
         self.query_one("#dashboard-detail-box").display = bool(shown)
-        self.query_one("#dashboard-title", Static).update(Text.assemble(
-            (_("DASHBOARD"), "bold " + theme.ACCENT), "   ",
-            (_("{n} queues").format(n=len(queues)), theme.TEXT_MUTED)))
         self.query_one("#dashboard-new", Static).update(
             Text(f"[{keymap.pretty(self._keys()['views.new_conversation'])}] " + _("new conversation")))
         for name, label in (("running", _("running {n}").format(n=running)),

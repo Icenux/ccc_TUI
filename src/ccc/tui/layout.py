@@ -127,10 +127,9 @@ def _next_bevel(widget) -> "BevelButton | None":
 
 class BevelButton(Button):
     """A 3D button of the menu or the sidebar, low as in the design: the
-    label row, then one row split in half — this button's dark bottom
-    edge over the light top edge of the button under it (or the menu's
-    ground under the last one). The first one of a group has a BevelCap
-    above it: its light top edge. In a short window just the label row."""
+    label row, then a row of the face with the dark bottom edge as its lower
+    quarter. The first one of a group has a BevelCap above it: its light
+    top edge, as thin. In a short window just the label row."""
 
     def on_mount(self) -> None:
         # The edge rows go from side to side (CSS refuses "line-pad: 0").
@@ -149,14 +148,14 @@ class BevelButton(Button):
         line = self.label_line(width)
         if self.size.height < 2 or self.disabled:
             return line
-        _face, _light, dark = self.colours()
-        below = _next_bevel(self)
-        ground = below.colours()[1] if below is not None else _sidebar_ground()
-        return Content("\n").join([line, Content.styled("▀" * width, f"{dark} on {ground}")])
+        face, _light, dark = self.colours()
+        # The edge row: the face, and the dark bottom edge as its lower quarter (▂, thin as the
+        # old "tall" borders): the edges are half as high as the half-row ones were (#317).
+        return Content("\n").join([line, Content.styled("▂" * width, f"{dark} on {face}")])
 
 
 class BevelCap(Static):
-    """The light top edge of the first 3D button of a group (the lower half of a row)."""
+    """The light top edge of the first 3D button of a group (the lower quarter of a row)."""
 
     # Not scoped: its rule for a short window starts at the screen.
     SCOPED_CSS = False
@@ -175,7 +174,7 @@ class BevelCap(Static):
         width = self.content_size.width
         if below is None or width <= 0:
             return ""
-        return Content.styled("▄" * width, f"{below.colours()[1]} on {_sidebar_ground()}")
+        return Content.styled("▂" * width, f"{below.colours()[1]} on {_sidebar_ground()}")
 
 
 class NavButton(BevelButton):
@@ -206,8 +205,8 @@ class NavButton(BevelButton):
         self.set_class(current, "-current")
 
     def _plain(self) -> str:
-        count = "" if self.count is None else f" {self.count}"
-        return f"{escape(self.item.label)}  {escape(self.key_text)}{count}"
+        count = "" if self.count is None else f" ({self.count})"
+        return f"{escape(self.item.label)}{count}  {escape(self.key_text)}"
 
     def set_key(self, key: str) -> None:
         self.key_text = key
@@ -221,9 +220,9 @@ class NavButton(BevelButton):
     def label_line(self, width: int) -> Content:
         width -= 2  # a space at each edge
         left = Text.assemble(("> " if self.has_class("-current") else "  "), self.item.label)
-        right = Text.assemble((self.key_text, "dim"))
         if self.count is not None:
-            right.append(f" {self.count}", style="bold")
+            left.append(f" ({self.count})", style="bold")
+        right = Text.assemble((self.key_text, "dim"))
         gap = max(1, width - left.cell_len - right.cell_len)
         return Content.from_text(Text.assemble(" ", left, " " * gap, right, " "))
 
@@ -627,21 +626,17 @@ SidebarScreen.-tmux-frame.-cli-open #sidebar {
     border-right: none;
 }
 SidebarScreen #daemon-state {
-    padding: 0 1;
-    margin-bottom: 1;
-}
-SidebarScreen.-short #daemon-state {
-    margin-bottom: 0;
+    padding: 0;
 }
 SidebarScreen #restart-state {
-    padding: 0 1;
+    padding: 0;
     color: $ccc-warning;
 }
 SidebarScreen #restart-state:hover {
     text-style: underline;
 }
 SidebarScreen #update-state {
-    padding: 0 1;
+    padding: 0;
     color: $ccc-warning;
 }
 SidebarScreen #update-state:hover {
@@ -810,6 +805,10 @@ class SidebarScreen(Screen):
 
     # --- hooks -----------------------------------------------------------
 
+    def status_widgets(self):
+        """The daemon's state, the restart and update notes: the Dashboard shows them (#317)."""
+        return [Static("", id="daemon-state"), Static("", id="restart-state"), Static("", id="update-state")]
+
     def compose_sidebar_section(self):
         """Extra widgets between the nav list and the buttons."""
         return []
@@ -834,9 +833,6 @@ class SidebarScreen(Screen):
         nav_items = [NavButton(item, self._nav_key(item), item.view and item.key == self.VIEW) for item in NAV]
         yield Horizontal(
             Vertical(
-                Static("", id="daemon-state"),
-                Static("", id="restart-state"),
-                Static("", id="update-state"),
                 Vertical(BevelCap(), *nav_items, id="sidebar-nav"),
                 Vertical(*self.compose_sidebar_section(), id="sidebar-section"),
                 *([BevelCap()] if self.sidebar_buttons() else []),
@@ -892,9 +888,12 @@ class SidebarScreen(Screen):
             text = Text.assemble(("● ", "bold " + theme.ACCENT), (_("daemon running"), theme.ACCENT))
         else:
             text = Text(_("✖ daemon not running — queues are stopped"), style=f"bold {theme.ERROR}")
-        self.query_one("#daemon-state", Static).update(text)
-        self._refresh_restart_state()
-        self._refresh_update_state()
+        try:
+            self.query_one("#daemon-state", Static).update(text)
+            self._refresh_restart_state()
+            self._refresh_update_state()
+        except NoMatches:
+            pass  # only the Dashboard has these lines
         self.sync_retry_button()
         self.refresh_nav_counts()
 
@@ -902,9 +901,11 @@ class SidebarScreen(Screen):
         """The counts on the menu's buttons: active conversations, live
         sessions (once known), waiting tasks."""
         try:
-            queues = [q for q in self.storage.list_queues() if not q.archived]
+            all_queues = self.storage.list_queues()
+            queues = [q for q in all_queues if not q.archived]
             counts = {
                 "conversations": len(queues),
+                "archive": len(all_queues) - len(queues),
                 "sessions": _LIVE_SESSIONS.get("count"),
                 "tasks": self.storage.count_all_pending_items(),
             }

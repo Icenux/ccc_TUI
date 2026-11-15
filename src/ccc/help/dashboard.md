@@ -8,7 +8,8 @@ doing right now. It's only for looking — you work with a conversation in
 
 ## The header and the filter
 
-The panel starts with **DASHBOARD** and the number of conversations; on
+The panel starts with the daemon's state (**● daemon running**, or the problem in red), under it
+**↻ restart needed — click** and the update note when there are any; on
 the right, `[n] new conversation` (a click or `n` opens it).
 
 The row under it filters the table: **all** · **running** (Claude is

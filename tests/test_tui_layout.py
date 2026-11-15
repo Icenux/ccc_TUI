@@ -398,3 +398,29 @@ def test_the_finished_dot_is_a_fixed_green_not_the_terminals_light_lime():
     assert DONE_STYLE == "bold #00af00"
     seen = {Color.parse(c).downgrade(ColorSystem.EIGHT_BIT).number for c in colours}
     assert len(seen) == 4
+
+
+@pytest.mark.asyncio
+async def test_focused_button_has_no_lines_over_and_under_the_label():
+    # #319: "underline" on :focus underlined the blank rows of a 3-row button.
+    from textual.app import App
+    from textual.widgets import Button
+
+    from ccc.tui import theme
+    from ccc.tui.layout import BUTTON_CSS
+
+    class ButtonApp(App):
+        CSS = BUTTON_CSS
+
+        def get_theme_variable_defaults(self):
+            return theme.VARIABLES
+
+        def compose(self):
+            yield Button("Cancel")
+
+    app = ButtonApp()
+    async with app.run_test(size=(30, 6)) as pilot:
+        await pilot.pause()
+        assert app.query_one(Button).has_focus
+        for strip in app.screen._compositor.render_strips()[:3]:
+            assert all(not seg.style.underline for seg in strip if seg.style)

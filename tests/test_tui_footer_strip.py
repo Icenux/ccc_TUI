@@ -65,7 +65,7 @@ async def test_strip_shows_published_keys_and_clicks_press_them(monkeypatch):
     async with app.run_test(size=(100, 1)) as pilot:
         await pilot.pause()
         items = list(app.query(".strip-item"))
-        assert [str(i.render()) for i in items] == ["? keys", "t tasks"]  # lower case, as in the design (#250)
+        assert [str(i.render()) for i in items] == [" ?  keys", " t  tasks"]  # lower case, as in the design (#250)
         await pilot.click(items[1])
         await pilot.pause()
     assert ("send-keys", "-t", "%0", "t") in sent and ("select-pane", "-t", "%0") in sent
@@ -95,7 +95,7 @@ async def test_click_goes_through_the_client_like_a_typed_key(monkeypatch):
 def test_wrap_splits_keys_into_rows_that_fit():
     items = [["a", "Alpha", "a"], ["b", "Beta", "b"], ["c", "Gamma", "c"]]
     assert footer_strip.wrap(items, 100) == [items]
-    assert footer_strip.wrap(items, 17) == [items[:2], items[2:]]
+    assert footer_strip.wrap(items, 21) == [items[:2], items[2:]]
     assert footer_strip.wrap([], 10) == [[]]
 
 
@@ -130,4 +130,4 @@ async def test_strip_shows_only_the_keys_not_the_screens_name(monkeypatch):
     app = footer_strip.FooterStrip("%0")
     async with app.run_test(size=(100, 1)) as pilot:
         await pilot.pause()
-        assert [str(w.render()) for w in app.query(".strip-row Static")] == ["? help"]
+        assert [str(w.render()) for w in app.query(".strip-row Static")] == [" ?  help"]

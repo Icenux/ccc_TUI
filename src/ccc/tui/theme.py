@@ -29,6 +29,7 @@ ERROR = "#d78787"  # blocked, errors (design #E57E7E)
 # colours — the row would vanish — so the darkest green of the cube.
 SELECTION = "#005f00"
 FRAME, TMUX_FRAME = "#00875f", "colour29"  # the frame (see below)
+KEY_TEXT = "#000000"  # a shortcut: black on a box in the accent colour (the bottom bar)
 
 # Textual's dark theme on ccc's colours, so that every widget (tables,
 # lists, dialogs) sits on the same ground as the page, focus is the accent
@@ -39,8 +40,8 @@ THEME = dataclasses.replace(
     error=ERROR,
     variables={
         "footer-background": PANEL,
-        "footer-key-foreground": ACCENT,
-        "footer-key-background": "transparent",
+        "footer-key-foreground": KEY_TEXT,
+        "footer-key-background": ACCENT,
         "footer-description-foreground": TEXT_MUTED,
         "footer-description-background": "transparent",
         "footer-item-background": "transparent",

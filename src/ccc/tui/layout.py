@@ -504,9 +504,10 @@ Button {
 Button:hover {
     background-tint: white 15%;
 }
+/* Tab focus: a lighter face, not an underline — text-style covers the button's blank rows
+   too, so "underline" drew a line over and under the label (#319). */
 Button:focus {
-    text-style: bold underline;
-    background-tint: white 15%;
+    background-tint: white 30%;
 }
 Button.-active {
     background-tint: black 25%;

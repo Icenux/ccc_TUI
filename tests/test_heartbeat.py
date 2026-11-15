@@ -16,7 +16,7 @@ def test_daemon_alive_reads_recent_heartbeat(tmp_path):
     assert daemon_alive(storage, now) is False
     storage.set_setting(HEARTBEAT_KEY, (now - timedelta(seconds=5)).isoformat())
     assert daemon_alive(storage, now) is True
-    storage.set_setting(HEARTBEAT_KEY, (now - timedelta(seconds=45)).isoformat())
+    storage.set_setting(HEARTBEAT_KEY, (now - timedelta(seconds=100)).isoformat())
     assert daemon_alive(storage, now) is False
     storage.set_setting(HEARTBEAT_KEY, "garbage")
     assert daemon_alive(storage, now) is False

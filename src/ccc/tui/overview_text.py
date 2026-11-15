@@ -69,7 +69,7 @@ def now_lines(now: dict) -> list[Content]:
 def changes_lines(changes: dict | None) -> list[Content]:
     if changes is None:
         return [Content.assemble((_("Not shown: ccc reads git only in a git folder, in conversations started with "
-                                    "“Skip all permission checks”."), "dim"))]
+                                    "“Bypass permissions”."), "dim"))]
     head = [changes["branch"] or "—"]
     if changes["added"] or changes["removed"]:
         head.append(f"+{changes['added']} −{changes['removed']}")

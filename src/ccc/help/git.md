@@ -57,9 +57,9 @@ ccc leaves the changes uncommitted when:
 - the folder already had **uncommitted changes** before the task — that's
   your work, ccc never sweeps it into its commit;
 - nothing changed, or the repository is on a detached HEAD;
-- the conversation wasn't started with **Skip all permission checks**.
+- the conversation wasn't started with **Bypass permissions**.
   ccc runs git itself, outside Claude's permission mode, so in an
-  *Auto-accept edits* / *Plan only* conversation Claude could otherwise
+  *Accept edits* / *Plan* conversation Claude could otherwise
   slip a git hook in that ccc would run;
 - the repository's config uses filters, includes or signing (or changed
   during the task) — for safety ccc then runs no git there.

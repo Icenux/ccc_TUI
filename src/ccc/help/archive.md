@@ -29,8 +29,8 @@ In the Archive:
 |---|---|
 | `x` | restore the conversation — it goes back to Conversations |
 | `Enter` | restore it and open it in Conversations |
-| `Delete` | delete it from ccc (asks first) |
-| `/` | search all conversations |
+| `Delete` | delete it from ccc (asks first); on a heading: every conversation of that group or project folder |
+| `/` | search — the Archive first; Conversations or everywhere in the window |
 | `f` | [filter the list](conversations.md#filtering-the-list); `Enter` shows the first result (doesn't restore it) |
 | `m` | [groups](conversations.md#groups) as in Conversations; `Enter` on a heading folds it (restores nothing) |
 | `e` | export it as Markdown |
@@ -41,7 +41,8 @@ with its whole history (`--resume`), waiting tasks go on.
 ## Deleting
 
 You can only delete a conversation from the Archive — archive it first.
-ccc asks before deleting. What goes and what stays:
+`Delete` on a heading deletes the whole group (or project folder) with all
+its conversations. ccc asks before deleting. What goes and what stays:
 
 - **Goes:** the conversation in ccc, its queued tasks and the texts of
   its runs.

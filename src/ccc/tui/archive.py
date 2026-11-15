@@ -11,8 +11,12 @@ from ccc.i18n import _
 from ccc.models import Queue
 from ccc.tui.conversations import ConversationsScreen
 
-# Conversation actions that make no sense for an archived one.
-DISABLED_ACTIONS = {"tasks", "approve", "retry_queue", "prompt_preset"}
+# Conversation actions that make no sense for an archived one — neither
+# working nor shown in the key list (#308): no Claude Code runs for it, so
+# no tasks, approvals, presets, review, goal or workflow; Routines are the
+# active conversations' (the menu still opens them).
+DISABLED_ACTIONS = {"tasks", "approve", "retry_queue", "prompt_preset", "review", "goal", "workflow",
+                    "routines", "focus_claude", "close_claude"}
 
 
 class ArchiveScreen(ConversationsScreen):

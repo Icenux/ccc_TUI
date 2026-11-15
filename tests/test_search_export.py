@@ -66,3 +66,16 @@ def test_export_markdown_masks_secrets(setup, tmp_path):
         f.write(_line("assistant", "Set GITHUB_TOKEN=ghp_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789", "2026-10-13T10:00:03.000Z"))
     text = export_markdown(storage, a.id, tmp_path / "exports").read_text()
     assert "AbCdEfGhIjKlMnOp" not in text and "GITHUB_TOKEN=ghp_[redacted]" in text
+
+
+def test_search_where_you_choose_and_in_the_tools_claude_ran(setup):
+    # #304: a command like grep is only in a tool call; the archive is searched only when asked.
+    from ccc.search import ACTIVE, ALL_KINDS, ARCHIVED
+
+    storage, a, b, _ = setup
+    assert [(h.queue_name, h.kind) for h in search_conversations(storage, "grep", kinds=ALL_KINDS)] == \
+        [("alpha", "tool_call")]
+    assert search_conversations(storage, "grep") == []  # messages only (the API's search)
+    assert {h.queue_name for h in search_conversations(storage, "login", where=ACTIVE)} == {"alpha"}
+    hits = search_conversations(storage, "login", where=ARCHIVED)
+    assert [h.queue_name for h in hits] == ["beta"] and hits[0].archived

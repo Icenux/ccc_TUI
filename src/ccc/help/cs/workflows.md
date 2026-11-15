@@ -26,7 +26,7 @@ otevře okno **Workflow** vybrané konverzace.
 | plán | plánovač přečte kód a napíše plán s **kritérii přijetí**, podle kterých se práce posoudí |
 | tvoje schválení | běh čeká: přečti plán, **Schválit** (s volitelnou poznámkou pro další krok) nebo **Zamítnout** (běh skončí). Dostaneš upozornění na Telegram / Discord |
 | stavba | úkol (s plánem, v dalších kolech s nálezy) přijde do [fronty úkolů](tasks.md) konverzace |
-| kontrola | ccc spustí kontrolní příkaz; selhání jde rovnou zpět ke stavbě. Jen v konverzacích s *Přeskočit všechny kontroly oprávnění*, stejně jako u [smyčky k cíli](goal.md) |
+| kontrola | ccc spustí kontrolní příkaz; selhání jde rovnou zpět ke stavbě. Jen v konverzacích s *Bypass permissions*, stejně jako u [smyčky k cíli](goal.md) |
 | recenze | 1–4 recenzenti **paralelně**, každý s vlastním zadáním (např. správnost, bezpečnost) a modelem |
 | rozhodčí | porovná zprávy recenzentů, v kódu sám ověří, v čem se liší, a dá verdikt |
 

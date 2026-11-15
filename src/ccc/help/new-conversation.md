@@ -29,12 +29,12 @@ allow only one choice.
 |---|---|
 | Session (*one*) | **New session** · **Continue last in directory** · **Resume selected…** (pick one of the folder's past Claude Code sessions) · **From pull request…** |
 | | **As a copy (fork)** — with Continue / Resume / From PR: a new conversation that starts from that one, the original stays as it was |
-| Permissions (*one*) | **Skip all permission checks** — Claude does everything without asking · **Auto-accept edits** — file edits yes, other tools ask · **Ask for everything** — every tool asks, even edits · **Only what is allowed** — whatever isn't already allowed is refused, nothing asks · **Auto mode** — Claude Code decides itself which actions are safe · **Plan only** — Claude only plans |
+| Permissions (*one*) | **Bypass permissions** — Claude does everything without asking · **Accept edits** — file edits yes, other tools ask · **Manual** — every tool asks, even edits · **Don't ask** — whatever isn't already allowed is refused, nothing asks · **Auto** — Claude Code decides itself which actions are safe · **Plan** — Claude only plans |
 | Model (*one*) | Opus · Sonnet · Haiku · Fable |
 | Effort (*one*) | low · medium · high · xhigh · max |
 | MCP servers | **Only selected MCP servers (fewer tokens)** — see [MCP servers](#mcp-servers) |
 | Other | Fallback to Sonnet when overloaded · Claude in Chrome · Safe mode |
-| | **Own git worktree** — a separate checkout and branch for this conversation (`.claude/worktrees/<name>`, branch `worktree-<name>`), so it can work side by side with others in the same repository; only with a new session or one from a pull request, and with *Skip all permission checks* (ccc runs git only there). See [Git](git.md#several-conversations-in-one-folder) |
+| | **Own git worktree** — a separate checkout and branch for this conversation (`.claude/worktrees/<name>`, branch `worktree-<name>`), so it can work side by side with others in the same repository; only with a new session or one from a pull request, and with *Bypass permissions* (ccc runs git only there). See [Git](git.md#several-conversations-in-one-folder) |
 
 Below them:
 

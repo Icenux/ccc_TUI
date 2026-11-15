@@ -37,7 +37,7 @@ name the default keys.
 |---|---|
 | `Enter` | Open the queue detail |
 | `q` | Close ccc (same as Ctrl+Q) |
-| `x` | Archive the selected conversation (a long press on a row offers Archive / Delete) |
+| `x` | Archive the selected conversation (asks first; a long press on a row offers Archive / Delete) |
 | `Del` | Delete the selected conversation from ccc (asks first) |
 | `/` | Filter the table: all, running, with pending tasks, blocked (also a click on the filter row) |
 
@@ -56,10 +56,11 @@ name the default keys.
 | `Enter` | Open the conversation's Claude Code CLI (in the list) / send the message (in the box) |
 | `r` | Blocked: run the failed task again / resume one paused at a limit |
 | `p` | Approve a tool call Claude is waiting on |
-| `x` | Archive (moves it to Archive, h) |
+| `x` | Archive (asks first; moves it to Archive, h) |
 | `Alt+0` | Switch between ccc and Claude Code (while it's open beside ccc) |
 | `Ctrl+]` | Close Claude Code beside ccc (it keeps running; Enter in the list opens it) |
-| `/` | Search all conversations |
+| `Ctrl+X` | End Claude Code of the conversation (asks first; Enter in the list or a new message starts it again) |
+| `/` | Search: Conversations, Archive or everywhere |
 | `f` | Filter the list: name or folder; ! working, ? approval, x error, * new (Esc cancels) |
 | `F2` | Rename the selected conversation |
 | `m` | Groups: put the conversation into one of your own; on a group's heading, rename / delete it |
@@ -88,7 +89,7 @@ name the default keys.
 | `x` | Restore the conversation |
 | `Enter` | Restore it and open it in Conversations |
 | `Del` | Delete the conversation from ccc (asks first; Claude Code's transcript stays) |
-| `/` | Search all conversations |
+| `/` | Search: Conversations, Archive or everywhere |
 | `f` | Filter the list: name or folder; ! working, ? approval, x error, * new (Esc cancels) |
 | `F2` | Rename the selected conversation |
 | `m` | Groups: put the conversation into one of your own; on a group's heading, rename / delete it |

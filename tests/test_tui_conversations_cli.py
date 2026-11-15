@@ -51,6 +51,9 @@ def pane(monkeypatch, tmp_path):
     for name in ("find", "open", "close", "focus", "find_bar"):
         monkeypatch.setattr(cli_pane, name, getattr(fake, name))
     monkeypatch.setattr(managed_sessions, "is_running", lambda queue_id: fake.session_running)
+    # A dialog zooms the window to ccc (tmux); not here.
+    monkeypatch.setattr(cli_pane, "zoom_ccc", lambda: False)
+    monkeypatch.setattr(cli_pane, "unzoom_ccc", lambda zoomed: None)
     return fake
 
 
@@ -229,6 +232,7 @@ async def test_archiving_closes_the_bar_left_by_the_ended_pane(storage, pane):
         await pilot.pause()
         assert pane.shown == ids["cli"] and pane.bar
         app.screen.action_toggle_archive()
+        await pilot.press("y")  # asks first
         pane.shown = None  # the daemon stopped Claude: its pane ended
         await app.screen._refresh_current()
         await pilot.pause()
@@ -263,6 +267,7 @@ async def test_archiving_the_last_conversation_shows_no_conversation(storage, pa
         await pilot.pause()
         assert pane.shown == ids["cli"] and not app.screen.has_class("-no-conversation")
         app.screen.action_toggle_archive()  # the list is empty now
+        await pilot.press("y")
         pane.shown = None  # the daemon stopped Claude: its pane ended
         await app.screen._refresh_current()
         await pilot.pause()
@@ -332,3 +337,50 @@ async def test_app_start_closes_a_pane_left_by_the_previous_process(storage, pan
         await pilot.pause()
         assert isinstance(app.screen, DashboardScreen)
         assert pane.shown is None and pane.bar is False
+
+
+@pytest.mark.asyncio
+async def test_archiving_asks_first_and_no_keeps_it(storage, pane):
+    ids = _ids(storage)
+    app = _host(ConversationsScreen(storage, select_queue_id=ids["cli"]))
+    async with app.run_test(size=(140, 40)) as pilot:
+        await pilot.pause()
+        app.screen.action_toggle_archive()
+        await pilot.pause()
+        assert not storage.get_queue(ids["cli"]).archived  # nothing yet
+        await pilot.press("n")
+        await pilot.pause()
+        assert not storage.get_queue(ids["cli"]).archived
+
+
+@pytest.mark.asyncio
+async def test_stop_claude_asks_then_flags_and_ends_it(storage, pane, monkeypatch):
+    ended = []
+    monkeypatch.setattr(managed_sessions, "end", lambda queue_id: ended.append(queue_id))
+    ids = _ids(storage)
+    app = _host(ConversationsScreen(storage, select_queue_id=ids["cli"]))
+    async with app.run_test(size=(140, 40)) as pilot:
+        await pilot.pause()
+        app.screen.action_stop_claude()
+        await pilot.pause()
+        assert not storage.get_queue(ids["cli"]).claude_stopped and not ended  # asks first
+        await pilot.press("y")
+        await pilot.pause()
+        await app.workers.wait_for_complete()
+        assert storage.get_queue(ids["cli"]).claude_stopped
+        assert ended == [ids["cli"]]
+
+
+@pytest.mark.asyncio
+async def test_stop_claude_no_changes_nothing(storage, pane, monkeypatch):
+    ended = []
+    monkeypatch.setattr(managed_sessions, "end", lambda queue_id: ended.append(queue_id))
+    ids = _ids(storage)
+    app = _host(ConversationsScreen(storage, select_queue_id=ids["cli"]))
+    async with app.run_test(size=(140, 40)) as pilot:
+        await pilot.pause()
+        app.screen.action_stop_claude()
+        await pilot.pause()
+        await pilot.press("n")
+        await pilot.pause()
+        assert not storage.get_queue(ids["cli"]).claude_stopped and not ended

@@ -14,7 +14,7 @@ open the **Goal** window of the selected conversation.
   not.
 - **Check command** (optional): run after every round in the project
   folder, e.g. `pytest -q` or `npm test && npm run lint`. ccc runs it only
-  in conversations started with *Skip all permission checks*, where Claude
+  in conversations started with *Bypass permissions*, where Claude
   may run any command anyway; elsewhere the check is left out.
 - **Rounds**: at most this many (5 by default, at most 20).
 - **Start** (`Ctrl+S`): the first task, the goal, goes into the

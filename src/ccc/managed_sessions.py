@@ -208,6 +208,24 @@ def stop(queue_id: int) -> None:
         _signal(pid, signal.SIGKILL)
 
 
+END_GRACE_SECONDS = 4.0
+
+
+def end(queue_id: int, sleep=time.sleep, clock=time.monotonic) -> None:
+    """Close the conversation's Claude Code the way the user would: `/exit`
+    typed into it. One that doesn't leave in END_GRACE_SECONDS (busy, hung)
+    is stopped."""
+    if not is_running(queue_id):
+        return
+    paste_and_submit(queue_id, "/exit")
+    deadline = clock() + END_GRACE_SECONDS
+    while clock() < deadline:
+        if not is_running(queue_id):
+            return
+        sleep(0.2)
+    stop(queue_id)
+
+
 # Only Claude Code's own notice counts: a tool-result line ("⎿") that starts with it. Text a tool
 # printed (a file, command output) is indented under another marker or sits mid-line, so it can't fake a limit.
 _LIMIT_RE = re.compile(r"^⎿\s+You['’]ve hit your [\w\- ]{1,30}?limit\b")

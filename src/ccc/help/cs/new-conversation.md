@@ -30,12 +30,12 @@ Stejné přepínače jako na příkazové řádce `claude`. Skupiny označené
 |---|---|
 | Relace (*jedna*) | **Nová relace** · **Pokračovat v poslední ve složce** · **Obnovit vybranou…** (vybereš některou z dřívějších relací Claude Code v této složce) · **Z pull requestu…** |
 | | **Jako kopie (fork)** — s Pokračovat / Obnovit / Z PR: nová konverzace, která z té původní vychází; původní zůstane, jak byla |
-| Oprávnění (*jedna*) | **Přeskočit všechny kontroly oprávnění** — Claude dělá všechno bez ptaní · **Automaticky přijímat úpravy** — úpravy souborů ano, ostatní nástroje se ptají · **Ptát se na vše** — ptá se každý nástroj, i úpravy · **Jen povolené** — co ještě není povolené, se odmítne, nic se neptá · **Automatický režim** — Claude Code sám rozhoduje, co je bezpečné · **Jen plán** — Claude jen plánuje |
+| Oprávnění (*jedna*) | **Bypass permissions** — Claude dělá všechno bez ptaní · **Accept edits** — úpravy souborů ano, ostatní nástroje se ptají · **Manual** — ptá se každý nástroj, i úpravy · **Don't ask** — co ještě není povolené, se odmítne, nic se neptá · **Auto** — Claude Code sám rozhoduje, co je bezpečné · **Plan** — Claude planuje |
 | Model (*jedna*) | Opus · Sonnet · Haiku · Fable |
 | Úsilí (*jedna*) | low · medium · high · xhigh · max |
 | MCP servery | **Jen vybrané MCP servery (méně tokenů)** — viz [MCP servery](#mcp-servery) |
 | Ostatní | Při přetížení přejít na Sonnet · Claude v Chromu · Bezpečný režim |
-| | **Vlastní git worktree** — samostatná pracovní kopie a větev pro tuto konverzaci (`.claude/worktrees/<název>`, větev `worktree-<název>`), aby mohla pracovat vedle ostatních ve stejném repozitáři; jen s novou relací nebo z pull requestu a s *Přeskočit všechny kontroly oprávnění* (ccc spouští git jen tam). Viz [Git](git.md#více-konverzací-v-jedné-složce) |
+| | **Vlastní git worktree** — samostatná pracovní kopie a větev pro tuto konverzaci (`.claude/worktrees/<název>`, větev `worktree-<název>`), aby mohla pracovat vedle ostatních ve stejném repozitáři; jen s novou relací nebo z pull requestu a s *Bypass permissions* (ccc spouští git jen tam). Viz [Git](git.md#více-konverzací-v-jedné-složce) |
 
 Pod nimi:
 

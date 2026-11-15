@@ -49,8 +49,9 @@ Every screen looks the same:
   Conversations, `h` Archive, `s` Live sessions, `a` Analytics; click
   them too), the screen's own list, and its buttons.
 - **Right:** the screen itself.
-- **Bottom bar:** the keys of the screen you're on, plus `?` Help,
-  `Ctrl+Q` Close and `Ctrl+P` Settings. Click a key to press it.
+- **Bottom bar:** the keys of the screen you're on — only those that do
+  something there — plus `?` Help, `Ctrl+Q` Close and `Ctrl+P` Settings;
+  when they don't fit, they go on to a second row. Click a key to press it.
 
 Keys without `Ctrl` or `Alt` (like `n`, `t`) don't work while you're
 typing in a text field — click the list on the left

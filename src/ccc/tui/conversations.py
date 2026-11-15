@@ -152,6 +152,7 @@ class ConversationsScreen(SidebarScreen):
         # (CCContinueApp.get_key_display).
         keymap.binding("conversations.focus_claude", "focus_claude", "Claude ↔ ccc", key_display="Alt+0"),
         keymap.binding("conversations.close_claude", "close_claude", _("Close Claude"), key_display="Ctrl+]"),
+        keymap.binding("conversations.stop_claude", "stop_claude", _("End Claude"), show=False),
         # Preset prompts (Settings); priority so they work while typing.
         *[keymap.binding(f"conversations.preset{n}", f"prompt_preset({n})", _("Preset {n}").format(n=n), show=False,
                          priority=True) for n in range(1, 10)],
@@ -294,6 +295,8 @@ class ConversationsScreen(SidebarScreen):
 
     def __init__(self, storage: Storage, select_queue_id: int | None = None):
         super().__init__(storage)
+        # Conversations waiting for your approval (as last listed): p is shown only for them (#308).
+        self._waiting: set[int] = set()
         # Per-queue cache: queue_id -> {"path": Path|None, "offset": int,
         # "events": list[TranscriptEvent]} so switching back to an
         # already-viewed queue doesn't re-parse its transcript from zero.
@@ -313,6 +316,7 @@ class ConversationsScreen(SidebarScreen):
         self._queue_ids: list[int] = []
         self._listed_ids: list[int] = []
         self._group_of: dict[int, str] = {}
+        self._group_titles: dict[str, str] = {}
         # The heading the cursor is on: it stays there over the refresh.
         self._cursor_group: str | None = None
         # Plain text of the list rows as last drawn — rebuild when it changes
@@ -426,6 +430,9 @@ class ConversationsScreen(SidebarScreen):
         shows every group unfolded)."""
         unseen = self.storage.unseen_queue_ids()
         waiting = self.storage.queues_waiting_for_approval()
+        if set(waiting) != self._waiting:
+            self._waiting = set(waiting)
+            self.refresh_bindings()
         labels: dict[int, Text] = {}
         markers: dict[int, tuple[str, str]] = {}
         queues = []
@@ -447,11 +454,12 @@ class ConversationsScreen(SidebarScreen):
         self._working_shown = working
         folded = set() if self._filter.active else groups.collapsed(self.storage)
         rows: list[tuple[int | str, Text]] = []
-        self._listed_ids, self._group_of = [], {}
+        self._listed_ids, self._group_of, self._group_titles = [], {}, {}
         for group, members in groups.grouped(queues, self.storage.conversation_groups(), groups.mode(self.storage)):
             self._listed_ids += [q.id for q in members]
             if group is not None:
                 self._group_of.update((q.id, group.key) for q in members)
+                self._group_titles[group.key] = group.title
                 rows.append((group.key, self._heading(group.title, len(members), group.key in folded,
                                                       [markers[q.id] for q in members])))
                 if group.key in folded:
@@ -533,6 +541,7 @@ class ConversationsScreen(SidebarScreen):
         from ccc import gitops
 
         self._current_queue_id = queue_id
+        self.refresh_bindings()  # the conversation's keys (CONVERSATION_ACTIONS)
         _LAST_OPEN.setdefault(self.storage, {})[self.ARCHIVED] = queue_id
         queue = self.storage.find_queue(queue_id)
         if queue is not None:
@@ -588,7 +597,7 @@ class ConversationsScreen(SidebarScreen):
         if not cli_pane.available():
             return
         queue = self._cli_queue()
-        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for
+        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for and not queue.claude_stopped
         shown = cli_pane.find()
         if want and shown is None and self._cli_open_for == queue.id:
             if managed_sessions.is_running(queue.id):
@@ -634,7 +643,7 @@ class ConversationsScreen(SidebarScreen):
         The pane is therefore remembered at once (self._embedded_pane), and
         there is never more than one for the selected conversation."""
         queue = self._cli_queue()
-        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for
+        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for and not queue.claude_stopped
         keep = self._embedded_pane
         if not (want and keep is not None and keep.queue_id == queue.id):
             keep = None
@@ -662,9 +671,21 @@ class ConversationsScreen(SidebarScreen):
         self._sync_cli_pane()
         self.query_one("#conversation-queue-list").focus()
 
+    # Keys that act on the selected conversation: shown (and working) only
+    # while one is selected; Approve only while it waits for you (#308).
+    CONVERSATION_ACTIONS = {"tasks", "export", "review", "goal", "workflow", "approve", "group", "rename",
+                            "toggle_archive"}
+
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         if action in ("focus_claude", "close_claude"):
             return self.has_class("-cli-open")
+        if action == "stop_claude":
+            queue = self._cli_queue()
+            return queue is not None and not queue.claude_stopped
+        if action in self.CONVERSATION_ACTIONS and self._current_queue_id is None:
+            return False
+        if action == "approve" and self._current_queue_id not in self._waiting:
+            return False
         return super().check_action(action, parameters)
 
     def action_focus_claude(self) -> None:
@@ -682,12 +703,42 @@ class ConversationsScreen(SidebarScreen):
         self._cli_closed_for = self._cli_open_for
         self._sync_cli_pane()
 
+    def action_stop_claude(self) -> None:
+        """Ctrl+X: end the conversation's Claude Code (`/exit`), after asking.
+        The daemon leaves it stopped until Enter or a new message."""
+        queue = self._cli_queue()
+        if queue is None or queue.claude_stopped:
+            return
+
+        def answered(yes: bool) -> None:
+            if not yes:
+                return
+            self.storage.set_claude_stopped(queue.id, True)  # first: the daemon must not start it again
+            self.run_worker(self._end_claude(queue.id), exclusive=True, group="end-claude")
+
+        self.app.push_screen(
+            ConfirmModal(
+                _("End Claude Code"),
+                _("End Claude Code of '{name}'? It gets /exit; what it is working on right now is lost.\n"
+                  "The conversation stays. Enter in the list (or a new message) starts it again.").format(name=queue.name),
+            ),
+            answered,
+        )
+
+    async def _end_claude(self, queue_id: int) -> None:
+        await asyncio.to_thread(managed_sessions.end, queue_id)
+        self._sync_cli_pane()
+        self.refresh_bindings()
+        await self._refresh_current()
+
     def _focus_cli(self) -> bool:
         """Put the keyboard into the selected conversation's Claude Code
         (the pane, or full screen outside tmux). False if it isn't one."""
         queue = self._cli_queue()
         if queue is None:
             return False
+        if queue.claude_stopped:
+            self.storage.set_claude_stopped(queue.id, False)  # opened: the daemon starts it
         self._cli_closed_for = None
         if cli_pane.embedded():
             self._sync_cli_pane()
@@ -1167,12 +1218,77 @@ class ConversationsScreen(SidebarScreen):
         if self._current_queue_id is None:
             return
         queue = self.storage.get_queue(self._current_queue_id)
+        if queue.archived:  # restoring needs no question
+            self._toggle_archived(queue.id)
+            return
+        self.app.push_screen(
+            ConfirmModal(
+                _("Archive conversation"),
+                _("Archive '{name}'? Its Claude Code is stopped and no task of it runs.\n"
+                  "Restore it from the Archive (h) with x.").format(name=queue.name),
+            ),
+            lambda yes: self._toggle_archived(queue.id) if yes else None,
+        )
+
+    def _toggle_archived(self, queue_id: int) -> None:
+        queue = self.storage.find_queue(queue_id)
+        if queue is None:
+            return
         self.storage.set_queue_archived(queue.id, not queue.archived)
         # It moved to the other view's list.
         self._select_neighbour()
         self.run_worker(self._refresh_current(), exclusive=True, group="refresh")
 
+    def _heading_at_cursor(self) -> str | None:
+        """The group heading the list's cursor is on (a group or a project
+        folder, ccc.groups), or None when it's on a conversation."""
+        row = self.query_one("#conversation-queue-list", DataTable).cursor_row
+        if 0 <= row < len(self._rows) and isinstance(self._rows[row], str):
+            return self._rows[row]
+        return None
+
+    def _delete_group(self, key: str) -> None:
+        """Delete every conversation under a heading (#307): a whole group or project folder."""
+        ids = [queue_id for queue_id in self._listed_ids if self._group_of.get(queue_id) == key]
+        if not ids:
+            return
+        title = self._group_titles.get(key, key)
+        running = [q.name for q in map(self.storage.get_queue, ids) if q.status == QueueStatus.RUNNING]
+        if running:
+            self.app.push_screen(ConfirmModal(
+                _("Can't delete"),
+                _("Claude is working on '{name}' right now — wait or pause it first (t, p).").format(name=running[0]),
+                can_confirm=False,
+            ))
+            return
+
+        def answered(yes: bool) -> None:
+            if not yes:
+                return
+            for queue_id in ids:
+                self.storage.delete_queue(queue_id)
+                self._cache.pop(queue_id, None)
+            if self._current_queue_id in ids:
+                rest = [queue_id for queue_id in self._listed_ids if queue_id not in ids]
+                self._current_queue_id = rest[0] if rest else None
+                self._shown = None
+            self.run_worker(self._after_delete(*ids), exclusive=True, group="refresh")
+
+        self.app.push_screen(
+            ConfirmModal(
+                _("Delete group"),
+                _("Delete all {n} conversations of '{name}' with their queued tasks and run history from ccc?\n"
+                  "Claude Code's own transcripts stay, so they can still be resumed later.").format(n=len(ids), name=title),
+            ),
+            answered,
+        )
+
     def action_delete_conversation(self) -> None:
+        heading = self._heading_at_cursor()
+        if heading is not None:
+            # The cursor is on a heading: that whole group, not the conversation shown before (#307).
+            self._delete_group(heading)
+            return
         if self._current_queue_id is None:
             return
         queue = self.storage.get_queue(self._current_queue_id)
@@ -1216,8 +1332,9 @@ class ConversationsScreen(SidebarScreen):
         self._current_queue_id = rest[0] if rest else None
         self._shown = None
 
-    async def _after_delete(self, deleted_id: int) -> None:
-        await self._drop_view(deleted_id)
+    async def _after_delete(self, *deleted_ids: int) -> None:
+        for deleted_id in deleted_ids:
+            await self._drop_view(deleted_id)
         self._rebuild_queue_list()
         self._move_cursor_to_current()
         if self._current_queue_id is None:
@@ -1234,7 +1351,10 @@ class ConversationsScreen(SidebarScreen):
             if queue_id is not None:
                 self.open_conversation(queue_id)  # in Archive when archived
 
-        self.app.push_screen(SearchModal(self.storage), chosen)
+        from ccc.search import ACTIVE, ARCHIVED
+
+        # Where it looks first: where you are (#304); the window lets you change it.
+        self.app.push_screen(SearchModal(self.storage, ARCHIVED if self.ARCHIVED else ACTIVE), chosen)
 
     # --- groups (m, Ctrl+Down / Ctrl+Up; ccc.groups) -----------------------
 

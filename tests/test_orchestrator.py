@@ -777,7 +777,7 @@ async def test_no_git_commands_for_conversations_without_command_permission(stor
     await orch.stop_all()
     run = storage.runs_for_queue(q.id)[0]
     assert calls == []
-    assert run.git_commit is None and "Skip all permission checks" in run.git_note
+    assert run.git_commit is None and "Bypass permissions" in run.git_note
 
 
 # --- permission prompt tool -------------------------------------------------

@@ -31,6 +31,33 @@ async def heartbeat_loop(storage: Storage, interval: float = HEARTBEAT_SECONDS) 
         await asyncio.sleep(interval)
 
 
+API_CHECK_SECONDS = 30.0
+
+
+async def api_loop(interval: float = API_CHECK_SECONDS) -> None:
+    """The phone's API (ccc-api.service) is a unit of its own that nothing but the user's login scripts starts: when
+    it stays down (not started after a boot, killed by the OOM killer past the restart limit), the app can't connect
+    and nothing says why. Start it again when it is enabled but not running; log once per outage."""
+    from ccc import pairing
+
+    down = False
+    while True:
+        await asyncio.sleep(interval)  # first: let the units come up by themselves, and tests finish
+        try:
+            started = await asyncio.to_thread(pairing.ensure_api_running)
+        except Exception:
+            logger.exception("checking ccc-api.service failed")
+            continue
+        if started is None:
+            down = False
+        elif started:
+            logger.warning("ccc-api.service was enabled but not running — started it")
+            down = False
+        elif not down:
+            down = True
+            logger.error("ccc-api.service is enabled but not running and could not be started (retrying)")
+
+
 BACKUP_CHECK_SECONDS = 3600.0
 
 
@@ -176,7 +203,8 @@ async def update_loop(storage: Storage, notifier: Notifier, interval: float = No
     what was found from the settings."""
     from ccc import updates
 
-    await asyncio.sleep(UPDATE_FIRST_CHECK_SECONDS)
+    # Every 24 hours (#306), counted from the last look — a restart doesn't look again sooner.
+    await asyncio.sleep(max(UPDATE_FIRST_CHECK_SECONDS, updates.seconds_until_next_check(storage)))
     while True:
         try:
             await asyncio.to_thread(update_tick, storage, notifier)
@@ -224,6 +252,7 @@ async def _run(db_path: str, run_fn: RunFn = execute) -> None:
     flows = asyncio.create_task(workflows_loop(storage, notifier))
     updating = asyncio.create_task(update_loop(storage, notifier))
     watching = asyncio.create_task(watch_loop(storage, notifier, db_path))
+    api_up = asyncio.create_task(api_loop())
     await stop_event.wait()
     logger.info("ccc daemon shutting down")
     heartbeat.cancel()
@@ -236,6 +265,7 @@ async def _run(db_path: str, run_fn: RunFn = execute) -> None:
     flows.cancel()
     updating.cancel()
     watching.cancel()
+    api_up.cancel()
     await orchestrator.stop_all()
 
 

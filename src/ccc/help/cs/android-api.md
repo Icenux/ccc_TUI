@@ -15,7 +15,10 @@ požadavek potřebuje token.
 
 1. Nainstaluj jeho službu: `bin/install.sh --api` (s ostatními volbami,
    které používáš). API pak běží jako `ccc-api.service` a poslouchá na
-   `127.0.0.1:8737` — jen na tomto počítači.
+   `127.0.0.1:8737` — jen na tomto počítači. Dokud je služba zapnutá
+   (enabled), daemon ji udržuje běžící: když spadne (nenastartovala po
+   spuštění počítače, byla zabita), do půl minuty ji spustí znovu. API
+   natrvalo vypneš: `systemctl --user disable --now ccc-api.service`.
 2. Vystav ho do tailnetu s HTTPS: `tailscale serve --bg 8737`. Pak je na
    `https://<počítač>.<tailnet>.ts.net/api/v1/` — adresu vypíše
    `tailscale serve status`. Proxy běží na tomto počítači, proto ccc
@@ -96,9 +99,9 @@ a jak volně ji smí appka založit, rozhoduje počítač — ne telefon:
   jen složky, ve kterých už ccc konverzace má — nedojde do `~` ani `/` (konverzace kdysi založená v `~` nic dalšího neotevře).
   Kontrola sleduje symlinky. Týká se zakládání konverzace, prompt do živé relace, `GET /sessions`
   a `GET /mcp-servers`; složka mimo dostane `403`.
-- **Přeskočit všechny kontroly oprávnění:** z appky se odmítne (`403`), dokud
+- **Bypass permissions:** z appky se odmítne (`403`), dokud
   nespustíš `ccc api skip-permissions on` (`off` to vrátí). Do té doby je
-  výchozí volba v appce *Ptát se na všechno*: schvaluješ v appce.
+  výchozí volba v appce *Manual*: schvaluješ v appce.
 
 ## Záznamy a poplachy
 

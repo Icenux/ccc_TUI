@@ -20,8 +20,17 @@ class SearchHit:
     queue_id: int
     queue_name: str
     timestamp: datetime
-    kind: str  # "human" | "assistant_text"
+    kind: str  # "human" | "assistant_text" | "tool_call" | "tool_result"
     snippet: str
+    archived: bool = False
+
+
+# Where to look (#304): the active conversations, the archived ones, or both.
+ACTIVE, ARCHIVED, EVERYWHERE = "active", "archived", "all"
+# What is searched: your messages, Claude's replies, and the tools it ran and
+# what they gave back (a command like `bash` is often only there — #304).
+MESSAGE_KINDS = ("human", "assistant_text")
+ALL_KINDS = (*MESSAGE_KINDS, "tool_call", "tool_result")
 
 
 def _events(storage: Storage, queue) -> list[TranscriptEvent]:
@@ -43,23 +52,26 @@ def _snippet(text: str, start: int, length: int) -> str:
     return ("…" if lo > 0 else "") + flat[lo:hi] + ("…" if hi < len(flat) else "")
 
 
-def search_conversations(storage: Storage, query: str, limit: int = MAX_HITS) -> list[SearchHit]:
-    """Case-insensitive substring search in every conversation (archived
-    too), newest messages first."""
+def search_conversations(storage: Storage, query: str, limit: int = MAX_HITS, where: str = EVERYWHERE,
+                         kinds: tuple[str, ...] = MESSAGE_KINDS) -> list[SearchHit]:
+    """Case-insensitive substring search in the conversations `where` says
+    (ACTIVE, ARCHIVED or EVERYWHERE), in the events of `kinds`, newest first."""
     query = query.strip()
     if not query:
         return []
     pattern = re.compile(re.escape(query), re.IGNORECASE)
     hits: list[SearchHit] = []
     for queue in storage.list_queues():
+        if (where == ACTIVE and queue.archived) or (where == ARCHIVED and not queue.archived):
+            continue
         for event in _events(storage, queue):
-            if event.kind not in ("human", "assistant_text"):
+            if event.kind not in kinds:
                 continue
             match = pattern.search(event.text)
             if match:
                 hits.append(
                     SearchHit(queue.id, queue.name, event.timestamp, event.kind,
-                              _snippet(event.text, match.start(), len(query)))
+                              _snippet(event.text, match.start(), len(query)), bool(queue.archived))
                 )
     hits.sort(key=lambda h: h.timestamp, reverse=True)
     return hits[:limit]

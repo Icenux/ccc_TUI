@@ -11,13 +11,22 @@ def storage(tmp_path):
     return Storage(str(tmp_path / "ccc.db"))
 
 
-def _input(session="s1", percent=42.5, tokens=85000, window=200000):
-    return json.dumps({"session_id": session, "context_window": {
-        "used_percentage": percent, "total_input_tokens": tokens, "context_window_size": window}})
+def _input(session="s1", percent=42.5, tokens=85000, window=200000, model=None):
+    data = {"session_id": session, "context_window": {
+        "used_percentage": percent, "total_input_tokens": tokens, "context_window_size": window}}
+    if model is not None:
+        data["model"] = model
+    return json.dumps(data)
 
 
 def test_parse_reads_the_context_of_a_session():
-    assert statusline.parse(_input()) == ("s1", 42.5, 85000, 200000)
+    assert statusline.parse(_input()) == ("s1", 42.5, 85000, 200000, None)
+
+
+def test_parse_reads_the_model_name():
+    assert statusline.parse(_input(model={"id": "claude-opus-4-7", "display_name": "Opus 4.7"}))[4] == "Opus 4.7"
+    assert statusline.parse(_input(model={"id": "claude-opus-4-7"}))[4] == "claude-opus-4-7"
+    assert statusline.parse(_input(model="nonsense"))[4] is None
 
 
 def test_parse_ignores_input_without_a_fill():

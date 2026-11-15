@@ -92,7 +92,7 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("conversations.tasks", "T", N_("Tasks editor of the selected conversation"), VIEWS),
     KeyAction("conversations.archive", "x", N_("Archive / restore the conversation"), _CONVERSATIONS),
     KeyAction("conversations.approve", "p", N_("Approve a tool call"), _CONVERSATIONS),
-    KeyAction("conversations.search", "slash", N_("Search all conversations"), _CONVERSATIONS),
+    KeyAction("conversations.search", "slash", N_("Search: Conversations, Archive or everywhere"), _CONVERSATIONS),
     KeyAction("conversations.filter", "f", N_("Filter the list (name, folder, state)"), _CONVERSATIONS),
     KeyAction("conversations.rename", "f2", N_("Rename the conversation"), _CONVERSATIONS),
     KeyAction("conversations.group", "m", N_("Put the conversation into a group / rename the group"), _CONVERSATIONS),
@@ -103,6 +103,10 @@ ACTIONS: tuple[KeyAction, ...] = (
               (*_CONVERSATIONS, CLAUDE), tmux=True),
     KeyAction("conversations.close_claude", "ctrl+right_square_bracket", N_("Close Claude Code beside ccc"),
               (*_CONVERSATIONS, CLAUDE), tmux=True),
+    # Not in tmux: Ctrl+X is Claude Code's own key (Ctrl+X Ctrl+E / Ctrl+K), so it works
+    # while ccc has the keyboard (Alt+0 from Claude Code's pane).
+    KeyAction("conversations.stop_claude", "ctrl+x", N_("End Claude Code of the conversation (asks first)"),
+              ("conversations",)),
     *[KeyAction(f"conversations.preset{n}", f"alt+{n}", N_("Preset prompt {n}"), (*_CONVERSATIONS, CLAUDE), tmux=True)
       for n in range(1, 10)],
     KeyAction("archive.delete", "delete", N_("Delete the conversation (Archive)"), ("archive",)),

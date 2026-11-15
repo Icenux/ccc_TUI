@@ -173,7 +173,7 @@ def test_an_own_worktree_needs_skip_permissions(storage, repo):
     from ccc.launch_options import toggle
 
     restricted = toggle(DEFAULT_SELECTION, "perm_accept_edits", True)
-    with pytest.raises(ValueError, match="Skip all permission checks"):
+    with pytest.raises(ValueError, match="Bypass permissions"):
         start_conversation(storage, str(repo), restricted, name="x", worktree=True, interactive=False)
     assert not (repo / ".claude" / "worktrees").exists()
 

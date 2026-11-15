@@ -163,7 +163,7 @@ def start_conversation(
         # ccc runs git (here: the checkout) only where Claude may run any
         # command anyway — see gitops.
         if not gitops.claude_can_run_commands(SimpleNamespace(launch_flags=flags)):
-            raise ValueError(_("An own worktree needs “Skip all permission checks” (ccc runs git only there)."))
+            raise ValueError(_("An own worktree needs “Bypass permissions” (ccc runs git only there)."))
         project_path = gitops.create_worktree(project_path, name)
     if remote_control:
         delivery = DeliveryMode.REMOTE_CONTROL
@@ -347,7 +347,7 @@ class QueueRuntime:
                 await self._wait_for_wake_or_poll(POLL_INTERVAL_SECONDS)
                 continue
 
-            if queue.delivery_mode.managed:
+            if queue.delivery_mode.managed and not queue.claude_stopped:
                 await self._maintain_managed_session(queue)
                 queue = self.storage.find_queue(queue.id)
                 if queue is None:
@@ -512,7 +512,7 @@ class QueueRuntime:
         finished_at = datetime.now()
         git_commit = git_note = None
         if not git_allowed and result.status == RunStatus.SUCCESS and _inside_git_repo(queue.project_path):
-            git_note = _("not committed: auto-commit only runs in 'Skip all permission checks' conversations")
+            git_note = _("not committed: auto-commit only runs in 'Bypass permissions' conversations")
         busy = None
         if before is not None and result.status == RunStatus.SUCCESS:
             # Never sweep another conversation's half-written work into this commit.
@@ -648,6 +648,8 @@ class QueueRuntime:
             has_transcript = find_transcript_path(queue.session_id) is not None
             command = managed_sessions.build_interactive_command(queue, has_transcript)
             logger.info("Starting interactive session for '%s'", queue.name)
+            if queue.claude_stopped:
+                self.storage.set_claude_stopped(queue.id, False)  # started again (a task is waiting)
             await asyncio.to_thread(managed_sessions.start, queue, command)
             self._managed_was_blocked = False
             self._managed_started_at = asyncio.get_running_loop().time()

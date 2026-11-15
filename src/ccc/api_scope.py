@@ -6,8 +6,8 @@ every permission check, are decided on the computer, not by the phone:
 * folders: only inside the allowed roots (`ccc api roots`). Not set yet = only
   the folders ccc already knows from its conversations (so the phone can start
   more in the projects it has, but not walk to ~ or /);
-* "Skip all permission checks": refused unless `ccc api skip-permissions on`;
-  until then the phone's default is "Ask for everything" (approve in the app).
+* "Bypass permissions": refused unless `ccc api skip-permissions on`;
+  until then the phone's default is "Manual" (approve in the app).
 
 It reaches every endpoint that takes a folder: starting a conversation,
 the sessions of a folder, the MCP servers of a folder."""
@@ -93,7 +93,7 @@ def set_skip_allowed(storage, allowed: bool) -> None:
 
 
 def default_selection(storage, default: frozenset[str]) -> frozenset[str]:
-    """The phone's default choice: without "Skip all permission checks" unless that is allowed."""
+    """The phone's default choice: without "Bypass permissions" unless that is allowed."""
     if skip_allowed(storage) or SKIP_OPTION not in default:
         return default
     return (default - {SKIP_OPTION}) | {SAFE_PERMISSION}

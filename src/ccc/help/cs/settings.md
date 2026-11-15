@@ -193,7 +193,7 @@ z tagu, [viz níže](#vydání-verze)). Verze se porovnávají jako čísla. ccc
 verze není číslo (ruční build, `0.0.0-dev`), bere za svou verzi nejnovější tag
 svého checkoutu; bez tagu se nikdy neptá.
 
-Daemon se jednou za pár hodin podívá (jeden dotaz na GitHub, bez tokenu, nic
+Daemon se jednou za 24 hodin podívá (jeden dotaz na GitHub, bez tokenu, nic
 se nemění) a když je novější vydání, dá ti vědět:
 
 - v ccc: žlutý řádek *⬆ Aktualizace* pod titulkem na každé obrazovce —

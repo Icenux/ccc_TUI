@@ -1,5 +1,5 @@
 """Approve or deny a tool call Claude is waiting on (headless conversation
-without "Skip all permission checks", see ccc.permission_mcp)."""
+without "Bypass permissions", see ccc.permission_mcp)."""
 from __future__ import annotations
 
 import json

@@ -575,3 +575,25 @@ def test_migration_drops_the_reverted_by_column_and_keeps_the_runs(tmp_path):
     columns = {row[1] for row in sqlite3.connect(db).execute("PRAGMA table_info(prompt_runs)")}
     assert "reverted_by" not in columns
     assert [(r.prompt_text, r.input_tokens) for r in storage.runs_for_queue(queue.id)] == [("p", 5)]
+
+
+def test_claude_stopped_is_cleared_by_a_new_message_or_task(storage):
+    q = storage.create_queue("demo", "/tmp/demo", "session-abc")
+    assert not storage.get_queue(q.id).claude_stopped
+    storage.set_claude_stopped(q.id, True)
+    assert storage.get_queue(q.id).claude_stopped
+    storage.add_queue_item(q.id, "go on")
+    assert not storage.get_queue(q.id).claude_stopped
+    storage.set_claude_stopped(q.id, True)
+    storage.add_queue_item_front(q.id, "continue")
+    assert not storage.get_queue(q.id).claude_stopped
+
+
+def test_claude_stopped_column_is_added_to_an_old_database(tmp_path):
+    path = tmp_path / "old.db"
+    Storage(path)
+    with sqlite3.connect(path) as conn:
+        conn.execute("ALTER TABLE queues DROP COLUMN claude_stopped")
+    storage = Storage(path)
+    q = storage.create_queue("demo", "/tmp/demo", "session-abc")
+    assert not storage.get_queue(q.id).claude_stopped

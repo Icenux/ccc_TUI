@@ -42,7 +42,7 @@ def test_queue_marker():
 
     q = Queue(id=1, name="a", project_path="/a", session_id="s")
     assert queue_marker(q, unseen=False)[0] == "○"  # idle, already looked at
-    assert queue_marker(q, unseen=True) == ("●", "bold green")  # green: finished, not looked at
+    assert queue_marker(q, unseen=True) == ("●", "bold #00af00")  # green: finished, not looked at
     q.archived = True
     assert queue_marker(q, unseen=False)[0] == " "
     q.archived = False
@@ -97,6 +97,9 @@ async def test_archive_moves_it_to_the_archive_view_and_x_restores(storage):
         await pilot.pause()
         app.screen.query_one("#conversation-queue-list").focus()
         await pilot.press("x")
+        await pilot.pause()
+        assert storage.get_queue(b.id).archived is False  # asks first
+        await pilot.press("y")
         await pilot.pause()
         assert storage.get_queue(b.id).archived is True
         table = app.screen.query_one("#conversation-queue-list", DataTable)

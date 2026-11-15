@@ -8,8 +8,8 @@ CS: dict[str, str] = {
     "Dashboard": "Přehled",
     "Archive the conversation (Dashboard)": "Archivovat konverzaci (Přehled)",
     "Delete the conversation (Dashboard)": "Smazat konverzaci (Přehled)",
-    "Archive the selected conversation (a long press on a row offers Archive / Delete)":
-        "Archivovat vybranou konverzaci (dlouhé podržení řádku nabídne Archivovat / Smazat)",
+    "Archive the selected conversation (asks first; a long press on a row offers Archive / Delete)":
+        "Archivovat vybranou konverzaci (nejdřív se zeptá; dlouhé podržení řádku nabídne Archivovat / Smazat)",
     "Delete the selected conversation from ccc (asks first)": "Smazat vybranou konverzaci z ccc (nejdřív se zeptá)",
     "Send the message right away, past the queue (Ctrl+Enter where supported)":
         "Odeslat zprávu ihned, mimo frontu (Ctrl+Enter, kde to terminál umí)",
@@ -183,6 +183,10 @@ CS: dict[str, str] = {
     "Claude is working on '{name}' right now — wait or pause it first (t, p).":
         "Claude právě pracuje na '{name}' — počkej, nebo ji nejdřív pozastav (t, p).",
     "Delete conversation": "Smazat konverzaci",
+    "Delete all {n} conversations of '{name}' with their queued tasks and run history from ccc?\n"
+    "Claude Code's own transcripts stay, so they can still be resumed later.":
+        "Smazat z ccc všech {n} konverzací skupiny „{name}“ i s frontou úloh a historií běhů?\n"
+        "Přepisy v Claude Code zůstanou, takže je půjde později obnovit.",
     "Delete '{name}' with its queued tasks and run history from ccc?\n"
     "Claude Code's own transcript stays, so it can still be resumed later.":
         "Smazat '{name}' z ccc i s úkoly ve frontě a historií běhů?\n"
@@ -235,18 +239,18 @@ CS: dict[str, str] = {
     "As a copy (fork)": "Jako kopie (fork)",
     "fork": "fork",
     "Permissions": "Oprávnění",
-    "Skip all permission checks": "Přeskočit všechny kontroly oprávnění",
-    "skip permissions": "bez kontrol oprávnění",
-    "Auto-accept edits": "Automaticky přijímat úpravy",
-    "accept edits": "přijímat úpravy",
-    "Ask for everything": "Ptát se na vše",
-    "ask for everything": "ptát se na vše",
-    "Only what is allowed": "Jen povolené",
-    "only allowed": "jen povolené",
-    "Auto mode": "Automatický režim",
-    "auto mode": "automatický režim",
-    "Plan only": "Jen plán",
-    "plan only": "jen plán",
+    "Bypass permissions": "Bypass permissions",
+    "bypass permissions": "bypass permissions",
+    "Accept edits": "Accept edits",
+    "accept edits": "accept edits",
+    "Manual": "Manual",
+    "manual": "manual",
+    "Don't ask": "Don't ask",
+    "don't ask": "don't ask",
+    "Auto": "Auto",
+    "auto": "auto",
+    "Plan": "Plan",
+    "plan mode": "plan mode",
     "Opus": "Opus",
     "Sonnet": "Sonnet",
     "Haiku": "Haiku",
@@ -269,7 +273,7 @@ CS: dict[str, str] = {
     "Chrome": "Chrome",
     "Safe mode (no customizations)": "Bezpečný režim (bez přizpůsobení)",
     "safe mode": "bezpečný režim",
-    "legacy (skip permissions)": "starší (bez kontrol oprávnění)",
+    "legacy (bypass permissions)": "starší (bypass permissions)",
     "Plugins": "Pluginy",
     "Only selected plugins (predictable behaviour)": "Jen vybrané pluginy (předvídatelné chování)",
     "plugins": "pluginy",
@@ -304,7 +308,12 @@ CS: dict[str, str] = {
     "No preset prompts — add them in Settings (Ctrl+P)": "Žádné přednastavené prompty — přidej je v Nastavení (Ctrl+P)",
 
     # --- Search / exports -------------------------------------------------------
-    "Search all conversations… (Enter)": "Hledat ve všech konverzacích… (Enter)",
+    "Search… (Enter)": "Hledat… (Enter)",
+    "In conversations": "V konverzacích",
+    "In the archive": "V archivu",
+    "Tool": "Nástroj",
+    "Output": "Výstup",
+    "(archived)": "(v archivu)",
     "Who": "Kdo",
     "Match": "Shoda",
     "{n} matches — ↓ then Enter opens one": "Nalezeno: {n} — ↓ a Enter výsledek otevře",
@@ -476,7 +485,7 @@ CS: dict[str, str] = {
     "✅ ccc: Discord notifications work.": "✅ ccc: notifikace přes Discord fungují.",
 
     # --- Help window and key list (tui/help.py) -------------------------------
-    "Help  ·  ↑↓ topic  ·  Tab text / topics  ·  Esc close": "Nápověda  ·  ↑↓ téma  ·  Tab text / témata  ·  Esc zavřít",
+    "↑↓ topic  ·  Tab text / topics  ·  Esc close": "↑↓ téma  ·  Tab text / témata  ·  Esc zavřít",
     "Keyboard shortcuts": "Klávesové zkratky",
     "Keys without Ctrl or Alt don't work while you're typing in a text field;\n"
     "Ctrl and Alt keys work everywhere. The bar at the bottom of the window\n"
@@ -503,12 +512,12 @@ CS: dict[str, str] = {
     "Blocked: run the failed task again / resume one paused at a limit":
         "Zablokovaná: znovu spustit selhaný úkol / pokračovat po pauze na limitu",
     "Approve a tool call Claude is waiting on": "Schválit nástroj, na který Claude čeká",
-    "Archive (moves it to Archive, h)": "Archivovat (přesune do Archivu, h)",
+    "Archive (asks first; moves it to Archive, h)": "Archivovat (nejdřív se zeptá; přesune do Archivu, h)",
     "Switch between ccc and Claude Code (while it's open beside ccc)":
         "Přepnout mezi ccc a Claude Code (když je otevřený vedle ccc)",
     "Close Claude Code beside ccc (it keeps running; Enter in the list opens it)":
         "Zavřít Claude Code vedle ccc (běží dál; Enter v seznamu ho otevře)",
-    "Search all conversations": "Hledat ve všech konverzacích",
+    "Search: Conversations, Archive or everywhere": "Hledat: v Konverzacích, v Archivu nebo všude",
     "Export the conversation as Markdown": "Exportovat konverzaci jako Markdown",
     "New line in the message box (Shift+Enter where supported)": "Nový řádek v poli pro zprávu (Shift+Enter, kde funguje)",
     "Preset prompt 1–9 (⏎ sends it, ✎ puts it into the message box; set in Settings)":
@@ -563,8 +572,8 @@ CS: dict[str, str] = {
     "Press r or send a message in ccc to continue.":
         "✋ {name} tě potřebuje: pozastaveno na limitu využití (obnoví se v {time}). "
         "Pro pokračování stiskni r nebo pošli zprávu v ccc.",
-    "not committed: auto-commit only runs in 'Skip all permission checks' conversations":
-        "necommitnuto: automatický commit běží jen v konverzacích s 'Přeskočit všechny kontroly oprávnění'",
+    "not committed: auto-commit only runs in 'Bypass permissions' conversations":
+        "necommitnuto: automatický commit běží jen v konverzacích s 'Bypass permissions'",
     # Sent to Claude as a tool result when an approval is denied (permission_mcp.DENY_MESSAGE); the API shows it translated.
     "Denied by the user in ccc.": "Zamítnuto uživatelem v ccc.",
     "✅ {name}: queue finished.": "✅ {name}: fronta doběhla.",
@@ -1128,8 +1137,8 @@ CS: dict[str, str] = {
     "No worktree: {path} is a symbolic link.": "Worktree nevznikl: {path} je symbolický odkaz.",
     "No worktree: {path} isn't a folder.": "Worktree nevznikl: {path} není složka.",
     "No worktree: {path} leads outside the repository.": "Worktree nevznikl: {path} vede mimo repozitář.",
-    "An own worktree needs “Skip all permission checks” (ccc runs git only there).":
-        "Vlastní worktree potřebuje „Přeskočit všechny kontroly oprávnění“ (ccc spouští git jen tam).",
+    "An own worktree needs “Bypass permissions” (ccc runs git only there).":
+        "Vlastní worktree potřebuje „Bypass permissions“ (ccc spouští git jen tam).",
 
     # Workflows (ccc.workflows, Workflow window, ccc workflow)
     "(back to build at most {n}×)": "(zpět ke stavbě nejvýš {n}×)",
@@ -1480,6 +1489,7 @@ CS: dict[str, str] = {
     "No such device.": "Takové zařízení neexistuje.",
     "Signed out.": "Odhlášeno.",
     "The device needs a name.": "Zařízení potřebuje jméno.",
+    "The conversation needs a name.": "Konverzace potřebuje název.",
     "address to listen on (default {host}: reach it through tailscale serve)":
         "adresa, na které poslouchat (výchozí {host}: zvenku přes tailscale serve)",
 
@@ -1512,9 +1522,9 @@ CS: dict[str, str] = {
     "⬆️ ccc update available: {version} (installed: {installed}).": "⬆️ Je dostupná aktualizace ccc: {version} (nainstalováno: {installed}).",
     "Update it in ccc (Update window) or from the phone.": "Aktualizuj v ccc (okno Aktualizace) nebo z telefonu.",
     "Look for updates": "Hledat aktualizace",
-    "Every few hours ccc looks for a new release on GitHub and tells you here (the {key} key), "
+    "Every 24 hours ccc looks for a new release on GitHub and tells you here (the {key} key), "
     "on the phone, and in Telegram / Discord. Updating asks first.":
-        "Každých pár hodin ccc hledá na GitHubu nové vydání a dá ti vědět tady (klávesa {key}), "
+        "Každých 24 hodin ccc hledá na GitHubu nové vydání a dá ti vědět tady (klávesa {key}), "
         "v telefonu a v Telegramu / Discordu. Aktualizace se před spuštěním ptá.",
     # --- notification categories (#146) ---------------------------------------
     "{name} must map the notification categories to true or false.":
@@ -1602,7 +1612,7 @@ CS: dict[str, str] = {
     "Branch: ": "Větev: ",
     "binary": "binární",
     "No activity yet.": "Zatím žádná aktivita.",
-    "Not shown: ccc reads git only in a git folder, in conversations started with “Skip all permission checks”.": "Nezobrazeno: ccc čte git jen ve složce s gitem a v konverzacích spuštěných s „Přeskočit všechny kontroly oprávnění“.",
+    "Not shown: ccc reads git only in a git folder, in conversations started with “Bypass permissions”.": "Nezobrazeno: ccc čte git jen ve složce s gitem a v konverzacích spuštěných s „Bypass permissions“.",
     "No uncommitted changes.": "Žádné necommitnuté změny.",
     "… and more files": "… a další soubory",
     "Today: {today} tokens   ·   All time: {total} tokens": "Dnes: {today} tokenů   ·   Celkem: {total} tokenů",
@@ -1717,4 +1727,18 @@ CS: dict[str, str] = {
     '{n} waiting': '{n} čeká',
     '{n} · {on} on': '{n} · {on} zapnuto',
     'Select a task of the conversation first (or add it from the conversation: {key}).': 'Nejdřív vyberte úkol té konverzace (nebo úkol přidejte z konverzace: {key}).',
+    "End Claude Code of the conversation (asks first)": "Ukončit Claude Code konverzace (nejdřív se zeptá)",
+    "End Claude Code of the conversation (asks first; Enter in the list or a new message starts it again)":
+        "Ukončit Claude Code konverzace (nejdřív se zeptá; Enter v seznamu nebo nová zpráva ho znovu spustí)",
+    "End Claude": "Ukončit Claude",
+    "End Claude Code": "Ukončit Claude Code",
+    "End Claude Code of '{name}'? It gets /exit; what it is working on right now is lost.\n"
+    "The conversation stays. Enter in the list (or a new message) starts it again.":
+        "Ukončit Claude Code konverzace '{name}'? Dostane /exit; co právě dělá, se ztratí.\n"
+        "Konverzace zůstane. Enter v seznamu (nebo nová zpráva) ho znovu spustí.",
+    "Archive conversation": "Archivovat konverzaci",
+    "Archive '{name}'? Its Claude Code is stopped and no task of it runs.\n"
+    "Restore it from the Archive (h) with x.":
+        "Archivovat '{name}'? Její Claude Code se zastaví a žádný její úkol nepoběží.\n"
+        "Obnovíš ji v Archivu (h) klávesou x.",
 }

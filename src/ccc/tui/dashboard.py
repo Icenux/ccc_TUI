@@ -651,8 +651,20 @@ class DashboardScreen(SidebarScreen):
         queue = self._cursor_queue()
         if queue is None:
             return
-        self.storage.set_queue_archived(queue.id, True)
-        self.refresh_table()
+
+        def answered(yes: bool) -> None:
+            if yes:
+                self.storage.set_queue_archived(queue.id, True)
+                self.refresh_table()
+
+        self.app.push_screen(
+            ConfirmModal(
+                _("Archive conversation"),
+                _("Archive '{name}'? Its Claude Code is stopped and no task of it runs.\n"
+                  "Restore it from the Archive (h) with x.").format(name=queue.name),
+            ),
+            answered,
+        )
 
     def action_delete_conversation(self) -> None:
         queue = self._cursor_queue()

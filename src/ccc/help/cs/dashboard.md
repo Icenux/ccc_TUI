@@ -84,7 +84,7 @@ Co s posledními dvěma: [Limity využití a zablokované fronty](limits.md).
   kolik zpráv je ve frontě a co se v konverzaci stalo naposledy;
 - **Změny**: větev složky a soubory s necommitnutými změnami, s počtem
   přidaných a odebraných řádků (jen ve složce s gitem a v konverzacích
-  spuštěných s *Přeskočit všechny kontroly oprávnění*, protože git ccc
+  spuštěných s *Bypass permissions*, protože git ccc
   spouští jen tam);
 - **Spotřeba**: tokeny za posledních 14 dní a použité modely;
 - **Chyby**: poslední selhané běhy a co konverzaci teď blokuje.

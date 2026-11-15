@@ -188,7 +188,7 @@ from the tag, [see below](#releasing)). Versions are compared as numbers. A ccc
 whose version isn't a number (a build made by hand, `0.0.0-dev`) uses the
 newest tag its checkout contains; with none, it never asks.
 
-Every few hours the daemon looks (one request to GitHub, no token, nothing is
+Every 24 hours the daemon looks (one request to GitHub, no token, nothing is
 changed) and, when there is a newer release, tells you:
 
 - in ccc: a yellow line *⬆ Update* under the title, on every screen — `U`

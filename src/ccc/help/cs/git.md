@@ -58,9 +58,9 @@ ccc změny nechá necommitnuté, když:
 - ve složce už před úkolem byly **necommitnuté změny** — to je tvoje
   práce, ccc ji nikdy do svého commitu nepřimíchá;
 - nic se nezměnilo, nebo je repozitář na odpojeném HEAD;
-- konverzace nebyla založená s **Přeskočit všechny kontroly oprávnění**.
+- konverzace nebyla založená s **Bypass permissions**.
   ccc spouští git sám, mimo režim oprávnění Clauda, takže v konverzaci
-  s *Automaticky přijímat úpravy* / *Jen plán* by tam Claude jinak mohl
+  s *Accept edits* / *Plan* by tam Claude jinak mohl
   podstrčit git hook, který by ccc spustil;
 - config repozitáře používá filtry, includy nebo podepisování (nebo se
   během úkolu změnil) — z bezpečnosti tam pak ccc git vůbec nespouští.

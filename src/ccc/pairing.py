@@ -83,6 +83,27 @@ def start_api() -> bool:
         return False
 
 
+def _api_unit_state(verb: str) -> str:
+    """`systemctl --user <verb> ccc-api.service` as its one word (`enabled`, `active`, …); "" when systemd can't be asked."""
+    try:
+        return subprocess.run(["systemctl", "--user", verb, "ccc-api.service"], capture_output=True, text=True,
+                              timeout=30, check=False).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def ensure_api_running() -> bool | None:
+    """Keep the API up when the user turned it on: ccc-api.service is enabled but not running (it didn't
+    come up after a boot — e.g. a home unlocked after the user manager started — or it was killed for good).
+    None: nothing to do (not enabled, or running, or starting/restarting by itself); otherwise whether
+    the start went through. An API the user doesn't want is disabled (`systemctl --user disable --now`)."""
+    if _api_unit_state("is-enabled") != "enabled":
+        return None
+    if _api_unit_state("is-active") in ("active", "activating", "reloading"):
+        return None
+    return start_api()
+
+
 def tailscale_url() -> str | None:
     try:
         out = subprocess.run(["tailscale", "serve", "status", "--json"], capture_output=True, text=True,

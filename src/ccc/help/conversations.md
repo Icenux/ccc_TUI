@@ -165,7 +165,7 @@ doesn't slow typing down.
 
 | Key | |
 |---|---|
-| `t` | the [task queue](tasks.md) of this conversation |
+| `T` | the [task queue](tasks.md) of this conversation |
 | `r` | stopped on an error: run the failed task again; paused at a limit: carry on — see [Usage limits](limits.md) |
 | `p` | [approve a tool call](approvals.md) Claude is waiting on |
 | `x` | [archive](archive.md) the conversation |

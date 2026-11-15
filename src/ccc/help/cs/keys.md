@@ -19,9 +19,9 @@ uvádějí výchozí klávesy.
 | `a` | Analytika |
 | `n` | Nová konverzace |
 | `?` | Tato nápověda |
-| `o` | Routiny: prompty podle plánu |
 | `A` | Agenti: pomocníci, které Claude Code umí zavolat |
-| `t` | Úkoly vybrané konverzace (v Konverzacích a Archivu jejich vlastní t) |
+| `t` | Úkoly a routiny: všechny čekající úkoly, všechny routiny |
+| `T` | Editor úkolů vybrané konverzace (fronta, plán, pauza, automatické pokračování) |
 | `U` | Aktualizovat ccc — jen když je nová verze |
 | `Ctrl+P` | Nastavení (jazyk, Telegram, fronty, předvolby, zkratky, záloha) |
 | `Alt+S` | Snímek obrazovky ccc (SVG do složky exportů, viz Nastavení) |
@@ -55,7 +55,6 @@ uvádějí výchozí klávesy.
 |---|---|
 | `Enter` | Otevřít Claude Code CLI konverzace (v seznamu) / odeslat zprávu (v poli) |
 | `r` | Zablokovaná: znovu spustit selhaný úkol / pokračovat po pauze na limitu |
-| `t` | Editor úkolů (fronta, plánování, pauza, automatické pokračování) |
 | `p` | Schválit nástroj, na který Claude čeká |
 | `x` | Archivovat (přesune do Archivu, h) |
 | `Alt+0` | Přepnout mezi ccc a Claude Code (když je otevřený vedle ccc) |
@@ -97,7 +96,7 @@ uvádějí výchozí klávesy.
 | `Ctrl+↑` | Skočit na nadpis předchozí skupiny |
 | `e` | Exportovat konverzaci jako Markdown |
 
-## Editor úkolů (t)
+## Editor úkolů (T)
 
 | Klávesa | |
 |---|---|
@@ -110,15 +109,17 @@ uvádějí výchozí klávesy.
 | `o` | Zapnout / vypnout automatické pokračování |
 | `Ctrl+S` | Uložit v editoru úkolu |
 
-## Routiny (o)
+## Úkoly a routiny (t)
 
 | Klávesa | |
 |---|---|
-| `a` | Přidat routinu |
-| `e` | Upravit routinu (také Enter) |
-| `Space` | Zapnout / vypnout ji |
-| `r` | Spustit ji hned (další čas podle plánu zůstane) |
-| `Del` | Smazat ji (úkoly, které zařadila, zůstanou) |
+| `+` | Přidat úkol / routinu (v tabulce, kde je kurzor; Tab přepíná tabulku) |
+| `e` | Upravit (také Enter) |
+| `Del` | Smazat (úkoly, které routina už zařadila, zůstanou) |
+| `Ctrl+↑` | Posunout úkol ve frontě nahoru |
+| `Ctrl+↓` | Posunout úkol ve frontě dolů |
+| `Space` | Zapnout / vypnout routinu |
+| `r` | Spustit routinu hned (její další termín zůstane) |
 | `Ctrl+S` | Uložit v editoru routiny |
 
 ## Agenti (A)

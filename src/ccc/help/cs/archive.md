@@ -49,4 +49,4 @@ smazáním zeptá. Co zmizí a co zůstane:
   [zahájení konverzace](new-conversation.md).
 
 Konverzaci, na které Claude pracuje, smazat nejde, dokud nedoběhne nebo
-ji nepozastavíš (`t`, `p`).
+ji nepozastavíš (`T`, `p`).

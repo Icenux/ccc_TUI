@@ -36,7 +36,7 @@ tam stojí *daemon neběží*, nic se neděje — viz
 2. Jsi v **Konverzacích**: vpravo od menu ccc se otevře skutečné
    Claude Code. Mluv s ním přesně jako v terminálu. `Alt+0` přepíná
    klávesnici mezi ccc a Claudem. Viz [Konverzace](conversations.md).
-3. Chceš, aby Claude potom udělal ještě něco? Stiskni `t` a přidej
+3. Chceš, aby Claude potom udělal ještě něco? Stiskni `T` a přidej
    **úkoly**: spouští se jeden po druhém, každý hned, jak Claude dokončí
    předchozí — i v noci, i po obnovení limitu využití. Viz
    [Fronta úkolů](tasks.md).

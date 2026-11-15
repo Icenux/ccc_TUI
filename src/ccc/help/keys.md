@@ -19,9 +19,9 @@ name the default keys.
 | `a` | Analytics |
 | `n` | New conversation |
 | `?` | This help |
-| `o` | Routines: prompts on a schedule |
 | `A` | Agents: helpers Claude Code can call |
-| `t` | Tasks of the selected conversation (Conversations and Archive: their own t) |
+| `t` | Tasks & Routines: every waiting task, every routine |
+| `T` | Tasks editor of the selected conversation (queue, schedule, pause, auto-continue) |
 | `U` | Update ccc — only when a new version is there |
 | `Ctrl+P` | Settings (language, Telegram, queues, presets, shortcuts, backup) |
 | `Alt+S` | Screenshot of ccc (an SVG in the export folder, see Settings) |
@@ -55,7 +55,6 @@ name the default keys.
 |---|---|
 | `Enter` | Open the conversation's Claude Code CLI (in the list) / send the message (in the box) |
 | `r` | Blocked: run the failed task again / resume one paused at a limit |
-| `t` | Tasks editor (queue, schedule, pause, auto-continue) |
 | `p` | Approve a tool call Claude is waiting on |
 | `x` | Archive (moves it to Archive, h) |
 | `Alt+0` | Switch between ccc and Claude Code (while it's open beside ccc) |
@@ -97,7 +96,7 @@ name the default keys.
 | `Ctrl+↑` | Jump to the previous group's heading |
 | `e` | Export the conversation as Markdown |
 
-## Tasks editor (t)
+## Tasks editor (T)
 
 | Key | |
 |---|---|
@@ -110,15 +109,17 @@ name the default keys.
 | `o` | Toggle auto-continue |
 | `Ctrl+S` | Save in the task editor |
 
-## Routines (o)
+## Tasks & Routines (t)
 
 | Key | |
 |---|---|
-| `a` | Add a routine |
-| `e` | Edit the routine (also Enter) |
-| `Space` | Turn it on / off |
-| `r` | Run it now (its next time stays) |
-| `Del` | Delete it (tasks it queued stay) |
+| `+` | Add a task / a routine (in the table that has the cursor; Tab changes table) |
+| `e` | Edit it (also Enter) |
+| `Del` | Delete it (a routine's tasks already queued stay) |
+| `Ctrl+↑` | Move the task up in its queue |
+| `Ctrl+↓` | Move the task down in its queue |
+| `Space` | Turn the routine on / off |
+| `r` | Run the routine now (its next time stays) |
 | `Ctrl+S` | Save in the routine editor |
 
 ## Agents (A)

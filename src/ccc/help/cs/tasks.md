@@ -5,8 +5,11 @@ jednu po druhé, v téže konverzaci. Další odejde, jakmile Claude dokončí
 předchozí, ať se díváš, nebo ne: můžeš si nachystat práci na celý večer
 a ccc zavřít.
 
-V [Konverzacích](conversations.md) stiskni `t` a otevře se fronta vybrané
-konverzace.
+V [Konverzacích](conversations.md) stiskni `T` (Shift+T) a otevře se fronta vybrané
+konverzace. Klávesa `t` kdekoli otevře **Úkoly a routiny**: všechny úkoly, které ještě
+čekají v kterékoli konverzaci (horní tabulka; dokončené se tu neuchovávají), nad
+[routinami](routines.md). `+` přidá, `e` / `Enter` upraví, `Delete` smaže,
+`Ctrl+↑` / `Ctrl+↓` změní pořadí — v tabulce, kde je kurzor.
 
 ![Fronta úkolů](../../../../docs/screenshots/tasks.png)
 

@@ -23,9 +23,9 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("views.analytics", N_("Analytics")),
         ("views.new_conversation", N_("New conversation")),
         ("views.help", N_("This help")),
-        ("views.routines", N_("Routines: prompts on a schedule")),
         ("views.agents", N_("Agents: helpers Claude Code can call")),
-        ("views.tasks", N_("Tasks of the selected conversation (Conversations and Archive: their own t)")),
+        ("views.tasks", N_("Tasks & Routines: every waiting task, every routine")),
+        ("conversations.tasks", N_("Tasks editor of the selected conversation (queue, schedule, pause, auto-continue)")),
         ("views.update", N_("Update ccc — only when a new version is there")),
         ("app.settings", N_("Settings (language, Telegram, queues, presets, shortcuts, backup)")),
         ("app.screenshot", N_("Screenshot of ccc (an SVG in the export folder, see Settings)")),
@@ -51,7 +51,6 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
     (N_("Conversations"), [
         ("enter", N_("Open the conversation's Claude Code CLI (in the list) / send the message (in the box)")),
         ("screen.retry", N_("Blocked: run the failed task again / resume one paused at a limit")),
-        ("conversations.tasks", N_("Tasks editor (queue, schedule, pause, auto-continue)")),
         ("conversations.approve", N_("Approve a tool call Claude is waiting on")),
         ("conversations.archive", N_("Archive (moves it to Archive, h)")),
         ("conversations.focus_claude", N_("Switch between ccc and Claude Code (while it's open beside ccc)")),
@@ -84,7 +83,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("conversations.prev_group", N_("Jump to the previous group's heading")),
         ("conversations.export", N_("Export the conversation as Markdown")),
     ]),
-    (N_("Tasks editor (t)"), [
+    (N_("Tasks editor (T)"), [
         ("tasks.add", N_("Add a task")),
         ("tasks.edit", N_("Edit the task (also Enter)")),
         ("tasks.remove", N_("Remove the task")),
@@ -94,12 +93,14 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("tasks.auto", N_("Toggle auto-continue")),
         ("window.save", N_("Save in the task editor")),
     ]),
-    (N_("Routines (o)"), [
-        ("routines.add", N_("Add a routine")),
-        ("routines.edit", N_("Edit the routine (also Enter)")),
-        ("routines.toggle", N_("Turn it on / off")),
-        ("routines.run", N_("Run it now (its next time stays)")),
-        ("routines.delete", N_("Delete it (tasks it queued stay)")),
+    (N_("Tasks & Routines (t)"), [
+        ("tasks_page.add", N_("Add a task / a routine (in the table that has the cursor; Tab changes table)")),
+        ("tasks_page.edit", N_("Edit it (also Enter)")),
+        ("tasks_page.delete", N_("Delete it (a routine's tasks already queued stay)")),
+        ("tasks_page.up", N_("Move the task up in its queue")),
+        ("tasks_page.down", N_("Move the task down in its queue")),
+        ("tasks_page.toggle", N_("Turn the routine on / off")),
+        ("tasks_page.run", N_("Run the routine now (its next time stays)")),
         ("window.save", N_("Save in the routine editor")),
     ]),
     (N_("Agents (A)"), [

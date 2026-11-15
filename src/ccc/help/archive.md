@@ -51,4 +51,4 @@ ccc asks before deleting. What goes and what stays:
   [starting a conversation](new-conversation.md).
 
 A conversation Claude is working on can't be deleted until it finishes or
-you pause it (`t`, `p`).
+you pause it (`T`, `p`).

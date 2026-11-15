@@ -398,7 +398,7 @@ async def test_message_while_paused_at_limit_resumes_queue(tmp_path, monkeypatch
 
 
 @pytest.mark.asyncio
-async def test_paused_queue_status_and_t_opens_tasks(tmp_path, monkeypatch):
+async def test_paused_queue_status_and_T_opens_tasks(tmp_path, monkeypatch):
     from ccc.tui.tasks import TasksModal
 
     monkeypatch.setattr("ccc.transcript.PROJECTS_ROOT", tmp_path / "projects")
@@ -410,7 +410,7 @@ async def test_paused_queue_status_and_t_opens_tasks(tmp_path, monkeypatch):
         await pilot.pause()
         assert "Queue paused" in str(app.screen.query_one("#conversation-status").render())
         app.screen.query_one("#conversation-queue-list").focus()
-        await pilot.press("t")
+        await pilot.press("T")
         await pilot.pause()
         assert isinstance(app.screen, TasksModal)
         await pilot.press("p")

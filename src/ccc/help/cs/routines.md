@@ -5,12 +5,13 @@ denních změn, kontrola každou hodinu, shrnutí v pracovní dny v šest.
 Routiny spouští daemon, takže běží **i se zavřeným ccc**, dokud je
 počítač zapnutý.
 
-Klávesa `o` kdekoli otevře **Routiny**: všechny routiny s plánem, dalším
-a posledním během.
+Klávesa `t` kdekoli otevře **Úkoly a routiny**: routiny jsou v dolní
+tabulce s plánem, dalším a posledním během (`Tab` na ni přepne). Routina
+zůstává, dokud ji nesmažeš.
 
 | Klávesa | |
 |---|---|
-| `a` | přidá routinu |
+| `+` | přidá routinu |
 | `e` / `Enter` | upraví ji |
 | `mezerník` | zapne / vypne ji |
 | `r` | spustí ji hned (další čas podle plánu zůstane) |

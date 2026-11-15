@@ -28,6 +28,7 @@ ERROR = "#d78787"  # blocked, errors (design #E57E7E)
 # The selected row (design #0E2216): that dark green rounds to black in 256
 # colours — the row would vanish — so the darkest green of the cube.
 SELECTION = "#005f00"
+FRAME, TMUX_FRAME = "#00875f", "colour29"  # the frame (see below)
 
 # Textual's dark theme on ccc's colours, so that every widget (tables,
 # lists, dialogs) sits on the same ground as the page, focus is the accent
@@ -68,12 +69,11 @@ VARIABLES = {
     "ccc-selection": SELECTION,  # the selected row
     "ccc-human": "#5f87af",  # your messages
     "ccc-claude": "#5faf87",  # Claude's replies
-    "ccc-frame": LINE,  # frame lines (the same grey as the tmux frame, FRAME)
+    "ccc-frame": FRAME,  # the frame of the menu and the page (the same green as the tmux frame)
 }
 
-# The frame lines — the tmux borders and ccc's own panel lines — are one
-# colour: the design's thin grey. colourN is the 256-cube colour Textual's
+# The frame — the tmux borders and ccc's own frame of the menu and the page — is
+# one colour: green (#317; the dividing lines inside stay the thin grey LINE). colourN is the 256-cube colour Textual's
 # hex is rounded to, so a line looks the same on both sides of a border.
-FRAME, TMUX_FRAME = LINE, "colour235"
 # The accent in tmux: the "typing here" mark on the pane you type in.
 TMUX_ACCENT = "colour121"

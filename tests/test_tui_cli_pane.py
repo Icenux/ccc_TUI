@@ -330,9 +330,9 @@ def test_publish_waiting_escapes_hashes(monkeypatch):
 
 def test_whole_frame_is_one_colour():
     options = dict(cli_pane.BORDER_OPTIONS)
-    # Active and inactive borders: the same grey line in ccc and in Claude Code (#250).
-    assert options["pane-border-style"] == "fg=colour235"
-    assert options["pane-active-border-style"] == "fg=colour235,bold"
+    # Active and inactive borders: the same green line in ccc and in Claude Code (#250).
+    assert options["pane-border-style"] == "fg=colour29"
+    assert options["pane-active-border-style"] == "fg=colour29,bold"
     assert "colour74" not in options["pane-border-format"]
 
 

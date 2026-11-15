@@ -7,7 +7,8 @@ jen k dívání — s konverzací pracuješ v [Konverzacích](conversations.md).
 
 ## Záhlaví a filtr
 
-Panel začíná nápisem **PŘEHLED** a počtem konverzací; vpravo
+Panel začíná stavem daemonu (**● daemon běží**, nebo problém červeně), pod ním
+**↻ je třeba restart — klikni** a upozornění na aktualizaci, když jsou; vpravo
 `[n] nová konverzace` (kliknutím nebo `n` ji otevřeš).
 
 Řádek pod ním filtruje tabulku: **vše** · **běží** (Claude na nich

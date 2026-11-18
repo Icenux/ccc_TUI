@@ -11,9 +11,7 @@ VERSION=${1:?usage: packaging/package.sh VERSION}
 export VERSION
 out=dist/release
 [ -d dist/ccc-arch/lib/ccc ] || { echo "dist/ccc-arch is missing — run packaging/build-arch.sh first" >&2; exit 1; }
-[ -x dist/ccc/venv/bin/python ] || { echo "dist/ccc is missing — run packaging/build.sh first" >&2; exit 1; }
-built=$(dist/ccc/venv/bin/python -c 'import ccc; print(ccc.__version__)')
-[ "$built" = "$VERSION" ] || { echo "Built version $built ≠ $VERSION" >&2; exit 1; }
+[ -f "dist/ccc/wheels/ccc-${VERSION}-py3-none-any.whl" ] || { echo "dist/ccc has no wheel for $VERSION — run packaging/build.sh $VERSION first" >&2; exit 1; }
 rm -rf "$out" && mkdir -p "$out"
 
 nfpm package --config packaging/nfpm.yaml --packager deb --target "$out/ccc_all.deb"

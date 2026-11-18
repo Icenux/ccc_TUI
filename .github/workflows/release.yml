@@ -124,7 +124,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["ubuntu:24.04"]  # the package is built for Python 3.12 (packaging/nfpm.yaml)
+        # the virtualenv is built at install time, so the same package must work on each system's python3
+        image: ["ubuntu:24.04", "ubuntu:26.04", "debian:13"]
     container: ${{ matrix.image }}
     steps:
       - uses: actions/download-artifact@v4
@@ -142,7 +143,7 @@ jobs:
         run: |
           ccc --help > /dev/null
           test "$(cat /usr/lib/ccc/install-kind)" = deb
-          /usr/lib/ccc/venv/bin/python -c "import ccc, ccc.daemon, ccc.help; print(ccc.__version__)"
+          /usr/lib/ccc/venv/bin/python -c "import ccc, ccc.daemon, ccc.help, segno, textual, pyte; print(ccc.__version__)"
 
   # The Arch package has no bundled virtualenv: the pacman hook builds it for the installed Python (rolling release).
   arch-test:

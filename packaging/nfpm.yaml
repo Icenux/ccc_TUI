@@ -21,9 +21,10 @@ vendor: ccc
 homepage: https://github.com/Icenux/ccc_TUI
 
 depends:
-  # The bundled virtualenv is built for Python 3.12 (Ubuntu 24.04): its libraries live in lib/python3.12.
+  # The virtualenv is built at install time (packaging/files/deb-setup.sh) for the python3 the system has:
+  # Ubuntu 24.04+ and Debian 13+. Its dependencies come from PyPI.
   - python3 (>= 3.12)
-  - python3 (<< 3.13)
+  - python3-venv
   - tmux
   - systemd
 recommends:
@@ -43,6 +44,10 @@ contents:
   - src: dist/ccc/
     dst: /usr/lib/ccc
     type: tree
+    packager: deb
+  - src: packaging/files/deb-setup.sh
+    dst: /usr/lib/ccc/deb-setup.sh
+    file_info: { mode: 0755 }
     packager: deb
   - src: packaging/files/ccc
     dst: /usr/bin/ccc
@@ -111,3 +116,10 @@ contents:
 
 scripts:
   postinstall: packaging/files/postinst.sh
+  postremove: packaging/files/postrm-deb.sh
+
+# A python3 upgrade breaks the virtualenv (its libraries are in lib/python3.X): postinst.sh gets "triggered" and rebuilds it.
+deb:
+  triggers:
+    interest_noawait:
+      - /usr/bin/python3

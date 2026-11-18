@@ -6,6 +6,18 @@
 set -e
 lib=/usr/lib/ccc
 
+# After a python3 upgrade (dpkg trigger on /usr/bin/python3) the virtualenv is rebuilt only if it stopped working.
+if [ "$1" = "triggered" ]; then
+    [ -x "$lib/deb-setup.sh" ] && "$lib/deb-setup.sh" --if-broken
+    exit 0
+fi
+
+# .deb: the virtualenv is built here, for the python3 this system has (see deb-setup.sh). The Arch package
+# has its own pacman hook and no deb-setup.sh.
+if [ -x "$lib/deb-setup.sh" ]; then
+    "$lib/deb-setup.sh"
+fi
+
 if [ -d /etc/apt/sources.list.d ] && [ -f "$lib/icenux.asc" ]; then
     install -d /usr/share/keyrings
     install -m 644 "$lib/icenux.asc" /usr/share/keyrings/icenux.asc

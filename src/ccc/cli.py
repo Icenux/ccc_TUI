@@ -304,7 +304,9 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     from ccc import instance
+    from ccc.daemon_start import ensure_daemon_running
 
+    ensure_daemon_running(Storage(str(default_db_path())))
     if args.command == "tui" or instance.inside_ccc_tmux():
         # Inside ccc's own tmux server `ccc` is the instance itself.
         from ccc.tui.app import run_app

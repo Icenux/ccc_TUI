@@ -29,10 +29,10 @@ fi
 
 cat <<'MSG'
 
-ccc is installed. As your user (not root), once:
-    systemctl --user enable --now ccc ccc-tui
-    loginctl enable-linger "$USER"      # keep them running after you log out
-then open it with: ccc
+ccc is installed. As your user (not root), just run:
+    ccc
+It starts the daemon (systemctl --user enable --now ccc) and enables lingering by itself.
+To start the TUI service as well, once: systemctl --user enable --now ccc-tui
 (After an upgrade: systemctl --user restart ccc ccc-tui)
 
 MSG

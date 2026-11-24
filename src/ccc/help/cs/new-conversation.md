@@ -2,24 +2,39 @@
 
 Kdekoli stiskni `n` (nebo zelené tlačítko **Nová konverzace**
 v Konverzacích, případně `[n] nová konverzace` na Přehledu). Odshora:
-složka, nedávné složky, zvolené volby jako barevné čipy, potom název,
-relace, předvolba a vlastní přepínače ccc; dole **Spustit** (nebo `Enter`
-v poli složky či názvu).
+název a předvolba, složka (s nedávnými složkami a stromem disků vedle),
+relace, všechny volby Claude Code a vlastní přepínače ccc; dole **Spustit**.
 
-- **Čip** ukazuje zvolenou volbu (červeně oprávnění, modře model, žlutě
-  úsilí, šedě ostatní); kliknutím na něj volbu zrušíš.
-- **+ volba** otevře všechny volby níže (ve skupinách z tabulky) i se
-  stromem složek k procházení; otevře je i pole **Relace**, rovnou na
-  volbě relace.
+- **Tab** v poli složky doplní cestu (nabídka je pod polem); **Enter** složku
+  jen potvrdí a přejde dál — nikdy nespustí. **Spustit** je tlačítko,
+  `Ctrl+Enter` odkudkoli, nebo `Enter` v názvu.
+- Všechno je vidět najednou; okno se posouvá. V úzkém okně (telefon) jsou
+  sloupce pod sebou.
 - `Ctrl+S` uloží volbu jako předvolbu (nebo **Uložit…** vedle Předvolby).
 
 ![Nová konverzace](../../../../docs/screenshots/new_conversation.png)
 
 ## Složka
 
-Složka projektu, ve které bude Claude pracovat: vyber některou
-z nedávných (↑↓, Enter), napiš cestu, nebo projdi strom složek (pod
-**+ volba**).
+Složka projektu, ve které bude Claude pracovat. Napiš cestu (**Tab** ji
+doplní), vyber některou z **nedávných** (↑↓, Enter), nebo projdi **strom
+disků**: zahrnuje všechny disky, → složku otevře, ← zavře (nahoře jde o úroveň
+výš, až do `/`), Enter ji zvolí. Skryté složky (název začíná tečkou) strom ani
+doplňování neukazují, dokud tečku nenapíšeš sám; systémové složky (`/proc`,
+`/sys`…) se neukazují nikdy. Složka, která už neexistuje, se z nedávných vynechá.
+
+**Najít projekt…** hledá podle části názvu složky s `.git` v domovské složce
+a na dalších discích (`/mnt`, `/media`). Běží jen po dobu, kdy je jeho okno
+otevřené, s omezenou hloubkou a časem, a výsledky přibývají průběžně; Enter na
+některém složku vyplní.
+
+## Relace
+
+*Relace je paměť Claude Code: celá historie rozhovoru v této složce.* Nová
+začne s čistou hlavou, ostatní navážou na to, co už Claude ví. **Pokračovat**
+a **Obnovit** jsou ve složce bez dřívějšího rozhovoru vypnuté i s důvodem
+vedle; **Jako kopie** jen když je z čeho kopírovat; **Vlastní git worktree**
+jen v git repozitáři.
 
 ## Volby
 
@@ -112,10 +127,11 @@ od času: toho volá sám i bez této volby.
 
 ## Předvolby
 
-Okno si pamatuje tvou poslední volbu. Pokud často používáš pár
-kombinací, **Uložit jako předvolbu** uloží tu aktuální pod názvem;
-**Vyber předvolbu…** jí okno vyplní. Předvolby mažeš
-v [Nastavení](settings.md).
+**Uložit jako předvolbu** uloží aktuální volby (ne název ani složku) pod
+názvem; **Vyber předvolbu…** jí okno vyplní. Předvolby mažeš
+v [Nastavení](settings.md). **★** vedle Uložit… udělá zobrazenou předvolbu
+**výchozí**: okno se s ní otevře. Dalším stisknutím žádná výchozí není
+a okno se otevře s tvou poslední volbou, jako dřív.
 
 ## Po Spustit
 

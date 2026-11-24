@@ -200,3 +200,14 @@ uvádějí výchozí klávesy.
 |---|---|
 | `Ctrl+S` | Uložit |
 | `Esc` | Zrušit (nic se neuloží) |
+
+## Nová konverzace (n)
+
+| Klávesa | |
+|---|---|
+| `Tab` | Doplnit cestu ke složce (Enter ji jen potvrdí) |
+| `→` | Otevřít složku ve stromu disků |
+| `←` | Zavřít složku; nahoře ve stromu o úroveň výš |
+| `Ctrl+Enter` | Spustit konverzaci (také tlačítko Spustit, nebo Enter v názvu) |
+| `Ctrl+S` | Uložit volby jako předvolbu |
+| `Esc` | Zrušit |

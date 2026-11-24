@@ -28,6 +28,7 @@ if find "$out/lib" \( -name '*.so' -o -name '*.pyd' \) | grep -q .; then
 fi
 
 cp bin/ccc-tui-supervise.sh "$out/ccc-tui-supervise.sh"
+cp src/ccc/tmux.conf "$out/tmux.conf"  # ccc's own tmux configuration, read by the script
 
 [ -z "$VERSION" ] || [ "$(PYTHONPATH="$out/lib" python3 -c 'import ccc; print(ccc.__version__)')" = "$VERSION" ] \
     || { echo "built version is not $VERSION" >&2; exit 1; }

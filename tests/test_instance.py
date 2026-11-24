@@ -1,6 +1,6 @@
 import subprocess
 
-from ccc import instance
+from ccc import instance, tmux
 
 
 def _tmux_has_session(monkeypatch, running):
@@ -10,13 +10,13 @@ def _tmux_has_session(monkeypatch, running):
 
 def test_attaches_to_the_running_instance(monkeypatch, tmux_dir):
     _tmux_has_session(monkeypatch, True)
-    assert instance.attach_command() == ["tmux", "-S", f"{tmux_dir}/ccc", "-f", "/dev/null", "attach-session", "-t", "ccc"]
+    assert instance.attach_command() == ["tmux", "-S", f"{tmux_dir}/ccc", "-f", tmux.config_path(), "attach-session", "-t", "ccc"]
 
 
 def test_starts_the_instance_when_it_isnt_running(monkeypatch, tmux_dir):
     _tmux_has_session(monkeypatch, False)
     command = instance.attach_command()
-    assert command[:7] == ["tmux", "-S", f"{tmux_dir}/ccc", "-f", "/dev/null", "new-session", "-s"]
+    assert command[:7] == ["tmux", "-S", f"{tmux_dir}/ccc", "-f", tmux.config_path(), "new-session", "-s"]
     assert command[-1] == instance.tui_loop()
     assert "-m ccc.cli tui" in instance.tui_loop() and instance.tui_loop().startswith("while true")
 

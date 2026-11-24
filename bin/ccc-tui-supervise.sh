@@ -15,9 +15,13 @@
 # - binary: CCC_TMUX_BIN (default `tmux` on PATH);
 # - socket: in CCC_TMUX_DIR (default /tmp/ccc-tmux-<uid>, 0700), not in
 #   tmux's /tmp/tmux-<uid> next to the user's servers;
-# - -f /dev/null when the server starts: no user tmux.conf, so no plugins.
-#   tmux-continuum/resurrect would otherwise restore the user's sessions
-#   (even re-launching `claude --continue` in them) into this server.
+# - -f <ccc's own tmux.conf> when the server starts (#335 #336): no user
+#   tmux.conf, so no plugins — tmux-continuum/resurrect would otherwise
+#   restore the user's sessions (even re-launching `claude --continue` in
+#   them) into this server — and ccc's mouse, scrollback and clipboard
+#   settings instead of the system's tmux defaults. The file: CCC_TMUX_CONF,
+#   else the one shipped with ccc (tmux.conf next to this script in the
+#   package, src/ccc/tmux.conf in a checkout), else none (/dev/null).
 set -euo pipefail
 
 TMUX_SOCKET="ccc"
@@ -36,7 +40,12 @@ if [ -L "$SOCKET_DIR" ] || [ ! -O "$SOCKET_DIR" ]; then
 fi
 chmod 700 "$SOCKET_DIR"
 
-own() { "$TMUX_BIN" -S "$SOCKET_DIR/$TMUX_SOCKET" -f /dev/null "$@"; }
+TMUX_CONF=/dev/null
+for candidate in "${CCC_TMUX_CONF:-}" "$PROJECT_DIR/src/ccc/tmux.conf" "$(dirname "${BASH_SOURCE[0]}")/tmux.conf"; do
+    if [ -n "$candidate" ] && [ -f "$candidate" ]; then TMUX_CONF="$candidate"; break; fi
+done
+
+own() { "$TMUX_BIN" -S "$SOCKET_DIR/$TMUX_SOCKET" -f "$TMUX_CONF" "$@"; }
 
 if [ "${1:-}" = "stop" ]; then
     own kill-session -t "=$SESSION" 2>/dev/null || true

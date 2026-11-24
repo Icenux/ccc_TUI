@@ -2,12 +2,12 @@ import io
 
 import pytest
 
-from ccc import attach_cli, managed_sessions
+from ccc import attach_cli, managed_sessions, tmux
 
 
 def test_attach_command_targets_the_session_server(tmux_dir):
     assert attach_cli.attach_command(7) == [
-        "tmux", "-S", f"{tmux_dir}/ccc-sessions", "-f", "/dev/null", "attach-session", "-t", "=q7:",
+        "tmux", "-S", f"{tmux_dir}/ccc-sessions", "-f", tmux.config_path(), "attach-session", "-t", "=q7:",
     ]
 
 

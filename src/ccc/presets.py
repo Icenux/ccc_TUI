@@ -9,6 +9,7 @@ from ccc.launch_options import DEFAULT_SELECTION, FORK, GROUPS, SESSION_NEW, gro
 
 LAST_KEY = "last_launch_selection"
 PRESETS_KEY = "launch_presets"
+DEFAULT_PRESET_KEY = "default_launch_preset"
 
 _KNOWN_KEYS = {option.key for group in GROUPS for option in group.options}
 
@@ -85,3 +86,24 @@ def save_preset(storage, name: str, choice: LaunchChoice) -> None:
 def delete_preset(storage, name: str) -> None:
     presets = {n: _to_dict(c) for n, c in list_presets(storage).items() if n != name}
     storage.set_setting(PRESETS_KEY, json.dumps(presets, ensure_ascii=False))
+    if default_preset_name(storage) == name:
+        set_default_preset(storage, None)
+
+
+def default_preset_name(storage) -> str | None:
+    """The preset the dialog opens with (#337), None if none is set or it was deleted."""
+    name = storage.get_setting(DEFAULT_PRESET_KEY)
+    return name if name and name in list_presets(storage) else None
+
+
+def set_default_preset(storage, name: str | None) -> None:
+    storage.set_setting(DEFAULT_PRESET_KEY, name or "")
+
+
+def opening_choice(storage) -> tuple[LaunchChoice, str | None]:
+    """What the New conversation dialog opens with: the default preset (and its
+    name) if the user set one, else what was used last, else the plain default."""
+    name = default_preset_name(storage)
+    if name is not None:
+        return list_presets(storage)[name], name
+    return load_last(storage) or LaunchChoice(DEFAULT_SELECTION), None

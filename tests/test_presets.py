@@ -45,3 +45,22 @@ def test_mcp_servers_are_remembered_with_the_choice(tmp_path):
     sel = toggle(DEFAULT_SELECTION, "mcp:context7", True)
     save_last(storage, LaunchChoice(sel))
     assert {"mcp_select", "mcp:context7"} <= load_last(storage).selection
+
+
+def test_default_preset_is_what_the_dialog_opens_with(tmp_path):
+    from ccc import presets
+    from ccc.storage import Storage
+    storage = Storage(tmp_path / "h.db")
+    plain, name = presets.opening_choice(storage)
+    assert name is None and plain.selection == presets.DEFAULT_SELECTION
+    presets.save_last(storage, presets.LaunchChoice(frozenset({"session_new", "perm_plan"})))
+    assert presets.opening_choice(storage)[0].selection >= {"perm_plan"}  # nothing set: what was used last
+    presets.save_preset(storage, "deep", presets.LaunchChoice(frozenset({"session_new", "perm_skip", "model_opus"}), False, True))
+    presets.set_default_preset(storage, "deep")
+    choice, name = presets.opening_choice(storage)
+    assert name == "deep" and "model_opus" in choice.selection and not choice.auto_continue
+    presets.delete_preset(storage, "deep")  # a deleted one is no default
+    assert presets.default_preset_name(storage) is None
+    assert presets.opening_choice(storage)[1] is None
+    presets.set_default_preset(storage, "gone")  # a name that isn't a preset
+    assert presets.default_preset_name(storage) is None

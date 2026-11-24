@@ -225,6 +225,14 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("window.save", N_("Save")),
         ("window.cancel", N_("Cancel (nothing is saved)")),
     ]),
+    (N_("New conversation (n)"), [
+        ("window.complete", N_("Complete the folder path (Enter only confirms it)")),
+        ("window.tree_open", N_("Open the folder in the disk tree")),
+        ("window.tree_back", N_("Close the folder; at the top of the tree, one level up")),
+        ("window.start", N_("Start the conversation (also the Start button, or Enter in the name)")),
+        ("window.save", N_("Save the options as a preset")),
+        ("window.cancel", N_("Cancel")),
+    ]),
 ]
 
 

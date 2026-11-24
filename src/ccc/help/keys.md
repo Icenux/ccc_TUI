@@ -200,3 +200,14 @@ name the default keys.
 |---|---|
 | `Ctrl+S` | Save |
 | `Esc` | Cancel (nothing is saved) |
+
+## New conversation (n)
+
+| Key | |
+|---|---|
+| `Tab` | Complete the folder path (Enter only confirms it) |
+| `→` | Open the folder in the disk tree |
+| `←` | Close the folder; at the top of the tree, one level up |
+| `Ctrl+Enter` | Start the conversation (also the Start button, or Enter in the name) |
+| `Ctrl+S` | Save the options as a preset |
+| `Esc` | Cancel |

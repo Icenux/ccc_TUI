@@ -2,23 +2,42 @@
 
 Press `n` anywhere (or the green **New conversation** button in
 Conversations, or `[n] new conversation` on the Dashboard). From the top:
-the folder, the recent folders, the chosen options as coloured chips,
-then name, session, preset and ccc's own switches; **Start** at the bottom
-(or `Enter` in the folder or name field).
+name and preset, the folder (with the recent folders and a tree of the
+disks beside it), the session, every option of Claude Code and ccc's own
+switches; **Start** at the bottom.
 
-- A **chip** shows a chosen option (red: permissions, blue: model,
-  yellow: effort, grey: the rest); a click on it drops the option.
-- **+ option** opens every option below (in the groups of the table
-  below) together with the folder tree to browse; the **Session** field
-  opens them too, on the session's choice.
+- **Tab** in the folder completes the path (the choices are shown under
+  it); **Enter** only confirms the folder and moves on — it never starts.
+  **Start** is the button, `Ctrl+Enter` from anywhere, or `Enter` in the name.
+- Everything is shown at once; the window scrolls. In a narrow window (a
+  phone) the columns stand one under another.
 - `Ctrl+S` saves the choice as a preset (or **Save…** next to Preset).
 
 ![New conversation](../../../docs/screenshots/new_conversation.png)
 
 ## Directory
 
-The project folder Claude will work in: pick one of the recent folders
-(↑↓, Enter), type a path, or browse the folder tree (under **+ option**).
+The project folder Claude will work in. Type a path (**Tab** completes it),
+pick one of the **recent** folders (↑↓, Enter) or walk the **disk tree**:
+it covers every disk, → opens a folder, ← closes it (at the top, goes up
+a level, as far as `/`), Enter chooses it. Hidden folders (a name starting
+with a dot) are left out of the tree and the completion unless you type the
+dot yourself; system folders (`/proc`, `/sys`…) never appear. A folder that
+is gone is dropped from the recent list.
+
+**Find project…** looks for folders with a `.git` by part of the name on the
+home folder and the other disks (`/mnt`, `/media`). It runs only while its
+window is open, with a depth and a time limit, and the results come as they
+are found; Enter on one fills in the folder.
+
+## Session
+
+*A session is Claude Code's memory: the whole history of the conversation
+in this folder.* A new one starts with a clean head, the others continue
+from what Claude already knows. **Continue** and **Resume** are switched
+off, with the reason next to them, in a folder with no earlier conversation;
+**As a copy** only with something to copy from; **Own git worktree** only
+in a git repository.
 
 ## Options
 
@@ -110,10 +129,11 @@ Claude calls by itself without this option.
 
 ## Presets
 
-The window remembers your last choice. If you use a few combinations
-often, **Save as preset** stores the current one under a name; **Choose a
-preset…** fills the window with it. Delete presets in
-[Settings](settings.md).
+**Save as preset** stores the current options (not the name or folder)
+under a name; **Choose a preset…** fills the window with it. Delete presets in
+[Settings](settings.md). **★** next to Save… makes the shown preset the
+**default**: the window opens with it. Press it again and no preset is the
+default — then the window opens with your last choice, as it did before.
 
 ## After Start
 

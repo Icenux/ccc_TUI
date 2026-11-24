@@ -2,7 +2,7 @@ import subprocess
 
 import pytest
 
-from ccc import managed_sessions as ms
+from ccc import managed_sessions as ms, tmux
 from ccc.models import DeliveryMode, Queue
 
 
@@ -116,7 +116,7 @@ def test_tmux_calls_use_own_socket_and_target(calls, tmux_dir):
     assert ms.capture(q.id) == "pane text\n"
     ms.stop(q.id)
     for args, _ in calls:
-        assert args[:5] == ["tmux", "-S", f"{tmux_dir}/{ms.TMUX_SOCKET}", "-f", "/dev/null"]
+        assert args[:5] == ["tmux", "-S", f"{tmux_dir}/{ms.TMUX_SOCKET}", "-f", tmux.config_path()]
     start_args = calls[1][0]
     assert "new-session" in start_args and "-c" in start_args and "/tmp/p" in start_args
     assert start_args[-1] == "env CLAUDE_CODE_NO_FLICKER=1 claude --session-id sid-1 --remote-control 'my conv'"  # fullscreen: prompt at the bottom (#274)

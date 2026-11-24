@@ -38,7 +38,7 @@ def test_socket_dir_is_ccc_own_not_tmux(monkeypatch):
 
 def test_command_uses_own_socket_and_no_user_config(tmux_dir):
     assert tmux.command("ccc-sessions", "has-session", "-t", "=q1:") == [
-        "tmux", "-S", f"{tmux_dir}/ccc-sessions", "-f", "/dev/null", "has-session", "-t", "=q1:",
+        "tmux", "-S", f"{tmux_dir}/ccc-sessions", "-f", tmux.config_path(), "has-session", "-t", "=q1:",
     ]
 
 
@@ -92,3 +92,31 @@ def test_a_real_server_lives_in_ccc_own_directory(tmux_dir):
         assert subprocess.run(tmux.command(name, "has-session", "-t", "=t"), timeout=10).returncode == 0
     finally:
         subprocess.run(tmux.command(name, "kill-server"), capture_output=True, timeout=10)
+
+
+def test_config_is_ccc_own_file_not_dev_null(monkeypatch):
+    path = tmux.config_path()
+    assert os.path.basename(path) == "tmux.conf" and os.path.isfile(path)
+    monkeypatch.setenv("CCC_TMUX_CONF", "/nonexistent/tmux.conf")
+    assert tmux.config_path() == os.devnull  # missing file: no configuration, never the user's
+
+
+@pytest.mark.skipif(shutil.which("tmux") is None, reason="needs tmux")
+def test_own_config_sets_mouse_scrollback_clipboard_on_a_fresh_server(tmp_path):
+    socket_path = str(tmp_path / "s")
+    base = ["tmux", "-S", socket_path, "-f", tmux.config_path()]
+    subprocess.run([*base, "new-session", "-d", "-s", "t", "sleep 30"], check=True)
+    try:
+        def show(*option):
+            return subprocess.run([*base, "show-options", *option], capture_output=True, text=True).stdout
+
+        assert show("-gv", "mouse").strip() == "on"
+        assert int(show("-gv", "history-limit")) >= 10000
+        assert show("-sv", "set-clipboard").strip() == "external"
+        assert "*:clipboard" in show("-s", "terminal-features")
+        # loading it again into the running server adds nothing
+        before = show("-s", "terminal-features")
+        subprocess.run([*base, "source-file", tmux.config_path()], check=True)
+        assert show("-s", "terminal-features") == before
+    finally:
+        subprocess.run([*base, "kill-server"], capture_output=True)

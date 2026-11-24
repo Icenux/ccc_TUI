@@ -89,6 +89,7 @@ def hide_chrome() -> None:
     no pane titles; every line on screen is ccc's."""
     if not (embedded() and os.environ.get("TMUX") and _on_ccc_server()):
         return
+    _tmux("source-file", tmux.config_path())  # ccc's own tmux.conf (#335 #336)
     _tmux("set-option", "-g", "status", "off")
     _tmux("set-option", "-w", "pane-border-status", "off")
     _tmux("set-option", "-w", "pane-border-lines", "single")
@@ -364,6 +365,7 @@ def style_window(keys: dict[str, str] | None = None) -> None:
     would shift all of ccc down by a row when switching views."""
     if not (available() and _on_ccc_server()):
         return
+    _tmux("source-file", tmux.config_path())  # ccc's own tmux.conf (#335 #336)
     # Click a pane to switch to it; the wheel scrolls Claude.
     _tmux("set-option", "-t", _own_pane(), "mouse", "on")
     for name, value in BORDER_OPTIONS:

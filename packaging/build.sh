@@ -29,6 +29,7 @@ case "$(ls "$app/wheels")" in
 esac
 
 cp bin/ccc-tui-supervise.sh "$app/ccc-tui-supervise.sh"
+cp src/ccc/tmux.conf "$app/tmux.conf"  # ccc's own tmux configuration, read by the script
 
 # Quick check that the wheel has the right version.
 [ -z "$VERSION" ] || ls "$app/wheels" | grep -q "^ccc-${VERSION}-py3-none-any.whl$" \

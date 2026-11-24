@@ -1,7 +1,7 @@
 import subprocess
 import threading
 
-from ccc import clipboard_bridge
+from ccc import clipboard_bridge, tmux
 
 
 def test_changed_buffer_parses_only_the_notification():
@@ -26,15 +26,15 @@ def test_forward_loads_into_ccc_with_clipboard(monkeypatch, tmux_dir):
 
     monkeypatch.setattr(clipboard_bridge.subprocess, "run", run)
     assert clipboard_bridge.forward("buffer3")
-    assert calls[0][0] == ["tmux", "-S", f"{tmux_dir}/ccc-sessions", "-f", "/dev/null",
+    assert calls[0][0] == ["tmux", "-S", f"{tmux_dir}/ccc-sessions", "-f", tmux.config_path(),
                            "save-buffer", "-b", "buffer3", "-"]
-    assert calls[1] == (["tmux", "-S", f"{tmux_dir}/ccc", "-f", "/dev/null", "load-buffer", "-w", "-"],
+    assert calls[1] == (["tmux", "-S", f"{tmux_dir}/ccc", "-f", tmux.config_path(), "load-buffer", "-w", "-"],
                         b"copied text")
 
 
 def test_control_client_is_read_only(tmux_dir):
     assert clipboard_bridge.control_command(7) == [
-        "tmux", "-S", f"{tmux_dir}/ccc-sessions", "-f", "/dev/null", "-C", "attach-session", "-r", "-t", "=q7:",
+        "tmux", "-S", f"{tmux_dir}/ccc-sessions", "-f", tmux.config_path(), "-C", "attach-session", "-r", "-t", "=q7:",
     ]
 
 

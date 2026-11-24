@@ -30,6 +30,7 @@ version = {attr = "ccc.__version__"}
 where = ["src"]
 
 [tool.setuptools.package-data]
+"ccc" = ["tmux.conf"]
 "ccc.help" = ["*.md", "cs/*.md"]
 
 [tool.pytest.ini_options]

@@ -153,6 +153,7 @@ def make_transparent(detach_key: str | None = None) -> None:
     """Server-wide options (idempotent; the server may have been started
     before ccc set them). The detach key: `detach_key`, else the one bound
     already, else Ctrl+]."""
+    _tmux("source-file", tmux.config_path())  # ccc's own tmux.conf (#335 #336)
     for args in TRANSPARENT_OPTIONS:
         _tmux(*args)
     set_detach_key(detach_key)

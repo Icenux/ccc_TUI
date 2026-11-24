@@ -9,8 +9,10 @@ managed_sessions). Nothing about them is shared with a tmux the user runs:
 - the sockets: in ccc's own directory (CCC_TMUX_DIR, default
   /tmp/ccc-tmux-<uid>), not in tmux's /tmp/tmux-<uid> next to the user's
   servers, and independent of TMUX_TMPDIR;
-- the configuration: `-f /dev/null`, so the user's tmux.conf (and its
-  plugins, e.g. tmux-continuum restoring sessions) is never loaded.
+- the configuration: ccc's own tmux.conf (next to this module, #335 #336),
+  so the user's tmux.conf (and its plugins, e.g. tmux-continuum restoring
+  sessions) is never loaded, and what ccc needs (mouse, scrollback,
+  clipboard) doesn't depend on the system's tmux defaults.
 
 Servers ccc started before this (`tmux -L <name>`, in /tmp/tmux-<uid>) keep
 being used while they're alive, so an upgrade doesn't cut off running
@@ -28,6 +30,13 @@ import stat
 def binary() -> str:
     """The tmux ccc runs its servers with."""
     return os.environ.get("CCC_TMUX_BIN") or "tmux"
+
+
+def config_path() -> str:
+    """ccc's own tmux configuration (CCC_TMUX_CONF overrides it); /dev/null
+    (no configuration at all) if the file is missing."""
+    path = os.environ.get("CCC_TMUX_CONF") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmux.conf")
+    return path if os.path.isfile(path) else os.devnull
 
 
 def socket_dir() -> str:
@@ -82,11 +91,13 @@ def server(name: str) -> list[str]:
 
 
 def command(name: str, *args: str) -> list[str]:
-    """A tmux command on ccc's server `name` (never the user's tmux.conf)."""
-    return [binary(), *server(name), "-f", "/dev/null", *args]
+    """A tmux command on ccc's server `name`, with ccc's own tmux.conf
+    (never the user's)."""
+    return [binary(), *server(name), "-f", config_path(), *args]
 
 
 def own(*args: str) -> list[str]:
     """A tmux command on the server the calling pane runs in ($TMUX) — for
     code running inside ccc's own server, with ccc's tmux binary."""
     return [binary(), *args]
+

@@ -44,6 +44,7 @@ POST /api/v1/pair                         {"code", "name"}: the one request with
 GET  /api/v1/audit                        what the devices did (admin): the newest first, ?limit= (100); changes, refusals and pairings only — see ccc.api_audit
 GET  /api/v1/devices                      the devices signed in; "current" marks the caller; ?all=1 adds the signed-out ones (history, with revoked_at / revoked_by)
 POST /api/v1/conversations/{id}/rename   {"name"}: rename a conversation
+GET  /api/v1/notes (and POST, /notes/item, /notes/rename)   ccc's own Markdown notes (#223) — see ccc.api_notes
 POST /api/v1/devices/{id}                 {"name"}: rename a device
 DELETE /api/v1/devices/{id}               sign a device out (the caller too); the row stays as history
 GET  /api/v1/launch-presets               New conversation presets and the last choice
@@ -80,6 +81,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from ccc import agents, goals, groups, i18n, launch_options, mcp_servers, overview, plugins, updates
 from ccc.api_agents import AgentEndpoints
+from ccc.api_notes import NoteEndpoints
 from ccc.api_subagent_runs import SubagentRunEndpoints
 from ccc.api_subagents import SubagentEndpoints
 from ccc import api_audit, api_scope
@@ -180,7 +182,7 @@ class _Transcript:
     events: list[TranscriptEvent] = field(default_factory=list)
 
 
-class Api(AgentEndpoints, SubagentEndpoints, SubagentRunEndpoints, ViewEndpoints):
+class Api(AgentEndpoints, SubagentEndpoints, SubagentRunEndpoints, ViewEndpoints, NoteEndpoints):
     """The endpoints without HTTP: route() takes a request and returns
     (status, JSON-able body), raising ApiError for an error."""
 
@@ -242,7 +244,7 @@ class Api(AgentEndpoints, SubagentEndpoints, SubagentRunEndpoints, ViewEndpoints
             ok(r"/devices", lambda ids, q, b: self.devices(int_of(q, CALLER), q.get("all") in ("1", "true"))),
             ok(r"/devices/(\d+)", lambda ids, q, b: self.rename_device(*ids, b), "POST"),
             ok(r"/devices/(\d+)", lambda ids, q, b: self.remove_device(*ids), "DELETE"),
-        ] + self._agent_routes() + self._subagent_routes() + self._subagent_run_routes() + self._view_routes()
+        ] + self._agent_routes() + self._subagent_routes() + self._subagent_run_routes() + self._view_routes() + self._note_routes()
 
     def route(self, method: str, path: str, query: dict[str, str], body: dict) -> tuple[HTTPStatus, object]:
         if not path.startswith(PREFIX + "/"):

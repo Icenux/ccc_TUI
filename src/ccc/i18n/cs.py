@@ -262,6 +262,21 @@ CS: dict[str, str] = {
     "Start": "Spustit",
     "{time} · {n} msgs · {prompt}": "{time} · zprávy: {n} · {prompt}",
     "Choose a directory.": "Vyber složku.",
+    # notes (notes.py, api_notes.py)
+    "Give the note's path.": "Zadej cestu poznámky.",
+    "A note's path is made of folders and a name ending in .md, e.g. ideas/api.md.":
+        "Cesta poznámky se skládá ze složek a názvu končícího na .md, např. napady/api.md.",
+    "A note may not be a link.": "Poznámka nesmí být odkaz.",
+    "The note is too long.": "Poznámka je moc dlouhá.",
+    "No such note.": "Taková poznámka není.",
+    "Could not read the note: {error}": "Poznámku se nepodařilo přečíst: {error}",
+    "The note's text is missing.": "Chybí text poznámky.",
+    "Could not write the note: {error}": "Poznámku se nepodařilo zapsat: {error}",
+    "A note with this path already exists.": "Poznámka s touto cestou už existuje.",
+    "Give the version the note was read with.": "Zadej verzi, se kterou byla poznámka přečtena.",
+    "The note changed since you opened it.": "Poznámka se od otevření změnila.",
+    "Could not rename the note: {error}": "Poznámku se nepodařilo přejmenovat: {error}",
+    "Could not remove the note: {error}": "Poznámku se nepodařilo odstranit: {error}",
     # launch options (launch_options.py)
     "Session": "Relace",
     "New session": "Nová relace",

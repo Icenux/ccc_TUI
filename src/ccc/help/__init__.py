@@ -16,6 +16,7 @@ TOPICS: list[tuple[str, str]] = [
     ("conversations", N_("Conversations")),
     ("new-conversation", N_("Starting a conversation")),
     ("tasks", N_("Task queue")),
+    ("notes", N_("Notes")),
     ("routines", N_("Routines")),
     ("agents", N_("Agents")),
     ("review", N_("Reviews")),
@@ -43,6 +44,7 @@ VIEW_TOPICS = {
     "sessions": "live-sessions",
     "analytics": "analytics",
     "tasks": "tasks",
+    "notes": "notes",
 }
 
 _IMAGE_LINE = re.compile(r"^\s*(!\[[^\]]*\]\([^)]*\)|<img\b[^>]*>)\s*$")

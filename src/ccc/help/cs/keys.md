@@ -21,6 +21,7 @@ uvádějí výchozí klávesy.
 | `?` | Tato nápověda |
 | `A` | Agenti: pomocníci, které Claude Code umí zavolat |
 | `t` | Úkoly a routiny: všechny čekající úkoly, všechny routiny |
+| `N` | Poznámky: soubory Markdown sdílené s Androidem |
 | `T` | Editor úkolů vybrané konverzace (fronta, plán, pauza, automatické pokračování) |
 | `U` | Aktualizovat ccc — jen když je nová verze |
 | `Ctrl+P` | Nastavení (jazyk, Telegram, fronty, předvolby, zkratky, záloha) |
@@ -125,6 +126,16 @@ uvádějí výchozí klávesy.
 | `Space` | Zapnout / vypnout routinu |
 | `r` | Spustit routinu hned (její další termín zůstane) |
 | `Ctrl+S` | Uložit v editoru routiny |
+
+## Poznámky (N)
+
+| Klávesa | |
+|---|---|
+| `+` | Napsat novou poznámku (zeptá se na název a otevře editor) |
+| `e` | Upravit poznámku v editoru (také Enter) |
+| `r` | Přejmenovat poznámku nebo ji přesunout do jiné složky |
+| `Del` | Smazat poznámku (přesune se do vlastní složky ccc) |
+| `/` | Hledat v názvech a textu poznámek (Esc hledání zruší) |
 
 ## Agenti (A)
 

@@ -52,6 +52,8 @@ GET  /api/v1/mcp-servers?path=            names of the MCP servers configured fo
 GET  /api/v1/plugins                      installed Claude Code plugins and which ones are on by default
 GET  /api/v1/agents?path=                 Claude Code subagents (.claude/agents of the folder, ~/.claude/agents); create, change, remove
                                           and the templates: see ccc.api_subagents
+GET  /api/v1/conversations/{id}/subagents[/{agent}]  what the conversation's subagents did (runs, steps, tokens): see
+                                          ccc.api_subagent_runs
 GET  /api/v1/permissions                  every approval waiting
 POST /api/v1/permissions/{id}             {"decision": "allow" | "always" | "deny"}
 GET  /api/v1/usage                        Claude usage limits
@@ -78,6 +80,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from ccc import agents, goals, groups, i18n, launch_options, mcp_servers, overview, plugins, updates
 from ccc.api_agents import AgentEndpoints
+from ccc.api_subagent_runs import SubagentRunEndpoints
 from ccc.api_subagents import SubagentEndpoints
 from ccc import api_audit, api_scope
 from ccc.api_common import ApiError, int_of, iso, route, text_of
@@ -177,7 +180,7 @@ class _Transcript:
     events: list[TranscriptEvent] = field(default_factory=list)
 
 
-class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
+class Api(AgentEndpoints, SubagentEndpoints, SubagentRunEndpoints, ViewEndpoints):
     """The endpoints without HTTP: route() takes a request and returns
     (status, JSON-able body), raising ApiError for an error."""
 
@@ -239,7 +242,7 @@ class Api(AgentEndpoints, SubagentEndpoints, ViewEndpoints):
             ok(r"/devices", lambda ids, q, b: self.devices(int_of(q, CALLER), q.get("all") in ("1", "true"))),
             ok(r"/devices/(\d+)", lambda ids, q, b: self.rename_device(*ids, b), "POST"),
             ok(r"/devices/(\d+)", lambda ids, q, b: self.remove_device(*ids), "DELETE"),
-        ] + self._agent_routes() + self._subagent_routes() + self._view_routes()
+        ] + self._agent_routes() + self._subagent_routes() + self._subagent_run_routes() + self._view_routes()
 
     def route(self, method: str, path: str, query: dict[str, str], body: dict) -> tuple[HTTPStatus, object]:
         if not path.startswith(PREFIX + "/"):

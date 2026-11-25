@@ -114,6 +114,17 @@ Good to know:
 - Every such conversation keeps a Claude Code process in memory —
   [archive](archive.md) (`x`) the ones you're done with.
 
+## Subagents
+
+Claude Code hands work to subagents. The **Subagents** button above *New conversation* (or `b`) shows what they did instead of Claude Code: the button counts them (`Subagents 6 · 1 running`), and `b` or `Esc` brings Claude Code back. The Archive has the same button.
+
+- The top half is a **tree with a timeline**: the conversation's subagents, a subagent's own subagents under it, a bar for when each worked (bars that overlap ran at the same time), its state (`✓` done, `✗` failed or cut off, `●` running), how long it took and its tokens.
+- The bottom half is the selected one: who started it, when, how long, model, tools and tokens, and the **Prompt** it was given, its **Steps** (tool, argument, time since its start, duration, an error such as `Exit code 1`) and its **Result**. `Tab` switches between the three; `Enter` on a step that started another subagent jumps to it.
+- It is **live**: a running subagent grows its bar and gets new steps while you watch.
+- `↑` `↓` move, `←` `→` fold and unfold a subagent's own subagents, `+` `−` zoom the timeline.
+
+ccc stores nothing for this: it reads Claude Code's own transcripts (the subagents' files beside the conversation's). The [Android app's API](android-api.md) serves the same.
+
 ## Headless conversations
 
 Conversations that share a folder show a ⚠ line: their headless tasks

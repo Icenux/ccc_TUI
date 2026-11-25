@@ -68,6 +68,7 @@ uvádějí výchozí klávesy.
 | `Ctrl+↓` | Skočit na nadpis další skupiny (Enter nebo klik ji sbalí / rozbalí) |
 | `Ctrl+↑` | Skočit na nadpis předchozí skupiny |
 | `e` | Exportovat konverzaci jako Markdown |
+| `b` | Subagenti konverzace: strom a časová osa, zadání, kroky, výsledek (b nebo Esc zpět) |
 | `v` | Nechat její změny zkontrolovat nezávislým recenzentem (jednou, nebo dokud neprojde) |
 | `g` | Smyčka k cíli: kola práce, kontroly a recenze, dokud není cíl splněný |
 | `w` | Workflow: plán, schválení, stavba, kontrola, paralelní recenze, rozhodčí |
@@ -97,6 +98,7 @@ uvádějí výchozí klávesy.
 | `Ctrl+↓` | Skočit na nadpis další skupiny (Enter nebo klik ji sbalí / rozbalí) |
 | `Ctrl+↑` | Skočit na nadpis předchozí skupiny |
 | `e` | Exportovat konverzaci jako Markdown |
+| `b` | Subagenti konverzace: strom a časová osa, zadání, kroky, výsledek (b nebo Esc zpět) |
 
 ## Editor úkolů (T)
 

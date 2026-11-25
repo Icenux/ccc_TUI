@@ -46,7 +46,7 @@ class SidebarButton:
     # key — Button labels are parsed as Rich markup, so use "({key})"
     # rather than "[{key}]" (brackets get silently eaten).
     label: str
-    color: str  # "green" | "teal" | "red" | "strip" — see BUTTON_CSS
+    color: str  # "green" | "teal" | "red" | "warning" | "strip" — see BUTTON_CSS
     action: str  # action name on the screen, without the "action_" prefix
     key_id: str  # keymap action id whose key the label shows
 
@@ -105,6 +105,7 @@ BEVEL_COLOURS: dict[str, tuple[str, str, str]] = {
     "nav-tasks": ("#5f5f87", "#87afaf", "#005f5f"),
     "sidebar-button-green": ("#00af5f", "#5fd787", "#005f5f"),
     "sidebar-button-red": ("#af5f5f", "#d78787", "#5f0000"),
+    "sidebar-button-warning": ("#af8700", "#d7af5f", "#875f00"),
     "sidebar-button": ("#3a3a3a", "#626262", "#1c1c1c"),
 }
 
@@ -290,6 +291,10 @@ NEW_CONVERSATION_BUTTON = SidebarButton(
 FILTER_BUTTON = SidebarButton("sidebar-filter", _("{key} Filter"), "strip", "filter", "conversations.filter")
 # Next to the filter: renames the selected conversation (F2).
 RENAME_BUTTON = SidebarButton("sidebar-rename", _("{key} Rename"), "strip", "rename", "conversations.rename")
+# Above the buttons below the list: shows what the conversation's subagents did (b, #286); its text carries
+# the counts (ConversationsScreen._subagents_label), the colour is the warning one.
+SUBAGENTS_BUTTON = SidebarButton("sidebar-subagents", _("Subagents ({key})"), "warning", "subagents",
+                                 "conversations.subagents")
 # Under New conversation: archives the selected conversation (x).
 ARCHIVE_BUTTON = SidebarButton("sidebar-archive", _("Archive ({key})"), "teal", "toggle_archive",
                                "conversations.archive")
@@ -520,6 +525,10 @@ Button.modal-submit, Button.workflow-ok, Button.sidebar-button-green {
 Button.settings-danger, Button.review-danger, Button.goal-danger,
 Button.routines-danger, Button.workflow-danger, Button.sidebar-button-red {
     background: $ccc-button-danger;
+}
+Button.sidebar-button-warning {
+    background: $ccc-warning;
+    color: black;
 }
 /* The 3D buttons of the menu and the sidebar (#102, #250): BevelButton draws the edges itself —
    the label row, then a row split in half: its dark bottom edge over the light top edge of the

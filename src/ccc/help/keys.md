@@ -68,6 +68,7 @@ name the default keys.
 | `Ctrl+↓` | Jump to the next group's heading (Enter or a click folds / unfolds it) |
 | `Ctrl+↑` | Jump to the previous group's heading |
 | `e` | Export the conversation as Markdown |
+| `b` | Subagents of the conversation: tree and timeline, prompt, steps, result (b or Esc back) |
 | `v` | Review its changes with a fresh reviewer (once or until it passes) |
 | `g` | Goal loop: rounds of work, check and review until the goal is met |
 | `w` | Workflow: plan, approve, build, check, parallel reviews, arbiter |
@@ -97,6 +98,7 @@ name the default keys.
 | `Ctrl+↓` | Jump to the next group's heading (Enter or a click folds / unfolds it) |
 | `Ctrl+↑` | Jump to the previous group's heading |
 | `e` | Export the conversation as Markdown |
+| `b` | Subagents of the conversation: tree and timeline, prompt, steps, result (b or Esc back) |
 
 ## Tasks editor (T)
 

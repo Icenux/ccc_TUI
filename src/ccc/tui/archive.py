@@ -10,6 +10,7 @@ from ccc import keymap
 from ccc.i18n import _
 from ccc.models import Queue
 from ccc.tui.conversations import ConversationsScreen
+from ccc.tui.layout import SUBAGENTS_BUTTON
 
 # Conversation actions that make no sense for an archived one — neither
 # working nor shown in the key list (#308): no Claude Code runs for it, so
@@ -43,7 +44,7 @@ class ArchiveScreen(ConversationsScreen):
         self._focus_input_on_mount = False  # no message box here
 
     def sidebar_buttons(self):
-        return []  # nothing to start from here; the Archive only restores and deletes
+        return [SUBAGENTS_BUTTON]  # nothing to start from here; the Archive restores, deletes and shows the subagents (#286)
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         if action in DISABLED_ACTIONS:

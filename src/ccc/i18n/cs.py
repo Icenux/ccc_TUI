@@ -1770,4 +1770,33 @@ CS: dict[str, str] = {
     "Restore it from the Archive (h) with x.":
         "Archivovat '{name}'? Její Claude Code se zastaví a žádný její úkol nepoběží.\n"
         "Obnovíš ji v Archivu (h) klávesou x.",
+    "No such subagent run.": "Takový běh subagenta neexistuje.",
+    "Subagents": "Subagenti",
+    "Subagents ({key})": "Subagenti ({key})",
+    "Subagents {n} ({key})": "Subagenti {n} ({key})",
+    "Subagents {n} · {m} running ({key})": "Subagenti {n} · {m} běží ({key})",
+    "Subagents: what they did, when, for how long, with what result":
+        "Subagenti: co dělali, kdy, jak dlouho a s jakým výsledkem",
+    "Subagents of the conversation: tree and timeline, prompt, steps, result (b or Esc back)":
+        "Subagenti konverzace: strom a časová osa, zadání, kroky, výsledek (b nebo Esc zpět)",
+    "This conversation has not started any subagent.": "Tato konverzace zatím nespustila žádného subagenta.",
+    "{name} · Subagents": "{name} · Subagenti",
+    "{n} runs": "{n} běhů",
+    "{n} running": "{n} běží",
+    "{n} errors": "{n} chyb",
+    "{n} tokens": "{n} tokenů",
+    "live": "živě",
+    "SUBAGENT": "SUBAGENT",
+    "TIMELINE": "ČASOVÁ OSA",
+    "TIME": "ČAS",
+    "TOKENS": "TOKENY",
+    "AT": "OD STARTU",
+    "TOOL": "NÁSTROJ",
+    "ARGUMENT": "ARGUMENT",
+    "TOOK": "TRVAL",
+    "Steps": "Průběh",
+    "(no result yet)": "(výsledek zatím není)",
+    "the conversation": "konverzace",
+    "by {who} · started {at} · took {took} · {model} · {tools} tools · {tokens} tokens":
+        "vyvolal {who} · start {at} · trval {took} · {model} · {tools} nástrojů · {tokens} tokenů",
 }

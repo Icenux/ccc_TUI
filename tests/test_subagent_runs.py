@@ -146,3 +146,52 @@ def test_the_api_lists_runs_with_a_summary_and_gives_one_in_detail(session, tmp_
     with pytest.raises(api.ApiError) as missing:
         server.route("GET", f"/api/v1/conversations/{queue.id}/subagents/zzz", {}, {})
     assert missing.value.status == 404
+
+
+# --- the TUI view ----------------------------------------------------------------------------
+
+
+def test_the_tree_puts_a_nested_run_under_its_parent_and_a_fold_hides_it():
+    from datetime import datetime, timezone
+
+    from ccc.tui import subagents as view
+
+    def run(id_, parent):
+        return sr.Run(id=id_, parent_id=parent, kind="Explore", description=id_,
+                      started=datetime(2026, 11, 1, 10, 0, int(id_[-1]), tzinfo=timezone.utc))
+
+    runs = [run("a1", ""), run("b2", "a1"), run("c3", "")]
+    assert [(r.id, prefix) for r, prefix in view.tree_order(runs, set())] == [
+        ("a1", ""), ("b2", "└─ "), ("c3", "")]  # the conversation's own runs are the roots
+    assert [r.id for r, _ in view.tree_order(runs, {"a1"})] == ["a1", "c3"]
+    assert view.duration(423000) == "7m03s" and view.tokens(186400) == "186k" and view.tokens(950) == "950"
+
+
+@pytest.mark.asyncio
+async def test_the_panel_lists_the_runs_and_shows_the_selected_one(session):
+    from textual.app import App
+    from textual.widgets import DataTable
+
+    from ccc.tui.subagents import SubagentsPanel
+
+    session.main.write_text(tool_use("toolu_A", "Agent", "2026-11-01T10:00:00Z", description="Find usages",
+                                     prompt="Look for foo"), encoding="utf-8")
+    session.agent("aaa", "toolu_A", "Find usages", [
+        line(type="user", timestamp="2026-11-01T10:00:01Z", message={"role": "user", "content": "Look for foo"}),
+        tool_use("t1", "Bash", "2026-11-01T10:00:02Z", command="pytest"),
+        tool_result("t1", "2026-11-01T10:00:04Z", "Exit code 1", error=True),
+    ])
+
+    class Host(App):
+        def compose(self):
+            yield SubagentsPanel(SESSION, "shop")
+
+    async with Host().run_test() as pilot:
+        await pilot.pause()
+        panel = pilot.app.query_one(SubagentsPanel)
+        table = panel.query_one("#sa-table", DataTable)
+        assert table.row_count == 1 and panel.selected == "aaa"
+        await pilot.press("tab")  # Prompt -> Steps
+        await pilot.pause()
+        steps = panel.query_one("#sa-steps", DataTable)
+        assert panel.tab == "steps" and steps.row_count == 1

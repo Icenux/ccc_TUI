@@ -9,11 +9,12 @@ from datetime import datetime
 from rich.text import Text
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.css.query import NoMatches
 from textual.content import Content
 from textual.screen import ModalScreen
 from textual.widgets import Collapsible, DataTable, Input, Markdown, Static
 
-from ccc import groups, keymap, list_filter, managed_sessions
+from ccc import groups, keymap, list_filter, managed_sessions, subagent_runs
 from ccc.i18n import _
 from ccc.launch_options import describe_flags
 from ccc.models import DeliveryMode, Queue, QueueStatus
@@ -28,6 +29,7 @@ from ccc.tui.layout import (
     DELETE_BUTTON,
     FILTER_BUTTON,
     RENAME_BUTTON,
+    SUBAGENTS_BUTTON,
     NEW_CONVERSATION_BUTTON,
     RETRY_BUTTON,
     ConfirmModal,
@@ -42,6 +44,7 @@ from ccc.tui.layout import (
 )
 from ccc.tui.message_box import MessageBox
 from ccc.tui.pixel_text import PixelBanner
+from ccc.tui.subagents import SubagentsPanel
 from ccc.tui.prompt_presets import ALT_DIGIT_CHARS, ALT_DIGIT_TEXT, ALT_ZERO_CHAR, bar_item
 
 GIT_STATUS_SECONDS = 15.0
@@ -134,6 +137,8 @@ class ConversationsScreen(SidebarScreen):
         keymap.binding("conversations.archive", "toggle_archive", _("Archive"), show=False),
         # Delete, not Ctrl+D: that exits Claude Code (#31). Its button is in the sidebar (DELETE_BUTTON).
         keymap.binding("archive.delete", "delete_conversation", _("Delete"), show=False),
+        # Its button is in the sidebar (SUBAGENTS_BUTTON); b or Esc in the view goes back (#286).
+        keymap.binding("conversations.subagents", "subagents", _("Subagents"), show=False),
         keymap.binding("conversations.search", "search", _("Search")),
         # Its button is above the list (FILTER_BUTTON), not in the footer.
         keymap.binding("conversations.filter", "filter", _("Filter"), show=False),
@@ -187,7 +192,7 @@ class ConversationsScreen(SidebarScreen):
         margin-bottom: 1;
         border-bottom: solid $ccc-frame;
     }
-    ConversationsScreen.-cli-open #main {
+    ConversationsScreen.-cli-open #main, ConversationsScreen.-subagents-open #main {
         display: none;
     }
     /* An archived interactive conversation has no Claude Code to show. */
@@ -347,9 +352,12 @@ class ConversationsScreen(SidebarScreen):
         # "*" match stops being new the moment you look at it.
         self._filter = list_filter.ListFilter()
         self._filter_kept: int | None = None
+        # The Subagents view (b, #286) in the place of Claude Code: whose, and its panel.
+        self._subagents_for: int | None = None
+        self._subagents_panel: SubagentsPanel | None = None
 
     def sidebar_buttons(self):
-        return [NEW_CONVERSATION_BUTTON, ARCHIVE_BUTTON, DELETE_BUTTON, RETRY_BUTTON]
+        return [SUBAGENTS_BUTTON, NEW_CONVERSATION_BUTTON, ARCHIVE_BUTTON, DELETE_BUTTON, RETRY_BUTTON]
 
     def retry_target(self):
         return self.storage.find_queue(self._current_queue_id) if self._current_queue_id is not None else None
@@ -555,6 +563,7 @@ class ConversationsScreen(SidebarScreen):
         self.storage.mark_seen(queue_id)
         self._sync_cli_pane()
         self.sync_retry_button()
+        await self._sync_subagents()
         self._load_transcript(queue_id)
         await self._render_transcript(queue_id)
 
@@ -599,7 +608,7 @@ class ConversationsScreen(SidebarScreen):
         if not cli_pane.available():
             return
         queue = self._cli_queue()
-        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for and not queue.claude_stopped
+        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for and not queue.claude_stopped and self._subagents_for is None
         shown = cli_pane.find()
         if want and shown is None and self._cli_open_for == queue.id:
             if managed_sessions.is_running(queue.id):
@@ -629,6 +638,69 @@ class ConversationsScreen(SidebarScreen):
             self.set_class(want, "-cli-open")
             self.refresh_bindings()  # Alt+0 / Ctrl+] in the key strip
 
+    # --- Subagents view (#286) ---------------------------------------------
+
+    async def _sync_subagents(self) -> None:
+        """The button's counts, and the view's rows while it is open (it follows the selected conversation)."""
+        queue = self.storage.find_queue(self._current_queue_id) if self._current_queue_id is not None else None
+        runs = await asyncio.to_thread(subagent_runs.read_runs, queue.session_id) if queue is not None else []
+        try:
+            button = self.query_one(f"#{SUBAGENTS_BUTTON.id}")
+        except NoMatches:
+            button = None
+        if button is not None:
+            running = sum(r.status == subagent_runs.RUNNING for r in runs)
+            key = keymap.pretty(self._keys()["conversations.subagents"])
+            if not runs:
+                label = SUBAGENTS_BUTTON.text(self._keys())
+            elif running:
+                label = _("Subagents {n} · {m} running ({key})").format(n=len(runs), m=running, key=key)
+            else:
+                label = _("Subagents {n} ({key})").format(n=len(runs), key=key)
+            if str(button.label) != label:
+                button.label = label
+        if self._subagents_for is None:
+            return
+        if queue is None or queue.id != self._subagents_for:
+            await self._close_subagents() if queue is None else await self._open_subagents(queue)
+        elif self._subagents_panel is not None:
+            self._subagents_panel.show_runs(runs)
+
+    async def _open_subagents(self, queue: Queue) -> None:
+        if self._subagents_panel is not None:
+            await self._subagents_panel.remove()
+        self._subagents_for = queue.id
+        self._subagents_panel = SubagentsPanel(queue.session_id, queue.name)
+        self.add_class("-subagents-open")
+        self._sync_cli_pane()
+        self._sync_embedded_pane()
+        await self.query_one("#main").parent.mount(self._subagents_panel)
+
+    async def _close_subagents(self) -> None:
+        self._subagents_for = None
+        panel, self._subagents_panel = self._subagents_panel, None
+        self.remove_class("-subagents-open")
+        if panel is not None:
+            await panel.remove()
+        self._sync_cli_pane()
+        self._sync_embedded_pane()
+        self.query_one("#conversation-queue-list").focus()
+
+    async def action_subagents(self) -> None:
+        """b: the right side shows what the conversation's subagents did instead of Claude Code; b or Esc back."""
+        if self._subagents_for is not None:
+            await self._close_subagents()
+            return
+        queue = self.storage.find_queue(self._current_queue_id) if self._current_queue_id is not None else None
+        if queue is None:
+            self.notify(_("Select a conversation first."), severity="warning")
+            return
+        await self._open_subagents(queue)
+
+    async def on_subagents_panel_closed(self, message: SubagentsPanel.Closed) -> None:
+        message.stop()
+        await self._close_subagents()
+
     def claude_pane(self) -> ClaudePane | None:
         """The Claude Code frame ccc draws itself (CCC_EMBEDDED_TERMINAL), if open."""
         panes = self.query(ClaudePane)
@@ -645,7 +717,7 @@ class ConversationsScreen(SidebarScreen):
         The pane is therefore remembered at once (self._embedded_pane), and
         there is never more than one for the selected conversation."""
         queue = self._cli_queue()
-        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for and not queue.claude_stopped
+        want = queue is not None and self._is_visible() and queue.id != self._cli_closed_for and not queue.claude_stopped and self._subagents_for is None
         keep = self._embedded_pane
         if not (want and keep is not None and keep.queue_id == queue.id):
             keep = None
@@ -675,7 +747,7 @@ class ConversationsScreen(SidebarScreen):
 
     # Keys that act on the selected conversation: shown (and working) only
     # while one is selected; Approve only while it waits for you (#308).
-    CONVERSATION_ACTIONS = {"tasks", "export", "review", "goal", "workflow", "approve", "group", "rename",
+    CONVERSATION_ACTIONS = {"subagents", "tasks", "export", "review", "goal", "workflow", "approve", "group", "rename",
                             "toggle_archive"}
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
@@ -1065,6 +1137,7 @@ class ConversationsScreen(SidebarScreen):
             self._update_list_labels(rows)
         self._sync_cli_pane()
         self.sync_retry_button()
+        await self._sync_subagents()
         if self._current_queue_id is None:
             return
         queue_id = self._current_queue_id
@@ -1445,7 +1518,10 @@ class ConversationsScreen(SidebarScreen):
         box.focus()
 
     def action_back(self) -> None:
-        # Esc first cancels the filter, then goes back.
+        # Esc first closes the Subagents view, then cancels the filter, then goes back.
+        if self._subagents_for is not None:
+            self.run_worker(self._close_subagents(), exclusive=True, group="subagents")
+            return
         if self.has_class("-filter-open"):
             self._close_filter()
             self.query_one("#conversation-queue-list", DataTable).focus()

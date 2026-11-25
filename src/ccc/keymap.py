@@ -96,6 +96,8 @@ ACTIONS: tuple[KeyAction, ...] = (
     # The id is older than the key's reach: it opens one conversation's tasks window from any view.
     KeyAction("conversations.tasks", "T", N_("Tasks editor of the selected conversation"), VIEWS),
     KeyAction("conversations.archive", "x", N_("Archive / restore the conversation"), _CONVERSATIONS),
+    KeyAction("conversations.subagents", "b", N_("Subagents: what they did, when, for how long, with what result"),
+              _CONVERSATIONS),
     KeyAction("conversations.approve", "p", N_("Approve a tool call"), _CONVERSATIONS),
     KeyAction("conversations.search", "slash", N_("Search: Conversations, Archive or everywhere"), _CONVERSATIONS),
     KeyAction("conversations.filter", "f", N_("Filter the list (name, folder, state)"), _CONVERSATIONS),

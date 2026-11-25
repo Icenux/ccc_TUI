@@ -277,12 +277,42 @@ def _subagent_dir(transcript: Path) -> Path:
     return transcript.parent / transcript.stem / "subagents"
 
 
+_cache: dict[str, tuple[tuple, list[Run]]] = {}
+
+
+def _signature(main: Path) -> tuple:
+    """What changed on disk: the size and time of the main transcript and of every subagent file."""
+    files = [main, *sorted(_subagent_dir(main).glob("agent-*"))]
+    out = []
+    for file in files:
+        try:
+            info = file.stat()
+        except OSError:
+            continue
+        out.append((file.name, info.st_size, info.st_mtime_ns))
+    return tuple(out)
+
+
 def read_runs(session_id: str, now: float | None = None) -> list[Run]:
-    """Every subagent run of a session — those of the conversation and of other subagents — oldest first, each
-    with its steps. [] for a session without any (or without a transcript)."""
+    """The runs of read_all_runs, parsed again only when a transcript changed (the TUI asks every 2 s)."""
     main = find_transcript_path(session_id)
     if main is None:
         return []
+    signature = _signature(main)
+    cached = _cache.get(session_id)
+    if cached and cached[0] == signature and now is None:
+        return cached[1]
+    runs = _read_all(session_id, main, now)
+    if now is None and not any(r.status == RUNNING for r in runs):  # a running one may turn stopped by the clock alone
+        _cache[session_id] = (signature, runs)
+        if len(_cache) > 8:
+            _cache.pop(next(iter(_cache)))
+    return runs
+
+
+def _read_all(session_id: str, main: Path, now: float | None) -> list[Run]:
+    """Every subagent run of a session — those of the conversation and of other subagents — oldest first, each
+    with its steps. [] for a session without any (or without a transcript)."""
     now = time.time() if now is None else now
     called: dict[str, _Called] = {}
     by_agent: dict[str, str] = {}

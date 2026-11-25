@@ -138,6 +138,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("conversations.next_group", N_("Jump to the next group's heading (Enter or a click folds / unfolds it)")),
         ("conversations.prev_group", N_("Jump to the previous group's heading")),
         ("conversations.export", N_("Export the conversation as Markdown")),
+        ("conversations.subagents", N_("Subagents of the conversation: tree and timeline, prompt, steps, result (b or Esc back)")),
         ("screen.review", N_("Review its changes with a fresh reviewer (once or until it passes)")),
         ("screen.goal", N_("Goal loop: rounds of work, check and review until the goal is met")),
         ("screen.workflow", N_("Workflow: plan, approve, build, check, parallel reviews, arbiter")),
@@ -157,6 +158,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("conversations.next_group", N_("Jump to the next group's heading (Enter or a click folds / unfolds it)")),
         ("conversations.prev_group", N_("Jump to the previous group's heading")),
         ("conversations.export", N_("Export the conversation as Markdown")),
+        ("conversations.subagents", N_("Subagents of the conversation: tree and timeline, prompt, steps, result (b or Esc back)")),
     ]),
     (N_("Tasks editor (T)"), [
         ("tasks.add", N_("Add a task")),

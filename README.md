@@ -197,6 +197,7 @@ Language):
 - [Conversations](src/ccc/help/conversations.md)
 - [Starting a conversation](src/ccc/help/new-conversation.md)
 - [Task queue](src/ccc/help/tasks.md)
+- [Notes](src/ccc/help/notes.md)
 - [Routines](src/ccc/help/routines.md)
 - [Agents](src/ccc/help/agents.md)
 - [Reviews](src/ccc/help/review.md)

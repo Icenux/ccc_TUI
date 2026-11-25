@@ -97,6 +97,7 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("views.help", N_("This help")),
         ("views.agents", N_("Agents: helpers Claude Code can call")),
         ("views.tasks", N_("Tasks & Routines: every waiting task, every routine")),
+        ("views.notes", N_("Notes: Markdown files, shared with the Android app")),
         ("conversations.tasks", N_("Tasks editor of the selected conversation (queue, schedule, pause, auto-continue)")),
         ("views.update", N_("Update ccc — only when a new version is there")),
         ("app.settings", N_("Settings (language, Telegram, queues, presets, shortcuts, backup)")),
@@ -179,6 +180,13 @@ KEY_HELP: list[tuple[str, list[tuple[str, str]]]] = [
         ("tasks_page.toggle", N_("Turn the routine on / off")),
         ("tasks_page.run", N_("Run the routine now (its next time stays)")),
         ("window.save", N_("Save in the routine editor")),
+    ]),
+    (N_("Notes (N)"), [
+        ("notes.add", N_("Write a new note (asks for its name, then opens the editor)")),
+        ("notes.edit", N_("Edit the note in the editor (also Enter)")),
+        ("notes.rename", N_("Rename the note, or move it to another folder")),
+        ("notes.delete", N_("Delete the note (it moves to ccc's own folder)")),
+        ("notes.search", N_("Search the notes' names and text (Esc clears)")),
     ]),
     (N_("Agents (A)"), [
         ("agents.add", N_("Add an agent from a template (name, where it is kept, preview of the file)")),

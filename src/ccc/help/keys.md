@@ -21,6 +21,7 @@ name the default keys.
 | `?` | This help |
 | `A` | Agents: helpers Claude Code can call |
 | `t` | Tasks & Routines: every waiting task, every routine |
+| `N` | Notes: Markdown files, shared with the Android app |
 | `T` | Tasks editor of the selected conversation (queue, schedule, pause, auto-continue) |
 | `U` | Update ccc — only when a new version is there |
 | `Ctrl+P` | Settings (language, Telegram, queues, presets, shortcuts, backup) |
@@ -125,6 +126,16 @@ name the default keys.
 | `Space` | Turn the routine on / off |
 | `r` | Run the routine now (its next time stays) |
 | `Ctrl+S` | Save in the routine editor |
+
+## Notes (N)
+
+| Key | |
+|---|---|
+| `+` | Write a new note (asks for its name, then opens the editor) |
+| `e` | Edit the note in the editor (also Enter) |
+| `r` | Rename the note, or move it to another folder |
+| `Del` | Delete the note (it moves to ccc's own folder) |
+| `/` | Search the notes' names and text (Esc clears) |
 
 ## Agents (A)
 

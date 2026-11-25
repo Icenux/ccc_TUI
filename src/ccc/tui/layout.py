@@ -66,6 +66,7 @@ VIEWS: list[tuple[str, str]] = [
     ("sessions", _("Live sessions")),
     ("analytics", _("Analytics")),
     ("tasks", _("Tasks & Routines")),
+    ("notes", _("Notes")),
 ]
 
 
@@ -90,6 +91,7 @@ NAV: list[NavItem] = [
     NavItem("agents", _("Agents"), "agents", "views.agents"),
     NavItem("analytics", _("Analytics"), "goto('analytics')", "views.analytics", view=True),
     NavItem("tasks", _("Tasks & Routines"), "goto('tasks')", "views.tasks", view=True),
+    NavItem("notes", _("Notes"), "goto('notes')", "views.notes", view=True),
 ]
 
 
@@ -103,6 +105,7 @@ BEVEL_COLOURS: dict[str, tuple[str, str, str]] = {
     "nav-agents": ("#0087af", "#5fafd7", "#005f87"),
     "nav-analytics": ("#00af5f", "#5fd787", "#005f5f"),
     "nav-tasks": ("#5f5f87", "#87afaf", "#005f5f"),
+    "nav-notes": ("#87875f", "#afaf87", "#5f5f00"),
     "sidebar-button-green": ("#00af5f", "#5fd787", "#005f5f"),
     "sidebar-button-red": ("#af5f5f", "#d78787", "#5f0000"),
     "sidebar-button-warning": ("#af8700", "#d7af5f", "#875f00"),
@@ -1061,6 +1064,10 @@ class SidebarScreen(Screen):
             from ccc.tui.tasks_page import TasksRoutinesScreen
 
             return TasksRoutinesScreen(self.storage)
+        if view == "notes":
+            from ccc.tui.notes_page import NotesScreen
+
+            return NotesScreen(self.storage)
         raise ValueError(f"unknown view: {view}")
 
     def action_goto(self, view: str) -> None:

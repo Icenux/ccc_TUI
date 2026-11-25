@@ -34,14 +34,14 @@ FORMAT = "ccc-keys"
 # Where a key works. The sidebar views; the windows on top of them (a
 # window's keys work only while it's open); "claude": the Claude Code
 # pane beside ccc (only the keys ccc binds in tmux reach ccc from there).
-VIEWS = ("dashboard", "conversations", "archive", "sessions", "analytics", "tasks_page", "queue_detail")
+VIEWS = ("dashboard", "conversations", "archive", "sessions", "analytics", "tasks_page", "notes", "queue_detail")
 WINDOWS = ("help", "confirm", "approval", "tasks", "task_edit", "preset_edit", "settings", "keys",
            "new_conversation", "preset_name", "add_prompt", "search", "attach", "routine_edit", "agents", "agent_new", "agent_edit",
-           "review", "goal", "workflow", "group", "rename", "update")
+           "review", "goal", "workflow", "group", "rename", "note_name", "update")
 CLAUDE = "claude"
 EVERYWHERE = (*VIEWS, *WINDOWS, CLAUDE)
 _CONVERSATIONS = ("conversations", "archive")
-_BACK = ("conversations", "archive", "sessions", "analytics", "tasks_page", "queue_detail")
+_BACK = ("conversations", "archive", "sessions", "analytics", "tasks_page", "notes", "queue_detail")
 _EDITORS = ("task_edit", "preset_edit", "settings", "keys", "routine_edit", "review", "goal", "workflow", "agent_new", "agent_edit",
             "new_conversation")
 
@@ -65,6 +65,7 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("views.help", "question_mark", N_("This help"), (*VIEWS, "help")),
     KeyAction("views.agents", "A", N_("Agents (helpers Claude Code can call)"), VIEWS),
     KeyAction("views.tasks", "t", N_("Tasks & Routines (every task waiting, every routine)"), VIEWS),
+    KeyAction("views.notes", "N", N_("Notes (Markdown files shared with the Android app)"), VIEWS),
     KeyAction("views.update", "U", N_("Update ccc (when there is a new version)"), VIEWS),
     KeyAction("app.settings", "ctrl+p", N_("Settings"), EVERYWHERE, tmux=True),
     KeyAction("app.screenshot", "alt+s", N_("Screenshot of ccc"), EVERYWHERE, tmux=True),
@@ -131,6 +132,11 @@ ACTIONS: tuple[KeyAction, ...] = (
     KeyAction("tasks_page.down", "ctrl+down", N_("Move the task down in its queue"), ("tasks_page",)),
     KeyAction("tasks_page.toggle", "space", N_("Turn the routine on / off"), ("tasks_page",)),
     KeyAction("tasks_page.run", "r", N_("Run the routine now"), ("tasks_page",)),
+    KeyAction("notes.add", "plus", N_("Write a new note"), ("notes",)),
+    KeyAction("notes.edit", "e", N_("Edit the note in the editor"), ("notes",)),
+    KeyAction("notes.rename", "r", N_("Rename or move the note"), ("notes",)),
+    KeyAction("notes.delete", "delete", N_("Delete the note"), ("notes",)),
+    KeyAction("notes.search", "slash", N_("Search the notes"), ("notes",)),
     KeyAction("agents.add", "a", N_("Add an agent from a template"), ("agents",)),
     KeyAction("agents.edit", "e", N_("Edit the agent"), ("agents",)),
     KeyAction("agents.delete", "delete", N_("Delete the agent"), ("agents",)),

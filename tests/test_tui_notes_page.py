@@ -177,3 +177,17 @@ async def test_search_filters_and_escape_clears(tmp_path):
         await pilot.press("escape")
         await pilot.pause()
         assert set(_paths(app.screen)) == {"a.md", "b.md"} and isinstance(app.screen, NotesScreen)
+
+
+@pytest.mark.asyncio
+async def test_the_page_fills_the_window_with_the_preview_inside_the_frame(tmp_path):
+    """compose_main() is unpacked into the frame, so a `with` block in it would leave the preview outside (#223)."""
+    app, root = _app(tmp_path)
+    notes.create_note(root, "a.md", "# One\n\ntext\n")
+    async with app.run_test(size=(140, 45)) as pilot:
+        await _open(app, pilot)
+        main = app.screen.query_one("#main")
+        assert main.region.y == 0 and main.region.height >= 40
+        assert [w.id for w in main.children] == ["notes-head", "notes-search", "notes-table", "notes-preview-box", "notes-foot"]
+        box = app.screen.query_one("#notes-preview-box")
+        assert box.region.height > 5 and app.screen.query_one("#notes-preview").parent is box

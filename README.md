@@ -78,6 +78,11 @@ phone via Remote Control.
   checks* conversations), with a diff viewer.
 - **Live sessions** — see every Claude Code session running on the machine
   and send a prompt into one of them once it's idle.
+- **Notes** (`N`) — your own Markdown notes, plain `.md` files in ccc's
+  folder: write them in your editor, search them, and read and edit them in
+  the Android app too (a note changed on both sides is never overwritten).
+- **Subagents** (`b` in a conversation) — what Claude's subagents did: a
+  tree over a timeline, each run's prompt, steps, result, time and tokens.
 - **Analytics** — the account's real 5-hour / weekly usage; tokens per
   calendar month by day, model and conversation, history kept for good —
   also as [monthly archive of Markdown notes for Obsidian](src/ccc/help/analytics.md) with

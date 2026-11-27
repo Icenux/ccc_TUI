@@ -22,6 +22,9 @@ you write on the phone is here a moment later, and the other way round.
 | `/` | search the names and the text of the notes (`Esc` clears it) |
 | `Esc` | back |
 
+Notes are not part of ccc's database backup (Settings → backup keeps
+`history.db` only): back up the `notes/` folder yourself, e.g. with git.
+
 ## The editor
 
 ccc steps aside while the editor runs and takes back what you saved. Which

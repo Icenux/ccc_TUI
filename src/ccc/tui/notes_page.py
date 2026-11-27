@@ -138,8 +138,7 @@ class NotesScreen(SidebarScreen):
         yield Static(id="notes-head")
         yield SearchInput(placeholder=_("Search the notes"), id="notes-search")
         yield DataTable(id="notes-table")
-        with VerticalScroll(id="notes-preview-box"):
-            yield Markdown(id="notes-preview")
+        yield VerticalScroll(Markdown(id="notes-preview"), id="notes-preview-box")  # no `with`: this is not compose()
         yield Static(id="notes-foot")
 
     def on_mount(self) -> None:

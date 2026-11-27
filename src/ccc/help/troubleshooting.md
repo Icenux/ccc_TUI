@@ -2,7 +2,10 @@
 
 ## The sidebar says "daemon not running"
 
-Nothing gets done without the daemon. Check and start it:
+Nothing gets done without the daemon. `ccc` and `ccc tui` start it
+themselves when they find it not running (and turn on lingering, so it
+survives logging out), so you normally see this only when systemd can't
+start it. Check and start it:
 
 ```bash
 systemctl --user status ccc        # is it running?
@@ -31,7 +34,9 @@ starts it. If ccc itself quits, it is back a second later.
 ccc's tmux servers are kept apart from yours: their sockets are in
 `/tmp/ccc-tmux-<uid>/` (not next to yours in `/tmp/tmux-<uid>/`) and they
 never load your `~/.tmux.conf`, so changing your tmux setup doesn't
-change ccc. Two environment variables move them further:
+change ccc. They run on ccc's own configuration instead (mouse wheel
+scrolling, a 50 000-line scrollback, copying to the system clipboard), so
+the same things work on a fresh system as on yours. Two environment variables move them further:
 
 - `CCC_TMUX_BIN` — the tmux program ccc uses (e.g. a build of its own,
   so upgrading the system tmux doesn't touch ccc);

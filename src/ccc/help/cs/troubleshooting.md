@@ -2,7 +2,9 @@
 
 ## Postranní panel ukazuje „daemon neběží“
 
-Bez daemonu se nic nestane. Zkontroluj ho a spusť:
+Bez daemonu se nic nestane. `ccc` i `ccc tui` ho samy spustí, když
+zjistí, že neběží (a zapnou lingering, aby přežil odhlášení), takže tohle
+obvykle uvidíš, jen když ho systemd nedokáže spustit. Zkontroluj ho a spusť:
 
 ```bash
 systemctl --user status ccc        # běží?
@@ -32,7 +34,9 @@ Když ccc samo skončí, za vteřinu je zpátky.
 Tmux servery ccc jsou oddělené od tvých: jejich sockety jsou
 v `/tmp/ccc-tmux-<uid>/` (ne vedle tvých v `/tmp/tmux-<uid>/`) a nikdy
 nenačítají tvůj `~/.tmux.conf`, takže změna tvého nastavení tmuxu ccc
-nezmění. Dvě proměnné prostředí je oddělí ještě víc:
+nezmění. Běží na vlastním nastavení ccc (rolování kolečkem myši, historie 50 000
+řádků, kopírování do systémové schránky), takže na čerstvém systému funguje totéž co u tebe.
+Dvě proměnné prostředí je oddělí ještě víc:
 
 - `CCC_TMUX_BIN` — program tmux, který ccc používá (např. vlastní build,
   aby upgrade systémového tmuxu ccc neovlivnil);

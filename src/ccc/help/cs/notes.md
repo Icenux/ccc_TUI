@@ -22,6 +22,9 @@ napíšeš v telefonu, je tady za okamžik, a naopak.
 | `/` | hledat v názvech i textu poznámek (`Esc` hledání zruší) |
 | `Esc` | zpět |
 
+Poznámky nejsou součástí zálohy databáze ccc (Nastavení → záloha ukládá
+jen `history.db`): složku `notes/` si zálohuj sám, třeba přes git.
+
 ## Editor
 
 Během editoru ccc ustoupí a převezme, co uložíš. Který editor to je, vybereš

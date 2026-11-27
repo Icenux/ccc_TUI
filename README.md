@@ -45,6 +45,14 @@ phone via Remote Control.
 <td align="center">Queue detail: status, delivery and last error</td>
 </tr>
 <tr>
+<td><img src="docs/screenshots/notes.png" alt="Notes"></td>
+<td><img src="docs/screenshots/subagents.png" alt="Subagents"></td>
+</tr>
+<tr>
+<td align="center">Notes: Markdown files, shared with the Android app</td>
+<td align="center">Subagents: what each one did, when and with what result</td>
+</tr>
+<tr>
 <td><img src="docs/screenshots/add_prompt.png" alt="Add prompt"></td>
 <td><img src="docs/screenshots/help.png" alt="Help"></td>
 </tr>

@@ -11,6 +11,8 @@ složkou: `napady/api` je soubor `napady/api.md`.
 [Android aplikace](android-api.md) čte a zapisuje tytéž poznámky, takže co
 napíšeš v telefonu, je tady za okamžik, a naopak.
 
+![Poznámky](../../../../docs/screenshots/notes.png)
+
 ## Klávesy
 
 | Klávesa | |

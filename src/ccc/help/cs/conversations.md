@@ -118,6 +118,8 @@ Dobré vědět:
 
 Claude Code předává práci subagentům. Tlačítko **Subagenti** nad *Novou konverzací* (nebo `b`) ukáže, co dělali, místo Claude Code: tlačítko je počítá (`Subagenti 6 · 1 běží`) a `b` nebo `Esc` vrátí Claude Code. Stejné tlačítko je i v Archivu.
 
+![Subagenti](../../../../docs/screenshots/subagents.png)
+
 - Horní polovina je **strom s časovou osou**: subagenti konverzace, pod subagentem jeho vlastní subagenti, pruh kdy který pracoval (překrývající se pruhy běžely současně), jeho stav (`✓` hotovo, `✗` chyba nebo přerušen, `●` běží), jak dlouho trval a tokeny.
 - Spodní polovina je vybraný subagent: kdo ho vyvolal, kdy, jak dlouho, model, nástroje a tokeny, a jeho **Zadání**, **Průběh** (nástroj, argument, čas od startu, trvání, chyba např. `Exit code 1`) a **Výsledek**. `Tab` přepíná mezi nimi; `Enter` na kroku, který spustil dalšího subagenta, na něj skočí.
 - Je to **živě**: běžící subagent roste a přibývají mu kroky, zatímco se díváš.

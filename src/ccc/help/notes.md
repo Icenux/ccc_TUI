@@ -11,6 +11,8 @@ start with a folder: `ideas/api` is the file `ideas/api.md`.
 The [Android app](android-api.md) reads and writes the same notes, so what
 you write on the phone is here a moment later, and the other way round.
 
+![Notes](../../../docs/screenshots/notes.png)
+
 ## Keys
 
 | Key | |
